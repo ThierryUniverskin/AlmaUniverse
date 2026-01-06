@@ -16,9 +16,9 @@
     --color-text-tertiary: theme('colors.stone.500');
     --color-text-muted: theme('colors.stone.400');
 
-    --color-accent: theme('colors.sage.600');
-    --color-accent-hover: theme('colors.sage.700');
-    --color-accent-subtle: theme('colors.sage.50');
+    --color-accent: theme('colors.purple.700');
+    --color-accent-hover: theme('colors.purple.800');
+    --color-accent-subtle: theme('colors.purple.50');
 
     /* Timing tokens */
     --transition-fast: 150ms;
@@ -70,7 +70,7 @@
 
   /* Selection styling */
   ::selection {
-    @apply bg-sage-200 text-stone-900;
+    @apply bg-purple-200 text-stone-900;
   }
 
   /* Refined scrollbar */
@@ -97,7 +97,7 @@
 @layer components {
   /* Premium focus ring - calm and intentional */
   .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-sage-500/25 focus:ring-offset-2 focus:ring-offset-ivory-100;
+    @apply focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:ring-offset-2 focus:ring-offset-ivory-100;
     transition: box-shadow var(--transition-normal) var(--ease-smooth);
   }
 
@@ -116,7 +116,7 @@
   .input-base {
     @apply w-full px-4 py-3 border border-stone-200 rounded-xl bg-white
            text-stone-900 placeholder:text-stone-400
-           focus:outline-none focus:ring-2 focus:ring-sage-500/15 focus:border-sage-400
+           focus:outline-none focus:ring-2 focus:ring-purple-500/15 focus:border-purple-400
            transition-all duration-250 ease-smooth;
     font-size: 0.9375rem;
     line-height: 1.5;
@@ -190,8 +190,8 @@
   }
 
   /* Glow effects for focus states */
-  .glow-sage {
-    box-shadow: 0 0 0 3px theme('colors.sage.500' / 15%);
+  .glow-purple {
+    box-shadow: 0 0 0 3px theme('colors.purple.500' / 15%);
   }
 
   /* Premium transitions */

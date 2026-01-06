@@ -63,9 +63,9 @@ function PatientForm({
       <Card hover={false}>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-sage-50 flex items-center justify-center">
+            <div className="h-9 w-9 rounded-lg bg-purple-50 flex items-center justify-center">
               <svg
-                className="h-4.5 w-4.5 text-sage-600"
+                className="h-4.5 w-4.5 text-purple-600"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"

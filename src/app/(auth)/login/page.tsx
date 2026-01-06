@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { Button, Input, Card } from '@/components/ui';
 
 export default function LoginPage() {
   const { state, login } = useAuth();
@@ -11,6 +12,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -42,104 +44,230 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-ivory-100 px-4 relative overflow-hidden">
-      {/* Subtle background pattern */}
-      <div className="absolute inset-0 pattern-bg opacity-40" />
+    <div className="min-h-screen bg-stone-100 p-4 lg:p-6">
+      <div className="h-full min-h-[calc(100vh-3rem)] flex rounded-2xl overflow-hidden bg-white shadow-sm">
+        {/* Left Side - Form */}
+        <div className="w-full lg:w-1/2 flex flex-col">
+          {/* Header */}
+          <header className="flex items-center justify-between px-8 py-5">
+            <Image
+              src="/images/logo.svg"
+              alt="Alma Universe"
+              width={130}
+              height={38}
+              className="h-9 w-auto"
+            />
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-stone-500">Don&apos;t have an account?</span>
+              <Link
+                href="#"
+                className="px-5 py-2.5 text-stone-700 font-medium border border-stone-300 rounded-full hover:bg-stone-50 transition-colors"
+              >
+                Register
+              </Link>
+            </div>
+          </header>
 
-      {/* Gradient accents */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-sage-200/30 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-ivory-400/20 rounded-full blur-3xl" />
-
-      <div className="w-full max-w-md relative z-10">
-        {/* Logo and Brand */}
-        <div className="text-center mb-10 animate-fade-in">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-sage-500 to-sage-600 mb-6 shadow-lg">
-            <svg
-              className="h-8 w-8 text-white"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-            </svg>
-          </div>
-          <h1 className="font-display text-3xl font-medium text-stone-900 tracking-tight mb-2">
-            Alma Universe
-          </h1>
-          <p className="text-stone-500 text-sm tracking-wide">
-            Clinical workflow management
-          </p>
-        </div>
-
-        {/* Login Card */}
-        <Card className="animate-slide-up shadow-elevated" padding="lg" hover={false}>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-4 rounded-xl bg-error-50 border border-error-200/60">
-                <div className="flex items-center gap-3">
-                  <svg className="h-5 w-5 text-error-500 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+          {/* Form Container */}
+          <div className="flex-1 flex items-center justify-center px-8 py-8">
+            <div className="w-full max-w-sm">
+              {/* User Icon */}
+              <div className="flex justify-center mb-6">
+                <div className="h-14 w-14 rounded-full bg-stone-100 flex items-center justify-center">
+                  <svg
+                    className="h-7 w-7 text-stone-400"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
                   </svg>
-                  <p className="text-sm text-error-700">{error}</p>
                 </div>
               </div>
-            )}
 
-            <Input
-              label="Email address"
-              type="email"
-              name="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="doctor@alma.health"
-              required
-              autoComplete="email"
-              autoFocus
-            />
+              {/* Title */}
+              <div className="text-center mb-8">
+                <h1 className="text-2xl font-semibold text-stone-900 mb-1.5">
+                  Login to your account
+                </h1>
+                <p className="text-stone-500 text-sm">
+                  Enter your details to login.
+                </p>
+              </div>
 
-            <Input
-              label="Password"
-              type="password"
-              name="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-              autoComplete="current-password"
-            />
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {error && (
+                  <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                )}
 
-            <div className="pt-2">
-              <Button
-                type="submit"
-                fullWidth
-                size="lg"
-                isLoading={isSubmitting}
-              >
-                Sign in to your account
-              </Button>
-            </div>
-          </form>
+                {/* Email Field */}
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                    Email Address<span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-stone-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <rect x="2" y="4" width="20" height="16" rx="2" />
+                        <path d="M22 6l-10 7L2 6" />
+                      </svg>
+                    </div>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="hello@demo.com"
+                      required
+                      autoComplete="email"
+                      autoFocus
+                      className="w-full pl-11 pr-4 py-3 bg-white border border-stone-200 rounded-lg text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                    />
+                  </div>
+                </div>
 
-          {/* Demo credentials hint */}
-          <div className="mt-8 pt-6 border-t border-stone-100">
-            <div className="text-center">
-              <p className="text-xs text-stone-400 mb-2">Demo credentials</p>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-ivory-200/50">
-                <span className="text-xs font-medium text-stone-600">doctor@alma.health</span>
-                <span className="text-stone-300">/</span>
-                <span className="text-xs font-medium text-stone-600">alma2024</span>
+                {/* Password Field */}
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                    Password<span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-stone-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <rect x="3" y="11" width="18" height="11" rx="2" />
+                        <circle cx="12" cy="16" r="1" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      autoComplete="current-password"
+                      className="w-full pl-11 pr-12 py-3 bg-white border border-stone-200 rounded-lg text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-stone-400 hover:text-stone-600"
+                    >
+                      {showPassword ? (
+                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      ) : (
+                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Forgot Password - Centered */}
+                <div className="text-center">
+                  <Link href="#" className="text-sm text-stone-500 hover:text-purple-700 transition-colors">
+                    Forgot password?
+                  </Link>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-3.5 px-4 bg-purple-700 hover:bg-purple-800 text-white font-medium rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Logging in...' : 'Login'}
+                </button>
+              </form>
+
+              {/* Demo credentials hint */}
+              <div className="mt-6 p-3 rounded-lg bg-purple-50 border border-purple-100">
+                <p className="text-xs text-purple-700 text-center">
+                  Demo: <span className="font-medium">doctor@alma.health</span> / <span className="font-medium">alma2024</span>
+                </p>
               </div>
             </div>
           </div>
-        </Card>
 
-        {/* Footer */}
-        <p className="text-center text-xs text-stone-400 mt-8 animate-fade-in">
-          Secure clinical platform for healthcare professionals
-        </p>
+          {/* Footer */}
+          <footer className="px-8 py-5 flex items-center justify-between text-sm text-stone-400">
+            <span>&copy; 2026 SkinXS</span>
+            <button className="flex items-center gap-1.5 hover:text-stone-600 transition-colors">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+              <span>ENG</span>
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+          </footer>
+        </div>
+
+        {/* Right Side - Branded Hero (Framed) */}
+        <div className="hidden lg:block w-1/2 p-3">
+          <div className="relative h-full w-full rounded-2xl overflow-hidden">
+            {/* Background Image */}
+            <Image
+              src="/images/login-bg.png"
+              alt=""
+              fill
+              className="object-cover"
+              priority
+            />
+
+            {/* Content Overlay */}
+            <div className="relative z-10 h-full flex flex-col items-center justify-between py-16 px-12">
+              {/* Top spacer */}
+              <div />
+
+              {/* Center - Logo */}
+              <div className="flex flex-col items-center">
+                <Image
+                  src="/images/logo.svg"
+                  alt="Alma Universe"
+                  width={320}
+                  height={90}
+                  className="h-24 w-auto"
+                />
+              </div>
+
+              {/* Bottom - Tagline & Links */}
+              <div className="flex flex-col items-center text-center">
+                <h2 className="text-3xl font-semibold text-white mb-2">
+                  Skin eXpert Software
+                </h2>
+                <p className="text-white/80 mb-10">
+                  A personalized workspace for physicians
+                </p>
+
+                {/* Footer Links */}
+                <div className="flex items-center gap-2 text-sm text-white/70">
+                  <Link href="#" className="hover:text-white transition-colors">Privacy Notice Doctors</Link>
+                  <span className="text-white/40">•</span>
+                  <Link href="#" className="hover:text-white transition-colors">Privacy Notice Patients</Link>
+                  <span className="text-white/40">•</span>
+                  <Link href="#" className="hover:text-white transition-colors">Legal</Link>
+                  <span className="text-white/40">•</span>
+                  <Link href="#" className="hover:text-white transition-colors">Terms of use</Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

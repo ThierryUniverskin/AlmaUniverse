@@ -31,32 +31,32 @@ const config: Config = {
           900: '#1C1917',
           950: '#0C0A09',
         },
-        // Refined sage accent - medical luxury
-        sage: {
-          50: '#F6F7F5',
-          100: '#E8EBE6',
-          200: '#D4D9D0',
-          300: '#B5BEB0',
-          400: '#94A08C',
-          500: '#7B917B',
-          600: '#5F7360',
-          700: '#4D5D4E',
-          800: '#414D42',
-          900: '#384039',
-          950: '#1D211E',
+        // Primary purple/violet - brand color (#442C5D)
+        purple: {
+          50: '#F7F5F9',
+          100: '#EDE9F2',
+          200: '#DDD6E6',
+          300: '#C4B6D4',
+          400: '#9E89B8',
+          500: '#7A6199',
+          600: '#5C4476',
+          700: '#442C5D',
+          800: '#38244D',
+          900: '#2B1C3C',
+          950: '#1A1024',
         },
-        // Muted rose for subtle accents
-        rose: {
-          50: '#FBF7F6',
-          100: '#F5EDEB',
-          200: '#EAD9D5',
-          300: '#DBBDB6',
-          400: '#C89B91',
-          500: '#B07D72',
-          600: '#9A6559',
-          700: '#7F5349',
-          800: '#6B4740',
-          900: '#5B3E39',
+        // Orange accent - for "Powered by SkinXs"
+        orange: {
+          50: '#FFF8F3',
+          100: '#FFEDD9',
+          200: '#FFD9B3',
+          300: '#FFBF80',
+          400: '#FFA04D',
+          500: '#F58220',
+          600: '#D96B0A',
+          700: '#B35608',
+          800: '#8C4307',
+          900: '#663205',
         },
         // Semantic colors - muted and sophisticated
         success: {
@@ -83,8 +83,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ['var(--font-fraunces)', 'Georgia', 'serif'],
-        sans: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
         mono: ['SF Mono', 'Monaco', 'Consolas', 'monospace'],
       },
       fontSize: {

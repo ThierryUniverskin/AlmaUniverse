@@ -1,21 +1,14 @@
 import type { Metadata } from 'next';
-import { DM_Sans, Fraunces } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { PatientProvider } from '@/context/PatientContext';
 import { ToastProvider } from '@/components/ui';
 
-const dmSans = DM_Sans({
+const inter = Inter({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
-  variable: '--font-dm-sans',
-  display: 'swap',
-});
-
-const fraunces = Fraunces({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-fraunces',
+  variable: '--font-inter',
   display: 'swap',
 });
 
@@ -30,8 +23,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${fraunces.variable}`}>
-      <body className={dmSans.className}>
+    <html lang="en" className={inter.variable}>
+      <body className={inter.className}>
         <AuthProvider>
           <PatientProvider>
             <ToastProvider>

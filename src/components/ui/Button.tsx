@@ -17,10 +17,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary: `
-    bg-sage-600 text-white
-    hover:bg-sage-700
-    active:bg-sage-800
-    focus:ring-sage-500/30
+    bg-purple-700 text-white
+    hover:bg-purple-800
+    active:bg-purple-900
+    focus:ring-purple-500/30
     shadow-sm hover:shadow-md
   `,
   secondary: `
@@ -78,7 +78,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           // Base styles
           'inline-flex items-center justify-center gap-2',
-          'font-medium tracking-snug rounded-xl',
+          'font-medium tracking-snug rounded-full',
           'transition-all duration-250 ease-smooth',
           'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-ivory-100',
           'disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none',
