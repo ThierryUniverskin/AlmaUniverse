@@ -39,7 +39,7 @@ function Header() {
                 {state.doctor.firstName[0]}{state.doctor.lastName[0]}
               </span>
             </div>
-            <span className="text-stone-800 font-medium">
+            <span className="text-white font-medium">
               Welcome, {getDisplayName(state.doctor)}
             </span>
           </>

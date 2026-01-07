@@ -14,34 +14,34 @@ export default function DashboardPage() {
       {/* Hero Section with Background Image */}
       <div className="absolute inset-0">
         <Image
-          src="/images/dashboard-hero.png"
+          src="/images/iStock-2097461666.jpg"
           alt=""
           fill
           className="object-cover object-[25%_15%] scale-110 origin-left"
           priority
         />
         {/* Gradient overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-white/5 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
       </div>
 
       {/* Content */}
-      <div className="relative h-full flex flex-col justify-center px-10 lg:px-16 max-w-2xl">
+      <div className="relative h-full flex flex-col items-center justify-center text-center px-10 lg:px-16 max-w-3xl mx-auto">
         <Image
-          src="/images/logo.svg"
+          src="/images/logo_white.svg"
           alt="Alma Universe"
           width={180}
           height={50}
           className="mb-6"
         />
-        <h1 className="text-3xl lg:text-4xl font-medium text-stone-900 !leading-[1.3] mb-5">
+        <h1 className="text-3xl lg:text-4xl font-medium text-white !leading-[1.3] mb-5">
           Your Professional Platform for Clinical Documentation & Skin Wellness
         </h1>
-        <p className="text-lg text-stone-600 mb-8 leading-relaxed">
+        <p className="text-lg text-white/70 mb-8 leading-relaxed">
           Support physician-directed treatments and independent cosmetic skin care personalization.
         </p>
         <div>
           <Link href="/patients/new">
-            <Button size="lg">
+            <Button size="lg" className="rounded-full px-8">
               Start a New Clinical Documentation
             </Button>
           </Link>
