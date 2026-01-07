@@ -14,14 +14,19 @@ export default function CreatePatientPage() {
   const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (data: PatientFormData) => {
+  const handleSubmit = async (data: PatientFormData) => {
     setIsSubmitting(true);
 
     try {
-      const newPatient = addPatient(data);
-      showToast('Patient created successfully', 'success');
-      router.push(`/patients/${newPatient.id}`);
-    } catch (error) {
+      const newPatient = await addPatient(data);
+      if (newPatient) {
+        showToast('Patient created successfully', 'success');
+        router.push(`/patients/${newPatient.id}`);
+      } else {
+        showToast('Failed to create patient', 'error');
+        setIsSubmitting(false);
+      }
+    } catch {
       showToast('Failed to create patient', 'error');
       setIsSubmitting(false);
     }

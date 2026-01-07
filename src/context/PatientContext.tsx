@@ -2,8 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { Patient, PatientFormData, PatientFilters, PatientStats } from '@/types';
-import { generateId } from '@/lib/utils';
-import { getPatients, setPatients, initializePatients } from '@/lib/storage';
+import { DbPatient } from '@/types/database';
+import { getSupabase } from '@/lib/supabase';
+import { useAuth } from './AuthContext';
 
 interface PatientContextValue {
   patients: Patient[];
@@ -13,10 +14,11 @@ interface PatientContextValue {
   filteredPatients: Patient[];
   stats: PatientStats;
   recentPatients: Patient[];
-  addPatient: (data: PatientFormData) => Patient;
-  updatePatient: (id: string, data: Partial<PatientFormData>) => Patient | null;
-  deletePatient: (id: string) => boolean;
+  addPatient: (data: PatientFormData) => Promise<Patient | null>;
+  updatePatient: (id: string, data: Partial<PatientFormData>) => Promise<Patient | null>;
+  deletePatient: (id: string) => Promise<boolean>;
   getPatient: (id: string) => Patient | undefined;
+  refreshPatients: () => Promise<void>;
 }
 
 const PatientContext = createContext<PatientContextValue | null>(null);
@@ -27,23 +29,60 @@ const defaultFilters: PatientFilters = {
   sortDirection: 'desc',
 };
 
+// Convert database row to app Patient type
+function dbToPatient(row: DbPatient): Patient {
+  return {
+    id: row.id,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    dateOfBirth: row.date_of_birth,
+    sex: row.sex ?? undefined,
+    phone: row.phone ?? undefined,
+    email: row.email ?? undefined,
+    notes: row.notes ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export function PatientProvider({ children }: { children: React.ReactNode }) {
+  const { state: authState } = useAuth();
   const [patients, setPatientsState] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFiltersState] = useState<PatientFilters>(defaultFilters);
 
-  // Load patients from localStorage on mount
-  useEffect(() => {
-    const loadedPatients = initializePatients();
-    setPatientsState(loadedPatients);
-    setIsLoading(false);
-  }, []);
+  // Load patients from Supabase when doctor is authenticated
+  const refreshPatients = useCallback(async () => {
+    if (!authState.doctor) {
+      setPatientsState([]);
+      setIsLoading(false);
+      return;
+    }
 
-  // Persist patients to localStorage whenever they change
-  const updatePatients = useCallback((newPatients: Patient[]) => {
-    setPatientsState(newPatients);
-    setPatients(newPatients);
-  }, []);
+    setIsLoading(true);
+    const supabase = getSupabase();
+
+    const { data, error } = await supabase
+      .from('patients')
+      .select('*')
+      .eq('doctor_id', authState.doctor.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Failed to load patients:', error);
+      setPatientsState([]);
+    } else {
+      setPatientsState(data.map(dbToPatient));
+    }
+
+    setIsLoading(false);
+  }, [authState.doctor]);
+
+  // Load patients when auth state changes
+  useEffect(() => {
+    if (authState.isLoading) return;
+    refreshPatients();
+  }, [authState.isLoading, authState.doctor?.id, refreshPatients]);
 
   // Update filters
   const setFilters = useCallback((newFilters: Partial<PatientFilters>) => {
@@ -107,60 +146,96 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
 
   // Add a new patient
   const addPatient = useCallback(
-    (data: PatientFormData): Patient => {
-      const now = new Date().toISOString();
-      const newPatient: Patient = {
-        id: generateId('pat'),
-        firstName: data.firstName.trim(),
-        lastName: data.lastName.trim(),
-        dateOfBirth: data.dateOfBirth,
-        sex: data.sex,
-        phone: data.phone?.trim(),
-        email: data.email?.trim(),
-        notes: data.notes?.trim(),
-        createdAt: now,
-        updatedAt: now,
-      };
+    async (data: PatientFormData): Promise<Patient | null> => {
+      if (!authState.doctor) return null;
 
-      updatePatients([...patients, newPatient]);
-      return newPatient;
+      const supabase = getSupabase();
+
+      const { data: newPatient, error } = await supabase
+        .from('patients')
+        .insert({
+          doctor_id: authState.doctor.id,
+          first_name: data.firstName.trim(),
+          last_name: data.lastName.trim(),
+          date_of_birth: data.dateOfBirth,
+          sex: data.sex ?? null,
+          phone: data.phone?.trim() ?? null,
+          email: data.email?.trim() ?? null,
+          notes: data.notes?.trim() ?? null,
+        })
+        .select()
+        .single();
+
+      if (error || !newPatient) {
+        console.error('Failed to add patient:', error);
+        return null;
+      }
+
+      const patient = dbToPatient(newPatient);
+      setPatientsState(prev => [patient, ...prev]);
+      return patient;
     },
-    [patients, updatePatients]
+    [authState.doctor]
   );
 
   // Update an existing patient
   const updatePatient = useCallback(
-    (id: string, data: Partial<PatientFormData>): Patient | null => {
-      const index = patients.findIndex(p => p.id === id);
-      if (index === -1) return null;
+    async (id: string, data: Partial<PatientFormData>): Promise<Patient | null> => {
+      if (!authState.doctor) return null;
 
-      const updatedPatient: Patient = {
-        ...patients[index],
-        ...data,
-        updatedAt: new Date().toISOString(),
-      };
+      const supabase = getSupabase();
 
-      const newPatients = [...patients];
-      newPatients[index] = updatedPatient;
-      updatePatients(newPatients);
+      const updates: Record<string, unknown> = {};
+      if (data.firstName !== undefined) updates.first_name = data.firstName.trim();
+      if (data.lastName !== undefined) updates.last_name = data.lastName.trim();
+      if (data.dateOfBirth !== undefined) updates.date_of_birth = data.dateOfBirth;
+      if (data.sex !== undefined) updates.sex = data.sex ?? null;
+      if (data.phone !== undefined) updates.phone = data.phone?.trim() ?? null;
+      if (data.email !== undefined) updates.email = data.email?.trim() ?? null;
+      if (data.notes !== undefined) updates.notes = data.notes?.trim() ?? null;
 
-      return updatedPatient;
+      const { data: updatedPatient, error } = await supabase
+        .from('patients')
+        .update(updates)
+        .eq('id', id)
+        .eq('doctor_id', authState.doctor.id)
+        .select()
+        .single();
+
+      if (error || !updatedPatient) {
+        console.error('Failed to update patient:', error);
+        return null;
+      }
+
+      const patient = dbToPatient(updatedPatient);
+      setPatientsState(prev => prev.map(p => p.id === id ? patient : p));
+      return patient;
     },
-    [patients, updatePatients]
+    [authState.doctor]
   );
 
   // Delete a patient
   const deletePatient = useCallback(
-    (id: string): boolean => {
-      const index = patients.findIndex(p => p.id === id);
-      if (index === -1) return false;
+    async (id: string): Promise<boolean> => {
+      if (!authState.doctor) return false;
 
-      const newPatients = patients.filter(p => p.id !== id);
-      updatePatients(newPatients);
+      const supabase = getSupabase();
 
+      const { error } = await supabase
+        .from('patients')
+        .delete()
+        .eq('id', id)
+        .eq('doctor_id', authState.doctor.id);
+
+      if (error) {
+        console.error('Failed to delete patient:', error);
+        return false;
+      }
+
+      setPatientsState(prev => prev.filter(p => p.id !== id));
       return true;
     },
-    [patients, updatePatients]
+    [authState.doctor]
   );
 
   // Get a single patient by ID
@@ -185,6 +260,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
         updatePatient,
         deletePatient,
         getPatient,
+        refreshPatients,
       }}
     >
       {children}
