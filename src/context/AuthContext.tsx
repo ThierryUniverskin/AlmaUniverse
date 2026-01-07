@@ -302,71 +302,116 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // Update doctor profile
+  // Update doctor profile - use direct fetch to avoid Supabase client issues
   const updateDoctor = useCallback(
     async (updates: Partial<DoctorProfileFormData>): Promise<{ success: boolean; error?: string }> => {
-      const supabase = getSupabase();
-
       if (!state.doctor) {
         return { success: false, error: 'Not authenticated' };
       }
 
-      const dbUpdates = doctorToDbUpdate(updates);
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const storageKey = `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`;
+        const storedSession = localStorage.getItem(storageKey);
+        const sessionData = storedSession ? JSON.parse(storedSession) : null;
+        const accessToken = sessionData?.access_token;
 
-      const { data, error } = await supabase
-        .from('doctors')
-        .update(dbUpdates)
-        .eq('id', state.doctor.id)
-        .select()
-        .single();
+        if (!accessToken) {
+          return { success: false, error: 'Not authenticated' };
+        }
 
-      if (error) {
-        return { success: false, error: error.message };
+        const dbUpdates = doctorToDbUpdate(updates);
+
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/doctors?id=eq.${state.doctor.id}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=representation',
+            },
+            body: JSON.stringify(dbUpdates),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          return { success: false, error: error.message || 'Failed to update profile' };
+        }
+
+        const data = await response.json();
+        if (data?.[0]) {
+          setState(prev => ({
+            ...prev,
+            doctor: dbToDoctor(data[0]),
+          }));
+        }
+
+        return { success: true };
+      } catch (err) {
+        console.error('Update doctor error:', err);
+        return { success: false, error: 'Failed to update profile' };
       }
-
-      if (data) {
-        setState(prev => ({
-          ...prev,
-          doctor: dbToDoctor(data),
-        }));
-      }
-
-      return { success: true };
     },
     [state.doctor]
   );
 
-  // Change password
+  // Change password - use direct API calls to avoid Supabase client issues
   const changePassword = useCallback(
-    async (data: PasswordChangeFormData): Promise<{ success: boolean; error?: string }> => {
-      const supabase = getSupabase();
+    async (formData: PasswordChangeFormData): Promise<{ success: boolean; error?: string }> => {
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        const storageKey = `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`;
+        const storedSession = localStorage.getItem(storageKey);
+        const sessionData = storedSession ? JSON.parse(storedSession) : null;
 
-      // First verify current password by attempting to sign in
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) {
-        return { success: false, error: 'Not authenticated' };
+        if (!sessionData?.user?.email || !sessionData?.access_token) {
+          return { success: false, error: 'Not authenticated' };
+        }
+
+        // Verify current password by attempting to sign in
+        const verifyResponse = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: {
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: sessionData.user.email,
+            password: formData.currentPassword,
+          }),
+        });
+
+        if (!verifyResponse.ok) {
+          return { success: false, error: 'Current password is incorrect' };
+        }
+
+        // Update password
+        const updateResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
+          method: 'PUT',
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${sessionData.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            password: formData.newPassword,
+          }),
+        });
+
+        if (!updateResponse.ok) {
+          const error = await updateResponse.json();
+          return { success: false, error: error.message || 'Failed to update password' };
+        }
+
+        return { success: true };
+      } catch (err) {
+        console.error('Change password error:', err);
+        return { success: false, error: 'Failed to change password' };
       }
-
-      // Verify current password
-      const { error: verifyError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: data.currentPassword,
-      });
-
-      if (verifyError) {
-        return { success: false, error: 'Current password is incorrect' };
-      }
-
-      // Update password
-      const { error } = await supabase.auth.updateUser({
-        password: data.newPassword,
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      return { success: true };
     },
     []
   );

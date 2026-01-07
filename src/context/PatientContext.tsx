@@ -162,7 +162,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     };
   }, [patients]);
 
-  // Add a new patient
+  // Add a new patient - use direct fetch to avoid Supabase client issues
   const addPatient = useCallback(
     async (data: PatientFormData): Promise<Patient | null> => {
       if (!authState.doctor) {
@@ -171,25 +171,45 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const supabase = getSupabase();
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const storageKey = `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`;
+        const storedSession = localStorage.getItem(storageKey);
+        const sessionData = storedSession ? JSON.parse(storedSession) : null;
+        const accessToken = sessionData?.access_token;
 
-        const { data: newPatient, error } = await supabase
-          .from('patients')
-          .insert({
-            doctor_id: authState.doctor.id,
-            first_name: data.firstName.trim(),
-            last_name: data.lastName.trim(),
-            date_of_birth: data.dateOfBirth,
-            sex: data.sex ?? null,
-            phone: data.phone?.trim() ?? null,
-            email: data.email?.trim() ?? null,
-            notes: data.notes?.trim() ?? null,
-          })
-          .select()
-          .single();
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/patients`,
+          {
+            method: 'POST',
+            headers: {
+              'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=representation',
+            },
+            body: JSON.stringify({
+              doctor_id: authState.doctor.id,
+              first_name: data.firstName.trim(),
+              last_name: data.lastName.trim(),
+              date_of_birth: data.dateOfBirth,
+              sex: data.sex ?? null,
+              phone: data.phone?.trim() ?? null,
+              email: data.email?.trim() ?? null,
+              notes: data.notes?.trim() ?? null,
+            }),
+          }
+        );
 
-        if (error || !newPatient) {
-          console.error('Failed to add patient:', error);
+        if (!response.ok) {
+          console.error('Failed to add patient:', response.status);
+          return null;
+        }
+
+        const result = await response.json();
+        const newPatient = result?.[0];
+
+        if (!newPatient) {
+          console.error('No patient returned');
           return null;
         }
 
@@ -204,13 +224,17 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     [authState.doctor]
   );
 
-  // Update an existing patient
+  // Update an existing patient - use direct fetch to avoid Supabase client issues
   const updatePatient = useCallback(
     async (id: string, data: Partial<PatientFormData>): Promise<Patient | null> => {
       if (!authState.doctor) return null;
 
       try {
-        const supabase = getSupabase();
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const storageKey = `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`;
+        const storedSession = localStorage.getItem(storageKey);
+        const sessionData = storedSession ? JSON.parse(storedSession) : null;
+        const accessToken = sessionData?.access_token;
 
         const updates: Record<string, unknown> = {};
         if (data.firstName !== undefined) updates.first_name = data.firstName.trim();
@@ -221,16 +245,30 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
         if (data.email !== undefined) updates.email = data.email?.trim() ?? null;
         if (data.notes !== undefined) updates.notes = data.notes?.trim() ?? null;
 
-        const { data: updatedPatient, error } = await supabase
-          .from('patients')
-          .update(updates)
-          .eq('id', id)
-          .eq('doctor_id', authState.doctor.id)
-          .select()
-          .single();
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/patients?id=eq.${id}&doctor_id=eq.${authState.doctor.id}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=representation',
+            },
+            body: JSON.stringify(updates),
+          }
+        );
 
-        if (error || !updatedPatient) {
-          console.error('Failed to update patient:', error);
+        if (!response.ok) {
+          console.error('Failed to update patient:', response.status);
+          return null;
+        }
+
+        const result = await response.json();
+        const updatedPatient = result?.[0];
+
+        if (!updatedPatient) {
+          console.error('No patient returned');
           return null;
         }
 
@@ -245,22 +283,32 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     [authState.doctor]
   );
 
-  // Delete a patient
+  // Delete a patient - use direct fetch to avoid Supabase client issues
   const deletePatient = useCallback(
     async (id: string): Promise<boolean> => {
       if (!authState.doctor) return false;
 
       try {
-        const supabase = getSupabase();
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const storageKey = `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`;
+        const storedSession = localStorage.getItem(storageKey);
+        const sessionData = storedSession ? JSON.parse(storedSession) : null;
+        const accessToken = sessionData?.access_token;
 
-        const { error } = await supabase
-          .from('patients')
-          .delete()
-          .eq('id', id)
-          .eq('doctor_id', authState.doctor.id);
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/patients?id=eq.${id}&doctor_id=eq.${authState.doctor.id}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-        if (error) {
-          console.error('Failed to delete patient:', error);
+        if (!response.ok) {
+          console.error('Failed to delete patient:', response.status);
           return false;
         }
 
