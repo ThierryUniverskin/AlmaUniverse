@@ -96,6 +96,28 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
+// Helper to get display name based on preference
+function getDisplayName(doctor: {
+  title?: string;
+  firstName: string;
+  lastName: string;
+  clinicName?: string;
+  displayPreference?: 'professional' | 'clinic' | 'both';
+}) {
+  const professionalName = `${doctor.title || ''} ${doctor.firstName} ${doctor.lastName}`.trim();
+  const clinicName = doctor.clinicName;
+
+  switch (doctor.displayPreference) {
+    case 'clinic':
+      return clinicName || professionalName;
+    case 'both':
+      return clinicName ? `${professionalName} - ${clinicName}` : professionalName;
+    case 'professional':
+    default:
+      return professionalName;
+  }
+}
+
 function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const { state, logout } = useAuth();
@@ -196,7 +218,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className="px-3 py-2 border-t border-stone-100">
         <ul className="space-y-1">
           {bottomNavItems.map(item => {
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <li key={item.label}>
@@ -299,11 +321,13 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* User Profile */}
       {state.doctor && (
         <div className="p-3 border-t border-stone-100">
-          <div
+          <Link
+            href="/account"
             className={cn(
-              'flex items-center gap-3 p-2 rounded-lg hover:bg-stone-50 transition-colors cursor-pointer',
+              'flex items-center gap-3 p-2 rounded-lg hover:bg-stone-50 transition-colors',
               collapsed && 'justify-center'
             )}
+            title={collapsed ? 'My Account' : undefined}
           >
             {/* Avatar */}
             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -315,9 +339,9 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <p className="text-sm font-medium text-stone-800 truncate">
-                    {state.doctor.firstName} {state.doctor.lastName}
+                    {getDisplayName(state.doctor)}
                   </p>
-                  <svg className="h-4 w-4 text-blue-500 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                  <svg className="h-4 w-4 text-purple-500 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                 </div>
@@ -329,7 +353,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             )}
-          </div>
+          </Link>
         </div>
       )}
     </aside>

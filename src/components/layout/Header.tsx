@@ -3,6 +3,28 @@
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 
+// Helper to get display name based on preference
+function getDisplayName(doctor: {
+  title?: string;
+  firstName: string;
+  lastName: string;
+  clinicName?: string;
+  displayPreference?: 'professional' | 'clinic' | 'both';
+}) {
+  const professionalName = `${doctor.title || ''} ${doctor.firstName} ${doctor.lastName}`.trim();
+  const clinicName = doctor.clinicName;
+
+  switch (doctor.displayPreference) {
+    case 'clinic':
+      return clinicName || professionalName;
+    case 'both':
+      return clinicName ? `${professionalName} - ${clinicName}` : professionalName;
+    case 'professional':
+    default:
+      return professionalName;
+  }
+}
+
 function Header() {
   const { state } = useAuth();
 
@@ -18,7 +40,7 @@ function Header() {
               </span>
             </div>
             <span className="text-stone-800 font-medium">
-              Welcome, Dr. {state.doctor.firstName} {state.doctor.lastName}
+              Welcome, {getDisplayName(state.doctor)}
             </span>
           </>
         )}

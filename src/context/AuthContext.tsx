@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { AuthState, Doctor, LoginCredentials } from '@/types';
+import { AuthState, Doctor, LoginCredentials, DoctorProfileFormData, PasswordChangeFormData } from '@/types';
 import { DEMO_CREDENTIALS, DEMO_DOCTOR, STORAGE_KEYS } from '@/lib/constants';
 import { getFromStorage, setToStorage, removeFromStorage } from '@/lib/storage';
 
@@ -9,6 +9,8 @@ interface AuthContextValue {
   state: AuthState;
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  updateDoctor: (updates: Partial<DoctorProfileFormData>) => Promise<{ success: boolean; error?: string }>;
+  changePassword: (data: PasswordChangeFormData) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -83,8 +85,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // Update doctor profile
+  const updateDoctor = useCallback(
+    async (updates: Partial<DoctorProfileFormData>): Promise<{ success: boolean; error?: string }> => {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      if (!state.doctor) {
+        return { success: false, error: 'Not authenticated' };
+      }
+
+      const updatedDoctor: Doctor = {
+        ...state.doctor,
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Update localStorage
+      const authData = {
+        isAuthenticated: true,
+        doctor: updatedDoctor,
+      };
+      setToStorage(STORAGE_KEYS.AUTH, authData);
+
+      // Update state
+      setState(prev => ({
+        ...prev,
+        doctor: updatedDoctor,
+      }));
+
+      return { success: true };
+    },
+    [state.doctor]
+  );
+
+  // Change password (simulated for demo)
+  const changePassword = useCallback(
+    async (data: PasswordChangeFormData): Promise<{ success: boolean; error?: string }> => {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Demo: Check current password matches demo credentials
+      if (data.currentPassword !== DEMO_CREDENTIALS.password) {
+        return { success: false, error: 'Current password is incorrect' };
+      }
+
+      // Demo: Just simulate success (password not actually stored in localStorage)
+      // In production, this would call an API
+      return { success: true };
+    },
+    []
+  );
+
   return (
-    <AuthContext.Provider value={{ state, login, logout }}>
+    <AuthContext.Provider value={{ state, login, logout, updateDoctor, changePassword }}>
       {children}
     </AuthContext.Provider>
   );

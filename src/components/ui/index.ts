@@ -20,3 +20,9 @@ export { EmptyState, UsersIcon } from './EmptyState';
 export type { EmptyStateProps } from './EmptyState';
 
 export { ToastProvider, useToast } from './Toast';
+
+export { Tabs } from './Tabs';
+export type { TabsProps, Tab } from './Tabs';
+
+export { ConfirmModal } from './ConfirmModal';
+export type { ConfirmModalProps } from './ConfirmModal';

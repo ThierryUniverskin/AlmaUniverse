@@ -18,13 +18,13 @@ interface ToastContextValue {
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const typeStyles: Record<ToastType, string> = {
-  success: 'bg-white border-sage-200 text-stone-800',
+  success: 'bg-white border-success-200 text-stone-800',
   error: 'bg-white border-error-200 text-stone-800',
   info: 'bg-white border-stone-200 text-stone-800',
 };
 
 const typeIconStyles: Record<ToastType, string> = {
-  success: 'text-sage-600',
+  success: 'text-success-600',
   error: 'text-error-600',
   info: 'text-stone-500',
 };
