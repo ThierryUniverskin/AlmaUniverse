@@ -4,11 +4,13 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui';
+import { Header } from '@/components/layout/Header';
 
 export default function DashboardPage() {
 
   return (
     <div className="h-full relative overflow-hidden">
+      <Header />
       {/* Hero Section with Background Image */}
       <div className="absolute inset-0">
         <Image
@@ -24,7 +26,14 @@ export default function DashboardPage() {
 
       {/* Content */}
       <div className="relative h-full flex flex-col justify-center px-10 lg:px-16 max-w-2xl">
-        <h1 className="text-4xl lg:text-5xl font-medium text-stone-900 !leading-[1.3] mb-6">
+        <Image
+          src="/images/logo.svg"
+          alt="Alma Universe"
+          width={180}
+          height={50}
+          className="mb-6"
+        />
+        <h1 className="text-3xl lg:text-4xl font-medium text-stone-900 !leading-[1.3] mb-5">
           Your Professional Platform for Clinical Documentation & Skin Wellness
         </h1>
         <p className="text-lg text-stone-600 mb-8 leading-relaxed">
@@ -33,7 +42,7 @@ export default function DashboardPage() {
         <div>
           <Link href="/patients/new">
             <Button size="lg">
-              Start Clinical Documentation
+              Start a New Clinical Documentation
             </Button>
           </Link>
         </div>

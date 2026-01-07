@@ -44,8 +44,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-100 p-4 lg:p-6">
-      <div className="h-full min-h-[calc(100vh-3rem)] flex rounded-2xl overflow-hidden bg-white shadow-sm">
+    <div className="h-screen w-screen flex overflow-hidden bg-white">
         {/* Left Side - Form */}
         <div className="w-full lg:w-1/2 flex flex-col">
           {/* Header */}
@@ -217,9 +216,8 @@ export default function LoginPage() {
           </footer>
         </div>
 
-        {/* Right Side - Branded Hero (Framed) */}
-        <div className="hidden lg:block w-1/2 p-3">
-          <div className="relative h-full w-full rounded-2xl overflow-hidden">
+        {/* Right Side - Branded Hero */}
+        <div className="hidden lg:block w-1/2 relative">
             {/* Background Image */}
             <Image
               src="/images/login-bg.png"
@@ -230,45 +228,28 @@ export default function LoginPage() {
             />
 
             {/* Content Overlay */}
-            <div className="relative z-10 h-full flex flex-col items-center justify-between py-16 px-12">
-              {/* Top spacer */}
-              <div />
-
+            <div className="relative z-10 h-full flex flex-col items-center justify-center px-12">
               {/* Center - Logo */}
-              <div className="flex flex-col items-center">
-                <Image
-                  src="/images/logo.svg"
-                  alt="Alma Universe"
-                  width={320}
-                  height={90}
-                  className="h-24 w-auto"
-                />
-              </div>
+              <Image
+                src="/images/logo.svg"
+                alt="Alma Universe"
+                width={320}
+                height={90}
+                className="h-24 w-auto"
+              />
 
-              {/* Bottom - Tagline & Links */}
-              <div className="flex flex-col items-center text-center">
-                <h2 className="text-3xl font-semibold text-white mb-2">
-                  Skin eXpert Software
-                </h2>
-                <p className="text-white/80 mb-10">
-                  A personalized workspace for physicians
-                </p>
-
-                {/* Footer Links */}
-                <div className="flex items-center gap-2 text-sm text-white/70">
-                  <Link href="#" className="hover:text-white transition-colors">Privacy Notice Doctors</Link>
-                  <span className="text-white/40">•</span>
-                  <Link href="#" className="hover:text-white transition-colors">Privacy Notice Patients</Link>
-                  <span className="text-white/40">•</span>
-                  <Link href="#" className="hover:text-white transition-colors">Legal</Link>
-                  <span className="text-white/40">•</span>
-                  <Link href="#" className="hover:text-white transition-colors">Terms of use</Link>
-                </div>
+              {/* Footer Links */}
+              <div className="absolute bottom-12 flex items-center gap-2 text-sm text-white/70">
+                <Link href="#" className="hover:text-white transition-colors">Privacy Notice Doctors</Link>
+                <span className="text-white/40">•</span>
+                <Link href="#" className="hover:text-white transition-colors">Privacy Notice Patients</Link>
+                <span className="text-white/40">•</span>
+                <Link href="#" className="hover:text-white transition-colors">Legal</Link>
+                <span className="text-white/40">•</span>
+                <Link href="#" className="hover:text-white transition-colors">Terms of use</Link>
               </div>
             </div>
-          </div>
         </div>
-      </div>
     </div>
   );
 }
