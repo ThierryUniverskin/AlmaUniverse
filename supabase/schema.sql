@@ -132,9 +132,12 @@ CREATE TRIGGER patients_updated_at
 -- This automatically creates a doctor record when a user signs up
 
 CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
-  INSERT INTO doctors (id, email, first_name, last_name)
+  INSERT INTO public.doctors (id, email, first_name, last_name)
   VALUES (
     NEW.id,
     NEW.email,
@@ -143,7 +146,11 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
+
+-- Grant permissions for the trigger to work
+GRANT USAGE ON SCHEMA public TO supabase_auth_admin;
+GRANT ALL ON public.doctors TO supabase_auth_admin;
 
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
