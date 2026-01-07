@@ -41,7 +41,7 @@ export default function DashboardPage() {
         </p>
         <div>
           <Link href="/patients/new">
-            <Button size="lg" className="rounded-full px-8">
+            <Button size="lg" className="rounded-full px-8 !bg-white !text-purple-700 hover:!bg-white/90 hover:!text-purple-800 active:!bg-white/80">
               Start a New Clinical Documentation
             </Button>
           </Link>
