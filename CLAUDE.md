@@ -21,6 +21,8 @@ The app is fully functional with real authentication and database persistence vi
 | Dashboard | Done | Stats, recent patients, hero image |
 | Patient list | Done | Search, filter, sort |
 | Add patient | Done | Persists to Supabase |
+| Edit patient | Done | Update patient details |
+| Delete patient | Done | Remove patient records |
 | View patient | Done | Detail page |
 | My Account page | Done | Profile editing with live preview |
 | Security settings | Done | Password change |
@@ -34,7 +36,6 @@ The app is fully functional with real authentication and database persistence vi
 - User registration (currently manual in Supabase dashboard)
 - Email verification
 - Password reset flow
-- Edit/delete patient UI
 
 ---
 
@@ -102,6 +103,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
 
 Set in `.env.local` (local) and Vercel dashboard (production).
 
+### Implementation Notes
+
+**Direct Fetch Pattern:** All Supabase operations (auth, CRUD) use direct `fetch()` calls to the Supabase REST API instead of the Supabase JS client methods. This bypasses internal locking mechanisms that caused hanging issues with React's component lifecycle.
+
+**React Strict Mode:** Disabled in `next.config.js` to prevent double-invocation of effects that conflicted with Supabase auth.
+
 ---
 
 ## Essential Commands
@@ -135,9 +142,8 @@ npx vercel       # Deploy to Vercel
 - Password reset flow
 
 ### Phase 3: Patient Features
-- Edit patient
-- Delete patient with confirmation
 - Patient notes/history
+- Patient search improvements
 
 ### Phase 4: Future Ideas
 - Appointments/scheduling
