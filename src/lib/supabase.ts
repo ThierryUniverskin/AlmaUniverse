@@ -1,24 +1,30 @@
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
-export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
+// Create a single instance of the Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Singleton instance for client-side usage
-let client: ReturnType<typeof createClient> | null = null;
+// Singleton instance
+let supabase: ReturnType<typeof createSupabaseClient> | null = null;
 
 export function getSupabase() {
-  if (typeof window === 'undefined') {
-    // Server-side: always create a new client
-    return createClient();
+  if (!supabase) {
+    supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        // No-op lock to avoid AbortError in React Strict Mode
+        lock: async <R,>(name: string, acquireTimeout: number, fn: () => Promise<R>): Promise<R> => {
+          return await fn();
+        },
+      },
+    });
   }
+  return supabase;
+}
 
-  // Client-side: reuse singleton
-  if (!client) {
-    client = createClient();
-  }
-  return client;
+// For backwards compatibility
+export function createClient() {
+  return getSupabase();
 }

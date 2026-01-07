@@ -60,22 +60,40 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     }
 
     setIsLoading(true);
-    const supabase = getSupabase();
+    console.log('[Patients] Fetching patients for doctor:', authState.doctor.id);
 
-    const { data, error } = await supabase
-      .from('patients')
-      .select('*')
-      .eq('doctor_id', authState.doctor.id)
-      .order('created_at', { ascending: false });
+    try {
+      // Use direct fetch to avoid Supabase client hanging issues
+      const storageKey = `sb-${new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0]}-auth-token`;
+      const storedSession = localStorage.getItem(storageKey);
+      const sessionData = storedSession ? JSON.parse(storedSession) : null;
+      const accessToken = sessionData?.access_token;
 
-    if (error) {
-      console.error('Failed to load patients:', error);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/patients?doctor_id=eq.${authState.doctor.id}&select=*&order=created_at.desc`,
+        {
+          headers: {
+            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Failed to load patients:', response.status);
+        setPatientsState([]);
+      } else {
+        const data = await response.json();
+        console.log('[Patients] Loaded', data.length, 'patients');
+        setPatientsState(data.map(dbToPatient));
+      }
+    } catch (error) {
+      console.error('Error fetching patients:', error);
       setPatientsState([]);
-    } else {
-      setPatientsState(data.map(dbToPatient));
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   }, [authState.doctor]);
 
   // Load patients when auth state changes
@@ -147,33 +165,41 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
   // Add a new patient
   const addPatient = useCallback(
     async (data: PatientFormData): Promise<Patient | null> => {
-      if (!authState.doctor) return null;
-
-      const supabase = getSupabase();
-
-      const { data: newPatient, error } = await supabase
-        .from('patients')
-        .insert({
-          doctor_id: authState.doctor.id,
-          first_name: data.firstName.trim(),
-          last_name: data.lastName.trim(),
-          date_of_birth: data.dateOfBirth,
-          sex: data.sex ?? null,
-          phone: data.phone?.trim() ?? null,
-          email: data.email?.trim() ?? null,
-          notes: data.notes?.trim() ?? null,
-        })
-        .select()
-        .single();
-
-      if (error || !newPatient) {
-        console.error('Failed to add patient:', error);
+      if (!authState.doctor) {
+        console.error('No doctor authenticated');
         return null;
       }
 
-      const patient = dbToPatient(newPatient);
-      setPatientsState(prev => [patient, ...prev]);
-      return patient;
+      try {
+        const supabase = getSupabase();
+
+        const { data: newPatient, error } = await supabase
+          .from('patients')
+          .insert({
+            doctor_id: authState.doctor.id,
+            first_name: data.firstName.trim(),
+            last_name: data.lastName.trim(),
+            date_of_birth: data.dateOfBirth,
+            sex: data.sex ?? null,
+            phone: data.phone?.trim() ?? null,
+            email: data.email?.trim() ?? null,
+            notes: data.notes?.trim() ?? null,
+          })
+          .select()
+          .single();
+
+        if (error || !newPatient) {
+          console.error('Failed to add patient:', error);
+          return null;
+        }
+
+        const patient = dbToPatient(newPatient);
+        setPatientsState(prev => [patient, ...prev]);
+        return patient;
+      } catch (error) {
+        console.error('Error adding patient:', error);
+        return null;
+      }
     },
     [authState.doctor]
   );
@@ -183,33 +209,38 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     async (id: string, data: Partial<PatientFormData>): Promise<Patient | null> => {
       if (!authState.doctor) return null;
 
-      const supabase = getSupabase();
+      try {
+        const supabase = getSupabase();
 
-      const updates: Record<string, unknown> = {};
-      if (data.firstName !== undefined) updates.first_name = data.firstName.trim();
-      if (data.lastName !== undefined) updates.last_name = data.lastName.trim();
-      if (data.dateOfBirth !== undefined) updates.date_of_birth = data.dateOfBirth;
-      if (data.sex !== undefined) updates.sex = data.sex ?? null;
-      if (data.phone !== undefined) updates.phone = data.phone?.trim() ?? null;
-      if (data.email !== undefined) updates.email = data.email?.trim() ?? null;
-      if (data.notes !== undefined) updates.notes = data.notes?.trim() ?? null;
+        const updates: Record<string, unknown> = {};
+        if (data.firstName !== undefined) updates.first_name = data.firstName.trim();
+        if (data.lastName !== undefined) updates.last_name = data.lastName.trim();
+        if (data.dateOfBirth !== undefined) updates.date_of_birth = data.dateOfBirth;
+        if (data.sex !== undefined) updates.sex = data.sex ?? null;
+        if (data.phone !== undefined) updates.phone = data.phone?.trim() ?? null;
+        if (data.email !== undefined) updates.email = data.email?.trim() ?? null;
+        if (data.notes !== undefined) updates.notes = data.notes?.trim() ?? null;
 
-      const { data: updatedPatient, error } = await supabase
-        .from('patients')
-        .update(updates)
-        .eq('id', id)
-        .eq('doctor_id', authState.doctor.id)
-        .select()
-        .single();
+        const { data: updatedPatient, error } = await supabase
+          .from('patients')
+          .update(updates)
+          .eq('id', id)
+          .eq('doctor_id', authState.doctor.id)
+          .select()
+          .single();
 
-      if (error || !updatedPatient) {
-        console.error('Failed to update patient:', error);
+        if (error || !updatedPatient) {
+          console.error('Failed to update patient:', error);
+          return null;
+        }
+
+        const patient = dbToPatient(updatedPatient);
+        setPatientsState(prev => prev.map(p => p.id === id ? patient : p));
+        return patient;
+      } catch (error) {
+        console.error('Error updating patient:', error);
         return null;
       }
-
-      const patient = dbToPatient(updatedPatient);
-      setPatientsState(prev => prev.map(p => p.id === id ? patient : p));
-      return patient;
     },
     [authState.doctor]
   );
@@ -219,21 +250,26 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     async (id: string): Promise<boolean> => {
       if (!authState.doctor) return false;
 
-      const supabase = getSupabase();
+      try {
+        const supabase = getSupabase();
 
-      const { error } = await supabase
-        .from('patients')
-        .delete()
-        .eq('id', id)
-        .eq('doctor_id', authState.doctor.id);
+        const { error } = await supabase
+          .from('patients')
+          .delete()
+          .eq('id', id)
+          .eq('doctor_id', authState.doctor.id);
 
-      if (error) {
-        console.error('Failed to delete patient:', error);
+        if (error) {
+          console.error('Failed to delete patient:', error);
+          return false;
+        }
+
+        setPatientsState(prev => prev.filter(p => p.id !== id));
+        return true;
+      } catch (error) {
+        console.error('Error deleting patient:', error);
         return false;
       }
-
-      setPatientsState(prev => prev.filter(p => p.id !== id));
-      return true;
     },
     [authState.doctor]
   );

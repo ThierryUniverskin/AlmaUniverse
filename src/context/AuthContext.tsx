@@ -70,56 +70,125 @@ function doctorToDbUpdate(data: Partial<DoctorProfileFormData>): Record<string, 
   return updates;
 }
 
+// Module-level guard for auth initialization
+let authInitPromise: Promise<void> | null = null;
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(initialState);
 
   // Load auth state from Supabase session on mount
   useEffect(() => {
     const supabase = getSupabase();
+    let isMounted = true;
 
-    // Get initial session
+    // Get initial session - read from localStorage directly to avoid getSession() hanging
     const initAuth = async () => {
+      console.log('[Auth] Starting init...');
+
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Check localStorage for existing session
+        const storageKey = `sb-${new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0]}-auth-token`;
+        const storedSession = localStorage.getItem(storageKey);
+        console.log('[Auth] Stored session:', storedSession ? 'found' : 'none');
 
-        if (session?.user) {
-          // Fetch doctor profile
-          const { data: doctor, error } = await supabase
-            .from('doctors')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+        if (!storedSession) {
+          console.log('[Auth] No stored session, setting unauthenticated');
+          setState({
+            isAuthenticated: false,
+            doctor: null,
+            isLoading: false,
+          });
+          return;
+        }
 
-          if (doctor && !error) {
-            setState({
-              isAuthenticated: true,
-              doctor: dbToDoctor(doctor),
-              isLoading: false,
-            });
-          } else {
-            setState({
-              isAuthenticated: false,
-              doctor: null,
-              isLoading: false,
-            });
+        // Parse the stored session
+        let sessionData;
+        try {
+          sessionData = JSON.parse(storedSession);
+        } catch {
+          console.log('[Auth] Invalid session data, clearing');
+          localStorage.removeItem(storageKey);
+          setState({
+            isAuthenticated: false,
+            doctor: null,
+            isLoading: false,
+          });
+          return;
+        }
+
+        const userId = sessionData?.user?.id;
+        if (!userId) {
+          console.log('[Auth] No user ID in session');
+          setState({
+            isAuthenticated: false,
+            doctor: null,
+            isLoading: false,
+          });
+          return;
+        }
+
+        if (!isMounted) return;
+
+        // Fetch doctor profile using direct fetch (bypass Supabase client which hangs)
+        console.log('[Auth] Fetching doctor profile for user:', userId);
+        const accessToken = sessionData?.access_token;
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/doctors?id=eq.${userId}&select=*`,
+          {
+            headers: {
+              'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
           }
+        );
+
+        const doctors = await response.json();
+        const doctor = doctors?.[0] || null;
+        const error = response.ok ? null : { message: 'Failed to fetch doctor' };
+        console.log('[Auth] Doctor profile result:', doctor ? 'found' : 'not found', error);
+
+        if (!isMounted) return;
+
+        if (doctor && !error) {
+          console.log('[Auth] Setting authenticated state');
+          setState({
+            isAuthenticated: true,
+            doctor: dbToDoctor(doctor),
+            isLoading: false,
+          });
         } else {
+          console.log('[Auth] No doctor profile or error, setting unauthenticated');
+          // Clear invalid session
+          localStorage.removeItem(storageKey);
           setState({
             isAuthenticated: false,
             doctor: null,
             isLoading: false,
           });
         }
-      } catch {
-        setState({
-          isAuthenticated: false,
-          doctor: null,
-          isLoading: false,
-        });
+      } catch (error) {
+        console.error('[Auth] Init error:', error);
+        if (isMounted) {
+          setState({
+            isAuthenticated: false,
+            doctor: null,
+            isLoading: false,
+          });
+        }
       }
     };
 
-    initAuth();
+    // Use promise deduplication - if init is already running, wait for it
+    if (!authInitPromise) {
+      authInitPromise = initAuth();
+    }
+    authInitPromise.then(() => {
+      // Reset for next mount cycle (e.g., after logout and re-login)
+      authInitPromise = null;
+    });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -148,55 +217,84 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
-  // Login function
+  // Login function - use direct API call to avoid Supabase client hanging
   const login = useCallback(
     async (credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> => {
-      const supabase = getSupabase();
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: credentials.email,
-        password: credentials.password,
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      if (data.user) {
-        // Fetch doctor profile
-        const { data: doctor, error: profileError } = await supabase
-          .from('doctors')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-
-        if (profileError || !doctor) {
-          return { success: false, error: 'Failed to load profile' };
-        }
-
-        setState({
-          isAuthenticated: true,
-          doctor: dbToDoctor(doctor),
-          isLoading: false,
+        // Call Supabase auth API directly
+        const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: {
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: credentials.email,
+            password: credentials.password,
+          }),
         });
 
-        return { success: true };
-      }
+        const data = await response.json();
 
-      return { success: false, error: 'Login failed' };
+        if (!response.ok) {
+          return { success: false, error: data.error_description || data.msg || 'Login failed' };
+        }
+
+        // Store the session in localStorage
+        const storageKey = `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`;
+        localStorage.setItem(storageKey, JSON.stringify(data));
+
+        // Fetch doctor profile
+        const userId = data.user?.id;
+        if (userId) {
+          const profileResponse = await fetch(
+            `${supabaseUrl}/rest/v1/doctors?id=eq.${userId}&select=*`,
+            {
+              headers: {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${data.access_token}`,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+
+          const doctors = await profileResponse.json();
+          const doctor = doctors?.[0];
+
+          if (doctor) {
+            setState({
+              isAuthenticated: true,
+              doctor: dbToDoctor(doctor),
+              isLoading: false,
+            });
+          }
+        }
+
+        return { success: true };
+      } catch (err) {
+        console.error('Login error:', err);
+        return { success: false, error: 'Login failed' };
+      }
     },
     []
   );
 
-  // Logout function
-  const logout = useCallback(async () => {
-    const supabase = getSupabase();
-    await supabase.auth.signOut();
-
+  // Logout function - clear localStorage directly to avoid Supabase client hanging
+  const logout = useCallback(() => {
+    try {
+      const storageKey = `sb-${new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0]}-auth-token`;
+      localStorage.removeItem(storageKey);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
     setState({
       isAuthenticated: false,
       doctor: null,
