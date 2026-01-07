@@ -191,7 +191,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
               doctor_id: authState.doctor.id,
               first_name: data.firstName.trim(),
               last_name: data.lastName.trim(),
-              date_of_birth: data.dateOfBirth,
+              date_of_birth: data.dateOfBirth || null,
               sex: data.sex ?? null,
               phone: data.phone?.trim() ?? null,
               email: data.email?.trim() ?? null,
@@ -201,7 +201,8 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
         );
 
         if (!response.ok) {
-          console.error('Failed to add patient:', response.status);
+          const errorData = await response.text();
+          console.error('Failed to add patient:', response.status, errorData);
           return null;
         }
 

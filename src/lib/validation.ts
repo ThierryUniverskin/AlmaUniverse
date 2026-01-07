@@ -1,4 +1,4 @@
-import { PatientFormData, DoctorProfileFormData, PasswordChangeFormData, PhoneNumber } from '@/types';
+import { PatientFormData, PatientFormDataExtended, DoctorProfileFormData, PasswordChangeFormData, PhoneNumber } from '@/types';
 
 export interface ValidationError {
   field: string;
@@ -53,10 +53,8 @@ export function validatePatientForm(data: PatientFormData): ValidationResult {
     errors.push({ field: 'lastName', message: 'Last name must be 50 characters or less' });
   }
 
-  // Required: Date of birth
-  if (!data.dateOfBirth) {
-    errors.push({ field: 'dateOfBirth', message: 'Date of birth is required' });
-  } else if (!isValidDateOfBirth(data.dateOfBirth)) {
+  // Optional: Date of birth (validate if provided)
+  if (data.dateOfBirth && !isValidDateOfBirth(data.dateOfBirth)) {
     errors.push({ field: 'dateOfBirth', message: 'Please enter a valid date of birth' });
   }
 
@@ -68,6 +66,23 @@ export function validatePatientForm(data: PatientFormData): ValidationResult {
   // Optional: Phone (validate if provided)
   if (data.phone && data.phone.trim().length > 0 && !isValidPhone(data.phone)) {
     errors.push({ field: 'phone', message: 'Please enter a valid phone number' });
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
+}
+
+// Validate patient form data with consent fields (for clinical documentation flow)
+export function validatePatientFormWithConsent(data: PatientFormDataExtended): ValidationResult {
+  // First validate base patient fields
+  const baseValidation = validatePatientForm(data);
+  const errors = [...baseValidation.errors];
+
+  // Require Terms & Conditions consent
+  if (!data.consentTerms) {
+    errors.push({ field: 'consentTerms', message: 'You must accept the Terms & Conditions and Privacy Policy' });
   }
 
   return {

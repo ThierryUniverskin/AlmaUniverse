@@ -22,6 +22,12 @@ export interface PatientFormData {
   notes?: string;
 }
 
+// Extended form data with consent fields for clinical documentation flow
+export interface PatientFormDataExtended extends PatientFormData {
+  consentSms?: boolean;
+  consentTerms?: boolean;
+}
+
 // Doctor/Auth types
 export interface PhoneNumber {
   countryCode: string; // e.g., "+1", "+44"
