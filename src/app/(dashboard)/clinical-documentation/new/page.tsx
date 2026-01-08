@@ -415,13 +415,14 @@ export default function ClinicalDocumentationPage() {
     <div className="min-h-full relative">
       {/* Base background */}
       <div className="absolute inset-0 bg-stone-50" />
-      {/* Medical doodles pattern - outlines only */}
+      {/* Medical doodles pattern - greyscale */}
       <div
-        className="absolute inset-0 opacity-[0.08]"
+        className="absolute inset-0 opacity-[0.04]"
         style={{
-          backgroundImage: 'url(/images/medical-doodles-outline.svg)',
-          backgroundSize: '400px 400px',
+          backgroundImage: 'url(/images/medical-doodles-bg.svg)',
+          backgroundSize: '440px 440px',
           backgroundRepeat: 'repeat',
+          filter: 'grayscale(100%)',
         }}
       />
 

@@ -30,12 +30,11 @@ export default function LoginPage() {
 
     const result = await login({ email, password });
 
-    if (result.success) {
-      router.push('/dashboard');
-    } else {
+    if (!result.success) {
       setError(result.error || 'Login failed');
       setIsSubmitting(false);
     }
+    // Don't redirect here - let the useEffect handle it when state.isAuthenticated becomes true
   };
 
   // Don't render if already authenticated
@@ -220,7 +219,7 @@ export default function LoginPage() {
         <div className="hidden lg:block w-1/2 relative">
             {/* Background Image */}
             <Image
-              src="/images/login-bg.png"
+              src="/images/iStock-2097461666.jpg"
               alt=""
               fill
               className="object-cover"
@@ -231,7 +230,7 @@ export default function LoginPage() {
             <div className="relative z-10 h-full flex flex-col items-center justify-center px-12">
               {/* Center - Logo */}
               <Image
-                src="/images/logo.svg"
+                src="/images/logo_white.svg"
                 alt="Alma Universe"
                 width={320}
                 height={90}

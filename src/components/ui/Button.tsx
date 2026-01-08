@@ -22,30 +22,35 @@ const variantStyles: Record<ButtonVariant, string> = {
     active:bg-purple-900
     focus:ring-purple-500/30
     shadow-sm hover:shadow-md
+    disabled:bg-stone-200 disabled:text-stone-400
   `,
   secondary: `
     bg-stone-100 text-stone-700
     hover:bg-stone-200
     active:bg-stone-300
     focus:ring-stone-500/20
+    disabled:bg-stone-100 disabled:text-stone-400
   `,
   outline: `
     border border-stone-200 bg-white text-stone-700
     hover:bg-stone-50 hover:border-stone-300
     active:bg-stone-100
     focus:ring-stone-500/20
+    disabled:bg-stone-50 disabled:text-stone-400 disabled:border-stone-200
   `,
   ghost: `
     bg-transparent text-stone-600
     hover:bg-stone-100 hover:text-stone-800
     active:bg-stone-200
     focus:ring-stone-500/20
+    disabled:bg-transparent disabled:text-stone-400
   `,
   danger: `
     bg-error-600 text-white
     hover:bg-error-700
     active:bg-error-700
     focus:ring-error-500/30
+    disabled:bg-stone-200 disabled:text-stone-400
   `,
 };
 
@@ -81,7 +86,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           'font-medium tracking-snug rounded-full',
           'transition-all duration-250 ease-smooth',
           'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-ivory-100',
-          'disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none',
+          'disabled:cursor-not-allowed disabled:shadow-none',
           // Variant and size
           variantStyles[variant],
           sizeStyles[size],
