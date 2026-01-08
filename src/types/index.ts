@@ -263,3 +263,19 @@ export interface PhotoConsentLog {
 // Current consent text version - increment when consent text changes
 export const PHOTO_CONSENT_VERSION = '1.0';
 
+// Medical Skin Concern Types for clinical documentation
+export type SkinConcernCategory =
+  | 'appearance-texture'
+  | 'pigmentation-color'
+  | 'vascular-lesional'
+  | 'scar-lesion';
+
+export interface SkinConcern {
+  id: string;
+  label: string;
+  category: SkinConcernCategory;
+}
+
+export interface SkinConcernsFormData {
+  selectedConcerns: string[]; // Array of concern IDs in priority order
+}

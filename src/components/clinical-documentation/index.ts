@@ -15,3 +15,6 @@ export type { PhotoCaptureFormProps } from './PhotoCaptureForm';
 
 export { PhotoConsentSection } from './PhotoConsentSection';
 export type { PhotoConsentSectionProps } from './PhotoConsentSection';
+
+export { SkinConcernsForm, getEmptySkinConcernsForm } from './SkinConcernsForm';
+export type { SkinConcernsFormProps } from './SkinConcernsForm';

@@ -8,7 +8,7 @@ interface Step {
 }
 
 export interface StepProgressProps {
-  currentStep: 1 | 2 | 3;
+  currentStep: 1 | 2 | 3 | 4;
   steps?: Step[];
 }
 
@@ -16,6 +16,7 @@ const defaultSteps: Step[] = [
   { number: 1, label: 'Patient' },
   { number: 2, label: 'Health' },
   { number: 3, label: 'Photos' },
+  { number: 4, label: 'Concerns' },
 ];
 
 export function StepProgress({ currentStep, steps = defaultSteps }: StepProgressProps) {

@@ -30,6 +30,22 @@ The app is fully functional with real authentication and database persistence vi
 | Toast notifications | Done | Success/error/info states |
 | Unsaved changes warning | Done | Modal on navigation |
 | Multi-tenant data | Done | RLS ensures doctors only see their patients |
+| Clinical Documentation | Done | 4-step flow: Patient → Health → Photos → Concerns |
+
+### Clinical Documentation Flow
+
+The clinical documentation wizard guides physicians through a 4-step process:
+
+1. **Patient Selection** - Select existing or create new patient record
+2. **Medical History** - Capture reproductive, cancer, skin conditions, allergies, medications
+3. **Photo Collection** - Capture frontal + profile photos with remove.bg background removal
+4. **Skin Concerns** - Select from 17 medical skin conditions across 4 categories (drag & drop priority)
+
+Key files:
+- `src/app/(dashboard)/clinical-documentation/new/page.tsx` - Main wizard page
+- `src/components/clinical-documentation/` - Step components
+- `src/lib/skinConcerns.ts` - Skin concern categories and items
+- `src/lib/backgroundRemoval.ts` - remove.bg API integration
 
 ### Pending Features
 
