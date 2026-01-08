@@ -1,5 +1,4 @@
 const BACKGROUND_COLOR = 'E5E5E5'; // Light gray (without #)
-const REMOVE_BG_API_KEY = 'vdSKaqVkqk1im6hHfFf1goui';
 
 export interface BackgroundRemovalProgress {
   stage: string;
@@ -26,10 +25,15 @@ export async function removeBackground(
   onProgress?.({ stage: 'Processing', progress: 0.5 });
 
   // Call remove.bg API
+  const apiKey = process.env.NEXT_PUBLIC_REMOVE_BG_API_KEY;
+  if (!apiKey) {
+    throw new Error('NEXT_PUBLIC_REMOVE_BG_API_KEY is not configured');
+  }
+
   const response = await fetch('https://api.remove.bg/v1.0/removebg', {
     method: 'POST',
     headers: {
-      'X-Api-Key': REMOVE_BG_API_KEY,
+      'X-Api-Key': apiKey,
     },
     body: formData,
   });
