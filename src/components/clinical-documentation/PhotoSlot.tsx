@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PhotoType } from '@/types';
+import { removeBackground } from '@/lib/backgroundRemoval';
 
 export interface PhotoSlotProps {
   type: PhotoType;
@@ -39,6 +40,8 @@ export function PhotoSlot({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0);
 
   // For portal mounting
   useEffect(() => {
@@ -58,19 +61,36 @@ export function PhotoSlot({
     }
   }, [photo]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      onCapture(file);
-    }
+    if (!file) return;
+
     // Reset input so same file can be selected again
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+
+    // Start processing
+    setIsProcessing(true);
+    setProcessingProgress(0);
+
+    try {
+      const processedFile = await removeBackground(file, (progress) => {
+        setProcessingProgress(progress.progress);
+      });
+      onCapture(processedFile);
+    } catch (error) {
+      console.error('Background removal failed:', error);
+      // Fallback: use original image if processing fails
+      onCapture(file);
+    } finally {
+      setIsProcessing(false);
+      setProcessingProgress(0);
+    }
   };
 
   const handleClick = () => {
-    if (!disabled && !photo) {
+    if (!disabled && !photo && !isProcessing) {
       fileInputRef.current?.click();
     }
   };
@@ -110,10 +130,21 @@ export function PhotoSlot({
             ? 'border-2 border-purple-500'
             : 'border-2 border-dashed border-stone-300 hover:border-stone-400'
           }
-          ${disabled ? 'opacity-50 cursor-not-allowed' : photo ? 'cursor-default' : 'cursor-pointer'}
+          ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : photo ? 'cursor-default' : 'cursor-pointer'}
           transition-colors bg-stone-50
         `}
       >
+        {/* Processing Overlay */}
+        {isProcessing && (
+          <div className="absolute inset-0 z-10 bg-white/90 flex flex-col items-center justify-center">
+            <div className="animate-spin h-10 w-10 border-3 border-purple-600 border-t-transparent rounded-full mb-3" />
+            <p className="text-sm font-medium text-stone-700">Removing background...</p>
+            <p className="text-xs text-stone-500 mt-1">
+              {Math.round(processingProgress * 100)}%
+            </p>
+          </div>
+        )}
+
         {previewUrl ? (
           // Photo Preview
           <div className="absolute inset-0">
@@ -123,7 +154,7 @@ export function PhotoSlot({
               className="w-full h-full object-cover"
             />
             {/* Overlay with actions */}
-            {!disabled && (
+            {!disabled && !isProcessing && (
               <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                 {/* View button - Eye icon */}
                 <button
@@ -173,18 +204,20 @@ export function PhotoSlot({
               </div>
             )}
             {/* Check badge */}
-            <div className="absolute top-3 right-3">
-              <div className="h-6 w-6 rounded-full bg-purple-600 flex items-center justify-center">
-                <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
+            {!isProcessing && (
+              <div className="absolute top-3 right-3">
+                <div className="h-6 w-6 rounded-full bg-purple-600 flex items-center justify-center">
+                  <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         ) : (
           // Empty State
           <div className="absolute inset-0">
-            {guideImageSrc ? (
+            {guideImageSrc && !isProcessing ? (
               <>
                 <img
                   src={guideImageSrc}
@@ -198,7 +231,7 @@ export function PhotoSlot({
                   </span>
                 </div>
               </>
-            ) : (
+            ) : !isProcessing && (
               <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
                 <div className="h-12 w-12 rounded-full bg-stone-200 flex items-center justify-center mb-3">
                   <svg className="h-6 w-6 text-stone-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -225,7 +258,7 @@ export function PhotoSlot({
           accept="image/*"
           onChange={handleFileSelect}
           className="hidden"
-          disabled={disabled}
+          disabled={disabled || isProcessing}
         />
       </div>
 

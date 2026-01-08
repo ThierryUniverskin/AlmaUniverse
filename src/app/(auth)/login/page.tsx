@@ -49,7 +49,7 @@ export default function LoginPage() {
           {/* Header */}
           <header className="flex items-center justify-between px-8 py-5">
             <Image
-              src="/images/logo.svg"
+              src="/images/logo_white.svg"
               alt="Alma Universe"
               width={130}
               height={38}
