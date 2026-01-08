@@ -185,15 +185,46 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="relative">
+    <div className="min-h-full relative">
+      {/* Base background */}
+      <div className="absolute inset-0 bg-stone-50" />
+      {/* Medical doodles pattern - greyscale */}
+      <div
+        className="absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage: 'url(/images/medical-doodles-bg.svg)',
+          backgroundSize: '440px 440px',
+          backgroundRepeat: 'repeat',
+          filter: 'grayscale(100%)',
+        }}
+      />
+
       {/* Sticky Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-stone-100 px-6 lg:px-10 py-6">
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-stone-200 px-6 lg:px-10 py-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
-          {/* User icon */}
-          <div className="h-12 w-12 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-            <svg className="h-6 w-6 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+          {/* Premium Doctor Account Icon with gradient and glow */}
+          <div className="relative flex-shrink-0">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-300 to-violet-400 rounded-full blur-lg opacity-20 scale-105" />
+            <svg className="relative h-12 w-12" viewBox="0 0 48 48" fill="none">
+              <defs>
+                <linearGradient id="doctorIconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#9ca3af" />
+                  <stop offset="100%" stopColor="#7c3aed" />
+                </linearGradient>
+                <filter id="doctorIconShadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#7c3aed" floodOpacity="0.15"/>
+                </filter>
+              </defs>
+              <circle cx="24" cy="24" r="23" fill="white" filter="url(#doctorIconShadow)" />
+              <circle cx="24" cy="24" r="21" fill="url(#doctorIconGradient)" opacity="0.05" />
+              {/* Person head */}
+              <circle cx="24" cy="17" r="5" stroke="url(#doctorIconGradient)" strokeWidth="1.5" fill="none" />
+              {/* Person body/shoulders */}
+              <path d="M14 36c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="url(#doctorIconGradient)" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+              {/* Medical cross badge */}
+              <circle cx="32" cy="30" r="5" fill="white" stroke="url(#doctorIconGradient)" strokeWidth="1.5" />
+              <path d="M32 28v4M30 30h4" stroke="url(#doctorIconGradient)" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </div>
           <div>
@@ -212,7 +243,11 @@ export default function AccountPage() {
               >
                 Discard
               </Button>
-              <Button onClick={handleSaveChanges} isLoading={isSubmitting}>
+              <Button
+                onClick={handleSaveChanges}
+                isLoading={isSubmitting}
+                disabled={!hasUnsavedChanges || isSubmitting}
+              >
                 Save Changes
               </Button>
             </div>
@@ -221,7 +256,7 @@ export default function AccountPage() {
       </div>
 
       {/* Two-column layout */}
-      <div className="p-6 lg:p-10">
+      <div className="relative p-6 lg:p-10">
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8">
           {/* Left: Profile Sidebar - shows live preview of form changes */}
           <div className="lg:sticky lg:top-28 lg:self-start">
