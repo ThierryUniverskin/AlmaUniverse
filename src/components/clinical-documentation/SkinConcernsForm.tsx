@@ -44,6 +44,14 @@ export function SkinConcernsForm({
     });
   };
 
+  const handleToggleConcern = (concernId: string) => {
+    if (formData.selectedConcerns.includes(concernId)) {
+      handleRemoveConcern(concernId);
+    } else {
+      handleAddConcern(concernId);
+    }
+  };
+
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     setDraggedIndex(index);
@@ -231,68 +239,47 @@ export function SkinConcernsForm({
                 const isSelected = isConcernSelected(concern.id);
 
                 return (
-                  <div
+                  <button
                     key={concern.id}
+                    type="button"
+                    onClick={() => !disabled && handleToggleConcern(concern.id)}
+                    disabled={disabled}
                     className={`
-                      flex items-center justify-between py-2.5 px-3 rounded-lg
+                      w-full flex items-center gap-3 py-2.5 px-3 rounded-lg text-left
                       ${isSelected
                         ? 'bg-purple-50 border border-purple-200'
                         : 'bg-stone-50 border border-transparent hover:bg-stone-100'
                       }
+                      ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
                       transition-colors
                     `}
                   >
-                    <div className="flex items-center gap-3">
-                      {/* Status indicator */}
-                      <div
-                        className={`
-                          h-5 w-5 rounded-full flex items-center justify-center
-                          ${isSelected
-                            ? 'bg-purple-600'
-                            : 'border-2 border-stone-300'
-                          }
-                        `}
-                      >
-                        {isSelected && (
-                          <svg className="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                            <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
-                      </div>
-                      <span
-                        className={`
-                          text-sm
-                          ${isSelected ? 'text-purple-900 font-medium' : 'text-stone-700'}
-                        `}
-                      >
-                        {concern.label}
-                      </span>
+                    {/* Checkbox */}
+                    <div
+                      className={`
+                        h-5 w-5 rounded flex-shrink-0 flex items-center justify-center
+                        ${isSelected
+                          ? 'bg-purple-600'
+                          : 'border-2 border-stone-300 bg-white'
+                        }
+                        transition-colors
+                      `}
+                    >
+                      {isSelected && (
+                        <svg className="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                          <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
                     </div>
-                    {!isSelected && !disabled && (
-                      <button
-                        type="button"
-                        onClick={() => handleAddConcern(concern.id)}
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-purple-600 bg-white border border-purple-200 hover:bg-purple-50 transition-colors"
-                      >
-                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                        </svg>
-                        Add
-                      </button>
-                    )}
-                    {isSelected && !disabled && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveConcern(concern.id)}
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-stone-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M18 6L6 18M6 6l12 12" />
-                        </svg>
-                        Remove
-                      </button>
-                    )}
-                  </div>
+                    <span
+                      className={`
+                        text-sm
+                        ${isSelected ? 'text-purple-900 font-medium' : 'text-stone-700'}
+                      `}
+                    >
+                      {concern.label}
+                    </span>
+                  </button>
                 );
               })}
             </div>
