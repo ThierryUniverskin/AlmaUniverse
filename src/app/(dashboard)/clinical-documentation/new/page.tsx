@@ -413,8 +413,17 @@ export default function ClinicalDocumentationPage() {
 
   return (
     <div className="min-h-full relative">
-      {/* Soft gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-stone-100 to-stone-50" />
+      {/* Base background */}
+      <div className="absolute inset-0 bg-stone-50" />
+      {/* Medical doodles pattern - outlines only */}
+      <div
+        className="absolute inset-0 opacity-[0.08]"
+        style={{
+          backgroundImage: 'url(/images/medical-doodles-outline.svg)',
+          backgroundSize: '400px 400px',
+          backgroundRepeat: 'repeat',
+        }}
+      />
 
       {/* Top bar with doctor name (left) and step progress (right) */}
       <div className="absolute top-6 left-6 right-6 lg:top-8 lg:left-10 lg:right-10 z-10 flex items-center justify-between">
