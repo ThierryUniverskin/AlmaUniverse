@@ -11,6 +11,7 @@ export interface PhotoCaptureFormProps {
   onChange: (data: PhotoSessionFormData) => void;
   disabled?: boolean;
   patientName: string;
+  onSkip?: () => void;
 }
 
 export function PhotoCaptureForm({
@@ -18,6 +19,7 @@ export function PhotoCaptureForm({
   onChange,
   disabled = false,
   patientName,
+  onSkip,
 }: PhotoCaptureFormProps) {
   const handleSourceSelect = (source: PhotoSessionFormData['source']) => {
     onChange({ ...formData, source });
@@ -118,6 +120,23 @@ export function PhotoCaptureForm({
           onSelect={handleSourceSelect}
           disabled={disabled}
         />
+
+        {/* Skip Option */}
+        {onSkip && (
+          <div className="mt-6 pt-6 border-t border-stone-200">
+            <button
+              type="button"
+              onClick={onSkip}
+              disabled={disabled}
+              className="w-full flex items-center justify-center gap-2 py-3 text-sm text-stone-500 hover:text-stone-700 transition-colors disabled:opacity-50"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Skip photo collection for now
+            </button>
+          </div>
+        )}
       </div>
 
       {/* AlmaIQ Coming Soon Message */}

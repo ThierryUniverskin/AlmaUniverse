@@ -271,6 +271,14 @@ export default function ClinicalDocumentationPage() {
     }
   };
 
+  // Handle Skip Photo Collection (Step 3 - skip photos and go to patient profile)
+  const handleSkipPhotos = () => {
+    if (!documentingPatient) return;
+    setHasUnsavedChanges(false);
+    showToast('Photo collection skipped', 'info');
+    router.push(`/patients/${documentingPatient.id}`);
+  };
+
   // Handle Save for Now (Step 3 - save photos and finish)
   const handleSaveForNow = async () => {
     if (isSubmitting || !documentingPatient) return;
@@ -465,6 +473,7 @@ export default function ClinicalDocumentationPage() {
         onChange={setPhotoFormData}
         disabled={isSubmitting}
         patientName={documentingPatient ? `${documentingPatient.firstName} ${documentingPatient.lastName}` : ''}
+        onSkip={handleSkipPhotos}
       />
 
       {/* Action Buttons */}
