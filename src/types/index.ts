@@ -226,3 +226,40 @@ export interface PatientMedicalHistoryFormData {
   // Recovery Time Preference
   recoveryTimePreference?: RecoveryTimePreference;
 }
+
+// Photo Collection types for clinical documentation
+export type PhotoSource = 'app' | 'almaiq';
+export type PhotoType = 'frontal' | 'left-profile' | 'right-profile';
+
+export interface PhotoSession {
+  id: string;
+  patientId: string;
+  source: PhotoSource;
+  frontalPhotoUrl: string | null;
+  leftProfilePhotoUrl: string | null;
+  rightProfilePhotoUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PhotoSessionFormData {
+  source: PhotoSource | null; // null = not yet selected
+  frontalPhoto: File | string | null; // File for new upload, string for existing URL
+  leftProfilePhoto: File | string | null;
+  rightProfilePhoto: File | string | null;
+  // Photo consent
+  photoConsentGiven: boolean;
+}
+
+// Photo consent log entry for audit trail
+export interface PhotoConsentLog {
+  timestamp: string; // ISO datetime
+  physicianUserId: string;
+  patientRecordId: string;
+  consentTextVersion: string;
+  consentGiven: boolean;
+}
+
+// Current consent text version - increment when consent text changes
+export const PHOTO_CONSENT_VERSION = '1.0';
+

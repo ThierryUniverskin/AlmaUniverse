@@ -60,12 +60,34 @@ CREATE TABLE patients (
 );
 
 -- ===========================================
+-- PHOTO SESSIONS TABLE
+-- ===========================================
+
+CREATE TABLE photo_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+
+  -- Source
+  source TEXT NOT NULL CHECK (source IN ('app', 'almaiq')),
+
+  -- Photos (stored as storage paths)
+  frontal_photo_url TEXT,
+  left_profile_photo_url TEXT,
+  right_profile_photo_url TEXT,
+
+  -- Metadata
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ===========================================
 -- ROW LEVEL SECURITY (RLS)
 -- ===========================================
 -- This ensures doctors can only access their own data
 
 ALTER TABLE doctors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE photo_sessions ENABLE ROW LEVEL SECURITY;
 
 -- Doctors can only view/update their own profile
 CREATE POLICY "Doctors can view own profile"
@@ -97,6 +119,39 @@ CREATE POLICY "Doctors can delete own patients"
   ON patients FOR DELETE
   USING (auth.uid() = doctor_id);
 
+-- Photo sessions - doctors can only access their own patients' photos
+CREATE POLICY "Doctors can view own patients photo sessions"
+  ON photo_sessions FOR SELECT
+  USING (EXISTS (
+    SELECT 1 FROM patients
+    WHERE patients.id = photo_sessions.patient_id
+    AND patients.doctor_id = auth.uid()
+  ));
+
+CREATE POLICY "Doctors can insert own patients photo sessions"
+  ON photo_sessions FOR INSERT
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM patients
+    WHERE patients.id = photo_sessions.patient_id
+    AND patients.doctor_id = auth.uid()
+  ));
+
+CREATE POLICY "Doctors can update own patients photo sessions"
+  ON photo_sessions FOR UPDATE
+  USING (EXISTS (
+    SELECT 1 FROM patients
+    WHERE patients.id = photo_sessions.patient_id
+    AND patients.doctor_id = auth.uid()
+  ));
+
+CREATE POLICY "Doctors can delete own patients photo sessions"
+  ON photo_sessions FOR DELETE
+  USING (EXISTS (
+    SELECT 1 FROM patients
+    WHERE patients.id = photo_sessions.patient_id
+    AND patients.doctor_id = auth.uid()
+  ));
+
 -- ===========================================
 -- INDEXES
 -- ===========================================
@@ -104,6 +159,8 @@ CREATE POLICY "Doctors can delete own patients"
 CREATE INDEX idx_patients_doctor_id ON patients(doctor_id);
 CREATE INDEX idx_patients_last_name ON patients(last_name);
 CREATE INDEX idx_patients_created_at ON patients(created_at);
+CREATE INDEX idx_photo_sessions_patient_id ON photo_sessions(patient_id);
+CREATE INDEX idx_photo_sessions_created_at ON photo_sessions(created_at);
 
 -- ===========================================
 -- UPDATED_AT TRIGGER
@@ -124,6 +181,10 @@ CREATE TRIGGER doctors_updated_at
 
 CREATE TRIGGER patients_updated_at
   BEFORE UPDATE ON patients
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER photo_sessions_updated_at
+  BEFORE UPDATE ON photo_sessions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- ===========================================

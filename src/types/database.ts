@@ -193,6 +193,38 @@ export interface Database {
           updated_at?: string;
         };
       };
+      photo_sessions: {
+        Row: {
+          id: string;
+          patient_id: string;
+          source: 'app' | 'almaiq';
+          frontal_photo_url: string | null;
+          left_profile_photo_url: string | null;
+          right_profile_photo_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          patient_id: string;
+          source: 'app' | 'almaiq';
+          frontal_photo_url?: string | null;
+          left_profile_photo_url?: string | null;
+          right_profile_photo_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          patient_id?: string;
+          source?: 'app' | 'almaiq';
+          frontal_photo_url?: string | null;
+          left_profile_photo_url?: string | null;
+          right_profile_photo_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 }
@@ -201,3 +233,4 @@ export interface Database {
 export type DbDoctor = Database['public']['Tables']['doctors']['Row'];
 export type DbPatient = Database['public']['Tables']['patients']['Row'];
 export type DbPatientMedicalHistory = Database['public']['Tables']['patient_medical_history']['Row'];
+export type DbPhotoSession = Database['public']['Tables']['photo_sessions']['Row'];

@@ -6,10 +6,11 @@ import { usePatients } from '@/context/PatientContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast, Button, ConfirmModal } from '@/components/ui';
 import { PatientSelectDropdown, InlinePatientForm } from '@/components/patients';
-import { StepProgress, MedicalHistoryForm, getEmptyMedicalHistoryForm } from '@/components/clinical-documentation';
-import { Patient, PatientFormDataExtended, PatientMedicalHistory, PatientMedicalHistoryFormData } from '@/types';
+import { StepProgress, MedicalHistoryForm, getEmptyMedicalHistoryForm, PhotoCaptureForm, getEmptyPhotoForm } from '@/components/clinical-documentation';
+import { Patient, PatientFormDataExtended, PatientMedicalHistory, PatientMedicalHistoryFormData, PhotoSessionFormData } from '@/types';
 import { validatePatientFormWithConsent } from '@/lib/validation';
 import { getMedicalHistory, saveMedicalHistory, updateMedicalHistory, historyToFormData } from '@/lib/medicalHistory';
+import { savePhotoSession } from '@/lib/photoSession';
 
 export default function ClinicalDocumentationPage() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function ClinicalDocumentationPage() {
   const doctorCountry = authState.doctor?.country || 'US';
 
   // Step management
-  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
   // Step 1 state - Patient Selection
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -35,6 +36,9 @@ export default function ClinicalDocumentationPage() {
   const [existingMedicalHistory, setExistingMedicalHistory] = useState<PatientMedicalHistory | null>(null);
   const [isMedicalHistoryLoading, setIsMedicalHistoryLoading] = useState(false);
 
+  // Step 3 state - Photo Collection
+  const [photoFormData, setPhotoFormData] = useState<PhotoSessionFormData>(getEmptyPhotoForm());
+
   // Shared state
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -43,7 +47,7 @@ export default function ClinicalDocumentationPage() {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
-  // Track unsaved changes across both steps
+  // Track unsaved changes across all steps
   useEffect(() => {
     if (currentStep === 1) {
       const hasChanges = selectedPatient !== null ||
@@ -55,11 +59,11 @@ export default function ClinicalDocumentationPage() {
         ));
       setHasUnsavedChanges(!!hasChanges);
     } else {
-      // Step 2: Always warn - user is in the middle of documenting a patient
+      // Step 2 & 3: Always warn - user is in the middle of documenting a patient
       // Even if no fields are changed, leaving would lose workflow progress
       setHasUnsavedChanges(true);
     }
-  }, [currentStep, selectedPatient, isNewPatientFormOpen, newPatientData, medicalHistoryData]);
+  }, [currentStep, selectedPatient, isNewPatientFormOpen, newPatientData, medicalHistoryData, photoFormData]);
 
   // Warn user about unsaved changes when leaving page
   useEffect(() => {
@@ -221,18 +225,23 @@ export default function ClinicalDocumentationPage() {
     }
   };
 
-  // Handle Back (Step 2 → Step 1)
+  // Handle Back navigation
   const handleBack = () => {
-    // Go back to Step 1
-    setCurrentStep(1);
-    // Keep the documenting patient selected
-    if (documentingPatient) {
-      setSelectedPatient(documentingPatient);
+    if (currentStep === 2) {
+      // Step 2 → Step 1
+      setCurrentStep(1);
+      // Keep the documenting patient selected
+      if (documentingPatient) {
+        setSelectedPatient(documentingPatient);
+      }
+    } else if (currentStep === 3) {
+      // Step 3 → Step 2
+      setCurrentStep(2);
     }
   };
 
-  // Handle Save (Step 2 - save medical history)
-  const handleSave = async () => {
+  // Handle Continue (Step 2 → Step 3) - Save medical history and go to photos
+  const handleContinueToStep3 = async () => {
     if (isSubmitting || !documentingPatient) return;
 
     setIsSubmitting(true);
@@ -249,16 +258,53 @@ export default function ClinicalDocumentationPage() {
       }
 
       if (result) {
-        setHasUnsavedChanges(false);
-        showToast('Medical history saved successfully', 'success');
-        router.push(`/patients/${documentingPatient.id}`);
+        showToast('Medical history saved', 'success');
+        setCurrentStep(3);
       } else {
         showToast('Failed to save medical history', 'error');
-        setIsSubmitting(false);
       }
     } catch (error) {
       console.error('Error saving medical history:', error);
       showToast('Failed to save medical history', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle Save for Now (Step 3 - save photos and finish)
+  const handleSaveForNow = async () => {
+    if (isSubmitting || !documentingPatient) return;
+
+    // Validate: frontal photo is required
+    if (!photoFormData.frontalPhoto) {
+      showToast('Please capture the frontal photo', 'error');
+      return;
+    }
+
+    // Validate: consent is required
+    if (!photoFormData.photoConsentGiven) {
+      showToast('Please confirm patient consent before saving', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Pass doctor ID for consent logging
+      const doctorId = authState.doctor?.id || '';
+      const result = await savePhotoSession(documentingPatient.id, photoFormData, doctorId);
+
+      if (result) {
+        setHasUnsavedChanges(false);
+        showToast('Photos saved successfully', 'success');
+        router.push(`/patients/${documentingPatient.id}`);
+      } else {
+        showToast('Failed to save photos', 'error');
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      console.error('Error saving photos:', error);
+      showToast('Failed to save photos', 'error');
       setIsSubmitting(false);
     }
   };
@@ -401,13 +447,47 @@ export default function ClinicalDocumentationPage() {
               size="lg"
               className="flex-1"
               isLoading={isSubmitting}
-              onClick={handleSave}
+              onClick={handleContinueToStep3}
             >
-              Save
+              Continue
             </Button>
           </div>
         </>
       )}
+    </>
+  );
+
+  // Render Step 3
+  const renderStep3 = () => (
+    <>
+      <PhotoCaptureForm
+        formData={photoFormData}
+        onChange={setPhotoFormData}
+        disabled={isSubmitting}
+        patientName={documentingPatient ? `${documentingPatient.firstName} ${documentingPatient.lastName}` : ''}
+      />
+
+      {/* Action Buttons */}
+      <div className="flex gap-4 mt-8">
+        <Button
+          variant="outline"
+          size="lg"
+          className="flex-1"
+          onClick={handleBack}
+          disabled={isSubmitting}
+        >
+          Back
+        </Button>
+        <Button
+          size="lg"
+          className="flex-1"
+          isLoading={isSubmitting}
+          onClick={handleSaveForNow}
+          disabled={!photoFormData.frontalPhoto || !photoFormData.photoConsentGiven || isSubmitting}
+        >
+          Save for Now
+        </Button>
+      </div>
     </>
   );
 
@@ -451,7 +531,9 @@ export default function ClinicalDocumentationPage() {
       {/* Content */}
       <div className="relative p-8 lg:p-10 max-w-2xl mx-auto">
         {/* Step Content */}
-        {currentStep === 1 ? renderStep1() : renderStep2()}
+        {currentStep === 1 && renderStep1()}
+        {currentStep === 2 && renderStep2()}
+        {currentStep === 3 && renderStep3()}
       </div>
 
       {/* Unsaved Changes Modal */}
