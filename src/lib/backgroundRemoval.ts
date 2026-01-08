@@ -1,28 +1,16 @@
 const BACKGROUND_COLOR = 'E5E5E5'; // Light gray (without #)
 
-export interface BackgroundRemovalProgress {
-  stage: string;
-  progress: number;
-}
-
 /**
  * Remove background from an image and replace with light gray.
  * Uses remove.bg API for high-quality results.
  */
-export async function removeBackground(
-  imageFile: File,
-  onProgress?: (progress: BackgroundRemovalProgress) => void
-): Promise<File> {
-  onProgress?.({ stage: 'Uploading', progress: 0.2 });
-
+export async function removeBackground(imageFile: File): Promise<File> {
   // Prepare form data
   const formData = new FormData();
   formData.append('image_file', imageFile);
   formData.append('size', 'auto');
   formData.append('format', 'jpg');
   formData.append('bg_color', BACKGROUND_COLOR);
-
-  onProgress?.({ stage: 'Processing', progress: 0.5 });
 
   // Call remove.bg API
   const apiKey = process.env.NEXT_PUBLIC_REMOVE_BG_API_KEY;
@@ -44,12 +32,8 @@ export async function removeBackground(
     throw new Error(`Background removal failed: ${response.status}`);
   }
 
-  onProgress?.({ stage: 'Finalizing', progress: 0.9 });
-
   // Get the result as blob
   const resultBlob = await response.blob();
-
-  onProgress?.({ stage: 'Complete', progress: 1.0 });
 
   // Return as File with original name
   const originalName = imageFile.name.replace(/\.[^/.]+$/, '') + '_processed.jpg';

@@ -61,6 +61,25 @@ export function PhotoSlot({
     }
   }, [photo]);
 
+  /**
+   * Calculate estimated processing time based on file size
+   * 0.2MB = 5s, 4MB+ = 12s, linear in between
+   */
+  const getEstimatedDuration = (fileSizeBytes: number): number => {
+    const fileSizeMB = fileSizeBytes / (1024 * 1024);
+    const minSize = 0.2; // MB
+    const maxSize = 4; // MB
+    const minTime = 5000; // ms
+    const maxTime = 12000; // ms
+
+    if (fileSizeMB <= minSize) return minTime;
+    if (fileSizeMB >= maxSize) return maxTime;
+
+    // Linear interpolation
+    const ratio = (fileSizeMB - minSize) / (maxSize - minSize);
+    return minTime + ratio * (maxTime - minTime);
+  };
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -74,13 +93,37 @@ export function PhotoSlot({
     setIsProcessing(true);
     setProcessingProgress(0);
 
+    // Calculate estimated duration and set up smooth progress animation
+    const estimatedDuration = getEstimatedDuration(file.size);
+    const updateInterval = 100; // Update every 100ms
+    const totalSteps = estimatedDuration / updateInterval;
+    const targetProgress = 0.9; // Animate to 90%, jump to 100% on completion
+    let currentStep = 0;
+
+    const progressInterval = setInterval(() => {
+      currentStep++;
+      // Use easeOutQuad for smoother feel
+      const linearProgress = currentStep / totalSteps;
+      const easedProgress = linearProgress * (2 - linearProgress); // easeOutQuad
+      const progress = Math.min(easedProgress * targetProgress, targetProgress);
+      setProcessingProgress(progress);
+
+      if (currentStep >= totalSteps) {
+        clearInterval(progressInterval);
+      }
+    }, updateInterval);
+
     try {
-      const processedFile = await removeBackground(file, (progress) => {
-        setProcessingProgress(progress.progress);
-      });
+      const processedFile = await removeBackground(file);
+      clearInterval(progressInterval);
+      setProcessingProgress(1); // Jump to 100%
+
+      // Small delay to show 100% before hiding
+      await new Promise(resolve => setTimeout(resolve, 200));
       onCapture(processedFile);
     } catch (error) {
       console.error('Background removal failed:', error);
+      clearInterval(progressInterval);
       // Fallback: use original image if processing fails
       onCapture(file);
     } finally {
@@ -137,10 +180,10 @@ export function PhotoSlot({
         {/* Processing Overlay */}
         {isProcessing && (
           <div className="absolute inset-0 z-20 bg-white/95 flex items-center justify-center">
-            <div className="flex flex-col items-center justify-center">
+            <div className="flex flex-col items-center justify-center text-center">
               <div className="animate-spin h-10 w-10 border-[3px] border-purple-600 border-t-transparent rounded-full mb-3" />
-              <p className="text-sm font-medium text-stone-700">Removing background...</p>
-              <p className="text-xs text-stone-500 mt-1">
+              <p className="text-sm font-medium text-stone-700 text-center">Removing background...</p>
+              <p className="text-xs text-stone-500 mt-1 text-center">
                 {Math.round(processingProgress * 100)}%
               </p>
             </div>
