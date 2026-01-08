@@ -26,3 +26,12 @@ export type { TabsProps, Tab } from './Tabs';
 
 export { ConfirmModal } from './ConfirmModal';
 export type { ConfirmModalProps } from './ConfirmModal';
+
+export { YesNoToggle } from './YesNoToggle';
+export type { YesNoToggleProps } from './YesNoToggle';
+
+export { CheckboxGroup } from './CheckboxGroup';
+export type { CheckboxGroupProps, CheckboxOption } from './CheckboxGroup';
+
+export { StyledSelect } from './StyledSelect';
+export type { StyledSelectProps, StyledSelectOption } from './StyledSelect';

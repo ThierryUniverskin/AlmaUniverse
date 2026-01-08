@@ -129,3 +129,100 @@ export interface PatientStats {
   total: number;
   recentCount: number;
 }
+
+// Medical History types for clinical documentation
+export type MenopausalStatus = 'pre-menopausal' | 'peri-menopausal' | 'post-menopausal' | 'n/a';
+
+export type KnownAllergyType =
+  | 'latex'
+  | 'fragrances'
+  | 'parabens'
+  | 'retinoids'
+  | 'ahas'
+  | 'salicylic-acid'
+  | 'penicillin'
+  | 'nsaids'
+  | 'sulfa-drugs'
+  | 'lidocaine';
+
+export type CancerType =
+  | 'breast'
+  | 'skin'
+  | 'gynecological'
+  | 'prostate'
+  | 'gastrointestinal'
+  | 'hematologic'
+  | 'other';
+
+export type RecoveryTimePreference =
+  | 'same-day'
+  | '1-2-days'
+  | '3-5-days'
+  | 'more-than-5-days';
+
+export interface PatientMedicalHistory {
+  id: string;
+  patientId: string;
+
+  // Reproductive / Hormonal
+  isPregnantOrBreastfeeding: boolean;
+  usesHormonalContraception: boolean;
+  receivesHrt: boolean;
+  menopausalStatus?: MenopausalStatus;
+
+  // Cancer History
+  hasCancerHistory: boolean;
+  cancerTypes: CancerType[];
+  cancerDetails?: string;
+
+  // Skin-Related Medical Context
+  hasInflammatorySkinCondition: boolean;
+  hasActiveColdSores: boolean;
+
+  // Allergies
+  knownAllergies: KnownAllergyType[];
+  otherAllergies?: string;
+
+  // Medications
+  currentMedications?: string;
+
+  // Additional Medical Information
+  relevantMedicalConditions?: string;
+
+  // Recovery Time Preference
+  recoveryTimePreference?: RecoveryTimePreference;
+
+  // Metadata
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PatientMedicalHistoryFormData {
+  // Reproductive / Hormonal
+  isPregnantOrBreastfeeding: boolean;
+  usesHormonalContraception: boolean;
+  receivesHrt: boolean;
+  menopausalStatus?: MenopausalStatus;
+
+  // Cancer History
+  hasCancerHistory: boolean;
+  cancerTypes: CancerType[];
+  cancerDetails?: string;
+
+  // Skin-Related Medical Context
+  hasInflammatorySkinCondition: boolean;
+  hasActiveColdSores: boolean;
+
+  // Allergies
+  knownAllergies: KnownAllergyType[];
+  otherAllergies?: string;
+
+  // Medications
+  currentMedications?: string;
+
+  // Additional Medical Information
+  relevantMedicalConditions?: string;
+
+  // Recovery Time Preference
+  recoveryTimePreference?: RecoveryTimePreference;
+}

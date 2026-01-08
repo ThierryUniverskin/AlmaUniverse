@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { PatientFormDataExtended } from '@/types';
-import { Textarea } from '@/components/ui';
+import { Textarea, StyledSelect } from '@/components/ui';
 import { SEX_OPTIONS } from '@/lib/constants';
 import { validatePatientFormWithConsent, getFieldError, ValidationError } from '@/lib/validation';
 
@@ -49,28 +49,37 @@ const COUNTRIES = [
   { code: 'TR', name: 'Turkey', dialCode: '+90', flag: '🇹🇷' },
 ];
 
-// Month names for date picker
-const MONTHS = [
-  { value: '01', label: 'January' },
-  { value: '02', label: 'February' },
-  { value: '03', label: 'March' },
-  { value: '04', label: 'April' },
+// Month names for date picker (short form for better display)
+const MONTH_OPTIONS = [
+  { value: '01', label: 'Jan' },
+  { value: '02', label: 'Feb' },
+  { value: '03', label: 'Mar' },
+  { value: '04', label: 'Apr' },
   { value: '05', label: 'May' },
-  { value: '06', label: 'June' },
-  { value: '07', label: 'July' },
-  { value: '08', label: 'August' },
-  { value: '09', label: 'September' },
-  { value: '10', label: 'October' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'December' },
+  { value: '06', label: 'Jun' },
+  { value: '07', label: 'Jul' },
+  { value: '08', label: 'Aug' },
+  { value: '09', label: 'Sep' },
+  { value: '10', label: 'Oct' },
+  { value: '11', label: 'Nov' },
+  { value: '12', label: 'Dec' },
 ];
 
 // Generate years (from current year back to 120 years ago)
 const currentYear = new Date().getFullYear();
-const YEARS = Array.from({ length: 120 }, (_, i) => currentYear - i);
+const YEAR_OPTIONS = Array.from({ length: 120 }, (_, i) => ({
+  value: String(currentYear - i),
+  label: String(currentYear - i),
+}));
 
 // Generate days 1-31
-const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
+const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => ({
+  value: String(i + 1).padStart(2, '0'),
+  label: String(i + 1),
+}));
+
+// Countries that use Month/Day/Year format
+const MDY_COUNTRIES = ['US'];
 
 interface InlinePatientFormProps {
   onFormChange: (data: PatientFormDataExtended, isValid: boolean) => void;
@@ -228,70 +237,85 @@ function InlinePatientForm({
 
         {/* Row 2: Date of Birth (dropdowns), Sex */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Date of Birth with dropdowns */}
+          {/* Date of Birth with dropdowns - order based on locale */}
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1.5">
               Date of Birth
             </label>
-            <div className="grid grid-cols-3 gap-2">
-              {/* Month */}
-              <select
-                value={dobMonth}
-                onChange={e => setDobMonth(e.target.value)}
-                disabled={disabled}
-                className="w-full px-4 py-2.5 bg-white border border-stone-200 rounded-full text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-stone-50 h-11 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2378716c%22%20stroke-width%3D%222%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10"
-              >
-                <option value="">Month</option>
-                {MONTHS.map(month => (
-                  <option key={month.value} value={month.value}>{month.label}</option>
-                ))}
-              </select>
-              {/* Day */}
-              <select
-                value={dobDay}
-                onChange={e => setDobDay(e.target.value)}
-                disabled={disabled}
-                className="w-full px-4 py-2.5 bg-white border border-stone-200 rounded-full text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-stone-50 h-11 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2378716c%22%20stroke-width%3D%222%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10"
-              >
-                <option value="">Day</option>
-                {DAYS.map(day => (
-                  <option key={day} value={day}>{parseInt(day)}</option>
-                ))}
-              </select>
-              {/* Year */}
-              <select
-                value={dobYear}
-                onChange={e => setDobYear(e.target.value)}
-                disabled={disabled}
-                className="w-full px-4 py-2.5 bg-white border border-stone-200 rounded-full text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-stone-50 h-11 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2378716c%22%20stroke-width%3D%222%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10"
-              >
-                <option value="">Year</option>
-                {YEARS.map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </div>
+            {MDY_COUNTRIES.includes(defaultCountry) ? (
+              /* US format: Month / Day / Year */
+              <div className="grid grid-cols-3 gap-2">
+                <StyledSelect
+                  options={MONTH_OPTIONS}
+                  value={dobMonth}
+                  onChange={setDobMonth}
+                  placeholder="Month"
+                  disabled={disabled}
+                  compact
+                />
+                <StyledSelect
+                  options={DAY_OPTIONS}
+                  value={dobDay}
+                  onChange={setDobDay}
+                  placeholder="Day"
+                  disabled={disabled}
+                  compact
+                />
+                <StyledSelect
+                  options={YEAR_OPTIONS}
+                  value={dobYear}
+                  onChange={setDobYear}
+                  placeholder="Year"
+                  disabled={disabled}
+                  compact
+                />
+              </div>
+            ) : (
+              /* International format: Day / Month / Year */
+              <div className="grid grid-cols-3 gap-2">
+                <StyledSelect
+                  options={DAY_OPTIONS}
+                  value={dobDay}
+                  onChange={setDobDay}
+                  placeholder="Day"
+                  disabled={disabled}
+                  compact
+                />
+                <StyledSelect
+                  options={MONTH_OPTIONS}
+                  value={dobMonth}
+                  onChange={setDobMonth}
+                  placeholder="Month"
+                  disabled={disabled}
+                  compact
+                />
+                <StyledSelect
+                  options={YEAR_OPTIONS}
+                  value={dobYear}
+                  onChange={setDobYear}
+                  placeholder="Year"
+                  disabled={disabled}
+                  compact
+                />
+              </div>
+            )}
             {getFieldError(errors, 'dateOfBirth') && (
               <p className="mt-1 text-sm text-red-600">{getFieldError(errors, 'dateOfBirth')}</p>
             )}
           </div>
 
-          {/* Sex - custom styled to match */}
+          {/* Sex - styled dropdown */}
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1.5">
               Sex
             </label>
-            <select
+            <StyledSelect
+              options={SEX_OPTIONS}
               value={formData.sex || ''}
-              onChange={e => handleChange('sex', e.target.value)}
+              onChange={(value) => handleChange('sex', value)}
+              placeholder="Select..."
               disabled={disabled}
-              className="w-full px-4 py-2.5 bg-white border border-stone-200 rounded-full text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-stone-50 h-11 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2378716c%22%20stroke-width%3D%222%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10"
-            >
-              <option value="">Select...</option>
-              {SEX_OPTIONS.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
+            />
           </div>
         </div>
 

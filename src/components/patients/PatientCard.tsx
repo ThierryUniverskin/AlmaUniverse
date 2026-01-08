@@ -30,9 +30,15 @@ function PatientCard({ patient }: PatientCardProps) {
                   {fullName}
                 </h2>
                 <p className="text-stone-600">
-                  {age} years old
-                  <span className="text-stone-300 mx-2">|</span>
-                  <span className="text-stone-500">{formatDate(patient.dateOfBirth)}</span>
+                  {age !== null ? (
+                    <>
+                      {age} years old
+                      <span className="text-stone-300 mx-2">|</span>
+                      <span className="text-stone-500">{formatDate(patient.dateOfBirth)}</span>
+                    </>
+                  ) : (
+                    <span className="text-stone-400 italic">Date of birth not provided</span>
+                  )}
                 </p>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-white/70 text-2xs font-medium text-stone-500 tracking-wide">
@@ -93,8 +99,14 @@ function PatientCard({ patient }: PatientCardProps) {
             <div className="space-y-1">
               <dt className="text-2xs font-semibold text-stone-400 uppercase tracking-widest">Date of Birth</dt>
               <dd className="text-sm font-medium text-stone-800">
-                {formatDate(patient.dateOfBirth)}
-                <span className="text-stone-400 ml-2">({age} years)</span>
+                {age !== null ? (
+                  <>
+                    {formatDate(patient.dateOfBirth)}
+                    <span className="text-stone-400 ml-2">({age} years)</span>
+                  </>
+                ) : (
+                  <span className="text-stone-400 italic">Not provided</span>
+                )}
               </dd>
             </div>
             <div className="space-y-1">

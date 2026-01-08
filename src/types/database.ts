@@ -131,6 +131,68 @@ export interface Database {
           updated_at?: string;
         };
       };
+      patient_medical_history: {
+        Row: {
+          id: string;
+          patient_id: string;
+          is_pregnant_or_breastfeeding: boolean;
+          uses_hormonal_contraception: boolean;
+          receives_hrt: boolean;
+          menopausal_status: 'pre-menopausal' | 'peri-menopausal' | 'post-menopausal' | 'n/a' | null;
+          has_cancer_history: boolean;
+          cancer_types: string[];
+          cancer_details: string | null;
+          has_inflammatory_skin_condition: boolean;
+          has_active_cold_sores: boolean;
+          known_allergies: string[];
+          other_allergies: string | null;
+          current_medications: string | null;
+          relevant_medical_conditions: string | null;
+          recovery_time_preference: 'same-day' | '1-2-days' | '3-5-days' | 'more-than-5-days' | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          patient_id: string;
+          is_pregnant_or_breastfeeding?: boolean;
+          uses_hormonal_contraception?: boolean;
+          receives_hrt?: boolean;
+          menopausal_status?: 'pre-menopausal' | 'peri-menopausal' | 'post-menopausal' | 'n/a' | null;
+          has_cancer_history?: boolean;
+          cancer_types?: string[];
+          cancer_details?: string | null;
+          has_inflammatory_skin_condition?: boolean;
+          has_active_cold_sores?: boolean;
+          known_allergies?: string[];
+          other_allergies?: string | null;
+          current_medications?: string | null;
+          relevant_medical_conditions?: string | null;
+          recovery_time_preference?: 'same-day' | '1-2-days' | '3-5-days' | 'more-than-5-days' | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          patient_id?: string;
+          is_pregnant_or_breastfeeding?: boolean;
+          uses_hormonal_contraception?: boolean;
+          receives_hrt?: boolean;
+          menopausal_status?: 'pre-menopausal' | 'peri-menopausal' | 'post-menopausal' | 'n/a' | null;
+          has_cancer_history?: boolean;
+          cancer_types?: string[];
+          cancer_details?: string | null;
+          has_inflammatory_skin_condition?: boolean;
+          has_active_cold_sores?: boolean;
+          known_allergies?: string[];
+          other_allergies?: string | null;
+          current_medications?: string | null;
+          relevant_medical_conditions?: string | null;
+          recovery_time_preference?: 'same-day' | '1-2-days' | '3-5-days' | 'more-than-5-days' | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 }
@@ -138,3 +200,4 @@ export interface Database {
 // Helper type for converting database row to app types
 export type DbDoctor = Database['public']['Tables']['doctors']['Row'];
 export type DbPatient = Database['public']['Tables']['patients']['Row'];
+export type DbPatientMedicalHistory = Database['public']['Tables']['patient_medical_history']['Row'];

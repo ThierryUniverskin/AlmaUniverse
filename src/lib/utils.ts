@@ -35,9 +35,15 @@ export function formatDateTime(dateString: string): string {
 }
 
 // Calculate age from date of birth
-export function calculateAge(dateOfBirth: string): number {
-  const today = new Date();
+export function calculateAge(dateOfBirth: string | null | undefined): number | null {
+  if (!dateOfBirth) return null;
+
   const birthDate = new Date(dateOfBirth);
+
+  // Check if the date is valid
+  if (isNaN(birthDate.getTime())) return null;
+
+  const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();
 

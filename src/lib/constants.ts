@@ -95,3 +95,45 @@ export const DISPLAY_PREFERENCE_OPTIONS = [
   { value: 'clinic', label: 'Clinic name only', description: 'e.g., Alma Health Clinic' },
   { value: 'both', label: 'Both', description: 'e.g., Dr. Sarah Mitchell - Alma Health Clinic' },
 ] as const;
+
+// Medical History - Menopausal status options
+export const MENOPAUSAL_STATUS_OPTIONS = [
+  { value: '', label: 'Select...' },
+  { value: 'pre-menopausal', label: 'Pre-menopausal' },
+  { value: 'peri-menopausal', label: 'Peri-menopausal' },
+  { value: 'post-menopausal', label: 'Post-menopausal' },
+  { value: 'n/a', label: 'N/A' },
+] as const;
+
+// Medical History - Known allergies for multi-select
+export const KNOWN_ALLERGY_OPTIONS = [
+  { value: 'latex', label: 'Latex' },
+  { value: 'fragrances', label: 'Fragrances' },
+  { value: 'parabens', label: 'Parabens' },
+  { value: 'retinoids', label: 'Retinoids' },
+  { value: 'ahas', label: 'AHAs' },
+  { value: 'salicylic-acid', label: 'Salicylic acid' },
+  { value: 'penicillin', label: 'Penicillin' },
+  { value: 'nsaids', label: 'NSAIDs' },
+  { value: 'sulfa-drugs', label: 'Sulfa drugs' },
+  { value: 'lidocaine', label: 'Lidocaine' },
+] as const;
+
+// Medical History - Cancer types for multi-select
+export const CANCER_TYPE_OPTIONS = [
+  { value: 'breast', label: 'Breast cancer' },
+  { value: 'skin', label: 'Skin cancer (including melanoma / non-melanoma)' },
+  { value: 'gynecological', label: 'Gynecological cancer (e.g., ovarian, uterine, cervical)' },
+  { value: 'prostate', label: 'Prostate cancer' },
+  { value: 'gastrointestinal', label: 'Gastrointestinal cancer' },
+  { value: 'hematologic', label: 'Hematologic cancer (e.g., leukemia, lymphoma)' },
+  { value: 'other', label: 'Other cancer type' },
+] as const;
+
+// Medical History - Recovery time preference options
+export const RECOVERY_TIME_OPTIONS = [
+  { value: 'same-day', label: 'Same day / no visible recovery' },
+  { value: '1-2-days', label: '1–2 days' },
+  { value: '3-5-days', label: '3–5 days' },
+  { value: 'more-than-5-days', label: 'More than 5 days' },
+] as const;
