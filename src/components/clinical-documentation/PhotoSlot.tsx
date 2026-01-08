@@ -136,12 +136,14 @@ export function PhotoSlot({
       >
         {/* Processing Overlay */}
         {isProcessing && (
-          <div className="absolute inset-0 z-10 bg-white/90 flex flex-col items-center justify-center">
-            <div className="animate-spin h-10 w-10 border-3 border-purple-600 border-t-transparent rounded-full mb-3" />
-            <p className="text-sm font-medium text-stone-700">Removing background...</p>
-            <p className="text-xs text-stone-500 mt-1">
-              {Math.round(processingProgress * 100)}%
-            </p>
+          <div className="absolute inset-0 z-20 bg-white/95 flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center">
+              <div className="animate-spin h-10 w-10 border-[3px] border-purple-600 border-t-transparent rounded-full mb-3" />
+              <p className="text-sm font-medium text-stone-700">Removing background...</p>
+              <p className="text-xs text-stone-500 mt-1">
+                {Math.round(processingProgress * 100)}%
+              </p>
+            </div>
           </div>
         )}
 

@@ -34,7 +34,8 @@
       "WebSearch",
       "Bash(npm uninstall:*)",
       "WebFetch(domain:almalasers.com)",
-      "WebFetch(domain:lp.almalasers.com)"
+      "WebFetch(domain:lp.almalasers.com)",
+      "WebFetch(domain:www.remove.bg)"
     ]
   }
 }

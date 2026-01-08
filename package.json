@@ -9,11 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@mediapipe/selfie_segmentation": "^0.1.1675465747",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.90.0",
-    "@tensorflow-models/body-segmentation": "^1.0.2",
-    "@tensorflow/tfjs": "^4.22.0",
     "clsx": "^2.1.1",
     "next": "14.2.21",
     "react": "^18.3.1",
