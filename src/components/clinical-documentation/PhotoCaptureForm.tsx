@@ -109,12 +109,9 @@ export function PhotoCaptureForm({
 
       {/* Photo Source Selection */}
       <div className="bg-white rounded-xl border border-stone-200 p-6">
-        <h2 className="text-base font-semibold text-stone-900 mb-1">
+        <h2 className="text-base font-semibold text-stone-900 mb-4">
           Capture Method
         </h2>
-        <p className="text-sm text-stone-500 mb-4">
-          Select how you would like to capture photos.
-        </p>
         <PhotoSourceSelector
           selectedSource={formData.source}
           onSelect={handleSourceSelect}
