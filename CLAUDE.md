@@ -40,13 +40,19 @@ The clinical documentation wizard guides physicians through a 5-step process:
 2. **Medical History** - Capture reproductive, cancer, skin conditions, allergies, medications
 3. **Photo Collection** - Capture frontal + profile photos with remove.bg background removal
 4. **Skin Concerns** - Select from 17 medical skin conditions across 4 categories (drag & drop priority)
-5. **EBD Devices** - Select Energy-Based Device procedures (documentation only, NOT clinical decision support)
+5. **Treatment Selection** - Select treatments from 4 categories (accordion UI):
+   - **EBD Devices** - Alma device catalog (read-only from database)
+   - **Toxins** - Custom doctor procedures (e.g., Botox, Dysport)
+   - **Injectables** - Custom doctor procedures (e.g., Juvederm, Restylane)
+   - **Other Aesthetic Procedures** - Custom procedures with subcategories
 
 Key files:
 - `src/app/(dashboard)/clinical-documentation/new/page.tsx` - Main wizard page
 - `src/components/clinical-documentation/` - Step components
 - `src/lib/skinConcerns.ts` - Skin concern categories and items
 - `src/lib/ebdDevices.ts` - EBD device catalog and database fetch
+- `src/lib/doctorProcedures.ts` - Custom procedures CRUD
+- `src/lib/treatmentCategories.ts` - Treatment category constants
 - `src/lib/backgroundRemoval.ts` - remove.bg API integration
 
 ### Pending Features
@@ -114,11 +120,16 @@ src/
 - `ebd_devices` - Master catalog of 19 Energy-Based Devices (lasers, IPL, plasma)
 - `doctor_devices` - Junction table: which devices each doctor has access to
 - `country_devices` - Junction table: which devices available per country
+- `doctor_procedures` - Custom procedures (Toxins, Injectables, Other) per doctor
 
 ### EBD Devices Database
 The EBD devices are stored in database with fallback to static data. To set up:
 1. Run `supabase/migrations/001_add_ebd_devices.sql` - Creates tables
 2. Run `supabase/seed-ebd-devices.sql` - Seeds 19 devices
+
+### Custom Procedures Database
+Custom procedures (Toxins, Injectables, Other) are stored per doctor:
+1. Run `supabase/migrations/002_add_doctor_procedures.sql` - Creates doctor_procedures table with RLS
 
 ### Row Level Security
 All tables have RLS enabled. Doctors can only access their own data.
@@ -146,8 +157,17 @@ Set in `.env.local` (local) and Vercel dashboard (production).
 npm run dev      # Start development server (localhost:3000)
 npm run build    # Production build
 npm run lint     # ESLint check
-npx vercel       # Deploy to Vercel
 ```
+
+### Deployment
+
+**IMPORTANT:** Deployment to Vercel is NOT automatic. You must deploy manually:
+
+```bash
+npx vercel --prod --yes   # Deploy to production
+```
+
+This uploads the build to Vercel and deploys to https://alma-universe.vercel.app
 
 ---
 
