@@ -179,9 +179,62 @@ export const EBD_DEVICES: EBDDevice[] = [
   },
 ];
 
-// Helper function to get device by ID
+// Helper function to get device by ID (sync - from static array, no image)
 export function getEBDDeviceById(id: string): EBDDevice | undefined {
   return EBD_DEVICES.find(device => device.id === id);
+}
+
+// Fetch a single device by ID from database (async - includes image)
+export async function fetchEBDDeviceById(id: string, accessToken?: string): Promise<EBDDevice | null> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey || !id) {
+    // Fall back to static data
+    return getEBDDeviceById(id) || null;
+  }
+
+  try {
+    const headers: Record<string, string> = {
+      'apikey': supabaseKey,
+      'Content-Type': 'application/json',
+    };
+
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/ebd_devices?id=eq.${id}&select=*`,
+      { headers }
+    );
+
+    if (!response.ok) {
+      // Fall back to static data
+      return getEBDDeviceById(id) || null;
+    }
+
+    const data: DbEBDDevice[] = await response.json();
+    if (data.length === 0) {
+      // Fall back to static data
+      return getEBDDeviceById(id) || null;
+    }
+
+    const db = data[0];
+    return {
+      id: db.id,
+      name: db.name,
+      description: db.description ?? '',
+      treats: db.treats ?? [],
+      fitzpatrick: db.fitzpatrick ?? '',
+      downtime: (db.downtime as 'None' | 'Minimal' | 'Some') ?? 'None',
+      tags: db.tags ?? [],
+      imageUrl: db.image_url ?? undefined,
+    };
+  } catch (error) {
+    console.error('Error fetching device by ID:', error);
+    return getEBDDeviceById(id) || null;
+  }
 }
 
 // Helper function to get device name by ID
@@ -208,7 +261,7 @@ export function getDowntimeColor(downtime: 'None' | 'Minimal' | 'Some'): { bg: s
     case 'Minimal':
       return { bg: 'bg-amber-50', text: 'text-amber-700' };
     case 'Some':
-      return { bg: 'bg-orange-50', text: 'text-orange-700' };
+      return { bg: 'bg-red-50', text: 'text-red-700' };
     default:
       return { bg: 'bg-stone-50', text: 'text-stone-700' };
   }

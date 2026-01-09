@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button, LoadingSpinner, useToast, ConfirmModal } from '@/components/ui';
-import { SettingsSidebar, ClinicDevicesSection } from '@/components/settings';
+import { SettingsSidebar, ClinicDevicesSection, CustomProceduresSection } from '@/components/settings';
 import { EBDDevice } from '@/types';
 import { fetchDevicesByCountry, fetchDoctorDeviceIds, saveDoctorDevices } from '@/lib/doctorDevices';
 
@@ -247,6 +247,12 @@ export default function SettingsPage() {
                 onDeviceToggle={handleDeviceToggle}
                 isLoading={isLoading}
                 doctorCountry={state.doctor.country}
+              />
+            )}
+            {activeSection === 'custom-procedures' && state.accessToken && (
+              <CustomProceduresSection
+                doctorId={state.doctor.id}
+                accessToken={state.accessToken}
               />
             )}
           </div>

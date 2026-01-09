@@ -6,8 +6,8 @@ import { usePatients } from '@/context/PatientContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast, Button, ConfirmModal } from '@/components/ui';
 import { PatientSelectDropdown, InlinePatientForm } from '@/components/patients';
-import { StepProgress, MedicalHistoryForm, getEmptyMedicalHistoryForm, PhotoCaptureForm, getEmptyPhotoForm, SkinConcernsForm, getEmptySkinConcernsForm, EBDProcedureForm, getEmptyEBDProcedureForm } from '@/components/clinical-documentation';
-import { Patient, PatientFormDataExtended, PatientMedicalHistory, PatientMedicalHistoryFormData, PhotoSessionFormData, SkinConcernsFormData, EBDProcedureFormData } from '@/types';
+import { StepProgress, MedicalHistoryForm, getEmptyMedicalHistoryForm, PhotoCaptureForm, getEmptyPhotoForm, SkinConcernsForm, getEmptySkinConcernsForm, TreatmentSelectionForm, getEmptyTreatmentSelectionForm } from '@/components/clinical-documentation';
+import { Patient, PatientFormDataExtended, PatientMedicalHistory, PatientMedicalHistoryFormData, PhotoSessionFormData, SkinConcernsFormData, TreatmentSelectionFormData } from '@/types';
 import { validatePatientFormWithConsent } from '@/lib/validation';
 import { getMedicalHistory, saveMedicalHistory, updateMedicalHistory, historyToFormData } from '@/lib/medicalHistory';
 import { savePhotoSession } from '@/lib/photoSession';
@@ -43,8 +43,8 @@ export default function ClinicalDocumentationPage() {
   // Step 4 state - Skin Concerns
   const [skinConcernsData, setSkinConcernsData] = useState<SkinConcernsFormData>(getEmptySkinConcernsForm());
 
-  // Step 5 state - EBD Procedure Selection
-  const [ebdProcedureData, setEbdProcedureData] = useState<EBDProcedureFormData>(getEmptyEBDProcedureForm());
+  // Step 5 state - Treatment Selection (multi-category)
+  const [treatmentData, setTreatmentData] = useState<TreatmentSelectionFormData>(getEmptyTreatmentSelectionForm());
 
   // Track saved photo session ID for linking to clinical evaluation
   const [savedPhotoSessionId, setSavedPhotoSessionId] = useState<string | null>(null);
@@ -73,7 +73,7 @@ export default function ClinicalDocumentationPage() {
       // Even if no fields are changed, leaving would lose workflow progress
       setHasUnsavedChanges(true);
     }
-  }, [currentStep, selectedPatient, isNewPatientFormOpen, newPatientData, medicalHistoryData, photoFormData, skinConcernsData, ebdProcedureData]);
+  }, [currentStep, selectedPatient, isNewPatientFormOpen, newPatientData, medicalHistoryData, photoFormData, skinConcernsData, treatmentData]);
 
   // Scroll to top when changing steps
   useEffect(() => {
@@ -369,19 +369,19 @@ export default function ClinicalDocumentationPage() {
         {
           photoSessionId: savedPhotoSessionId,
           selectedSkinConcerns: skinConcernsData.selectedConcerns,
-          selectedEBDDevices: ebdProcedureData.selectedDevices,
+          selectedTreatments: treatmentData.selectedTreatments,
         }
       );
 
       if (session) {
         setHasUnsavedChanges(false);
         const concernCount = skinConcernsData.selectedConcerns.length;
-        const deviceCount = ebdProcedureData.selectedDevices.length;
+        const treatmentCount = treatmentData.selectedTreatments.length;
         let message = 'Clinical documentation completed';
-        if (concernCount > 0 || deviceCount > 0) {
+        if (concernCount > 0 || treatmentCount > 0) {
           const parts = [];
           if (concernCount > 0) parts.push(`${concernCount} skin concern${concernCount > 1 ? 's' : ''}`);
-          if (deviceCount > 0) parts.push(`${deviceCount} EBD device${deviceCount > 1 ? 's' : ''}`);
+          if (treatmentCount > 0) parts.push(`${treatmentCount} treatment${treatmentCount > 1 ? 's' : ''}`);
           message = `Clinical documentation completed with ${parts.join(' and ')} noted`;
         }
         showToast(message, 'success');
@@ -619,9 +619,9 @@ export default function ClinicalDocumentationPage() {
   // Render Step 5
   const renderStep5 = () => (
     <>
-      <EBDProcedureForm
-        formData={ebdProcedureData}
-        onChange={setEbdProcedureData}
+      <TreatmentSelectionForm
+        formData={treatmentData}
+        onChange={setTreatmentData}
         disabled={isSubmitting}
         patientName={documentingPatient ? `${documentingPatient.firstName} ${documentingPatient.lastName}` : ''}
         selectedConcerns={skinConcernsData.selectedConcerns}

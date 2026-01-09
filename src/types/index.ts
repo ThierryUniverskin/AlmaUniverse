@@ -290,7 +290,8 @@ export interface ClinicalEvaluationSession {
   doctorId: string;
   photoSessionId: string | null;
   selectedSkinConcerns: string[]; // Array of concern IDs in priority order
-  selectedEBDDevices: SelectedEBDDevice[]; // Array of selected EBD devices
+  selectedEBDDevices: SelectedEBDDevice[]; // Array of selected EBD devices (legacy)
+  selectedTreatments: SelectedTreatment[]; // Array of all treatments (new multi-category)
   notes: string | null;
   status: ClinicalEvaluationStatus;
   createdAt: string;
@@ -301,6 +302,7 @@ export interface ClinicalEvaluationSessionFormData {
   photoSessionId?: string | null;
   selectedSkinConcerns: string[];
   selectedEBDDevices?: SelectedEBDDevice[];
+  selectedTreatments?: SelectedTreatment[]; // New multi-category treatments
   notes?: string;
 }
 
@@ -323,7 +325,73 @@ export interface SelectedEBDDevice {
   notes: string;
 }
 
-// Form data for Step 5
+// Form data for Step 5 (legacy - kept for backward compatibility)
 export interface EBDProcedureFormData {
   selectedDevices: SelectedEBDDevice[];
+}
+
+// ===========================================
+// Treatment Selection Types (Multi-Category)
+// ===========================================
+
+// Treatment category types
+export type TreatmentCategory = 'ebd' | 'toxin' | 'injectable' | 'other';
+
+// Subcategories for "Other Aesthetic Procedures"
+export type OtherProcedureSubcategory =
+  | 'biostimulators'
+  | 'skin_boosters'
+  | 'prp'
+  | 'mesotherapy'
+  | 'rf_microneedling'
+  | 'ultrasound_tightening'
+  | 'microneedling'
+  | 'chemical_peels'
+  | 'dermabrasion'
+  | 'microdermabrasion'
+  | 'prp_hair'
+  | 'hair_mesotherapy'
+  | 'other';
+
+// Metadata for subcategory display
+export interface OtherSubcategoryMeta {
+  id: OtherProcedureSubcategory;
+  label: string;
+}
+
+// Custom procedure created by doctor (Toxins, Injectables, Other)
+export interface DoctorProcedure {
+  id: string;
+  doctorId: string;
+  category: Exclude<TreatmentCategory, 'ebd'>; // 'toxin' | 'injectable' | 'other'
+  subcategory?: OtherProcedureSubcategory;
+  name: string;
+  brand?: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Form data for creating/editing custom procedures
+export interface DoctorProcedureFormData {
+  category: Exclude<TreatmentCategory, 'ebd'>;
+  subcategory?: OtherProcedureSubcategory;
+  name: string;
+  brand?: string;
+  description?: string;
+}
+
+// Selected treatment (unified type for all categories)
+export interface SelectedTreatment {
+  type: TreatmentCategory;
+  deviceId?: string;      // For EBD devices (ebd_devices.id)
+  procedureId?: string;   // For custom procedures (doctor_procedures.id)
+  sessionCount: number | null;
+  notes: string;
+}
+
+// Form data for Treatment Selection (Step 5 - new version)
+export interface TreatmentSelectionFormData {
+  selectedTreatments: SelectedTreatment[];
 }

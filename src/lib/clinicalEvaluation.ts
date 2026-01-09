@@ -1,4 +1,4 @@
-import { ClinicalEvaluationSession, ClinicalEvaluationSessionFormData, ClinicalEvaluationStatus } from '@/types';
+import { ClinicalEvaluationSession, ClinicalEvaluationSessionFormData, ClinicalEvaluationStatus, SelectedTreatment } from '@/types';
 import { DbClinicalEvaluationSession } from '@/types/database';
 
 // Convert database row to app type
@@ -10,6 +10,7 @@ function dbToClinicalEvaluation(row: DbClinicalEvaluationSession): ClinicalEvalu
     photoSessionId: row.photo_session_id,
     selectedSkinConcerns: row.selected_skin_concerns || [],
     selectedEBDDevices: row.selected_ebd_devices || [],
+    selectedTreatments: (row.selected_treatments || []) as SelectedTreatment[],
     notes: row.notes,
     status: row.status as ClinicalEvaluationStatus,
     createdAt: row.created_at,
@@ -58,6 +59,7 @@ export async function createClinicalEvaluation(
           photo_session_id: data.photoSessionId || null,
           selected_skin_concerns: data.selectedSkinConcerns || [],
           selected_ebd_devices: data.selectedEBDDevices || [],
+          selected_treatments: data.selectedTreatments || [],
           notes: data.notes || null,
           status: 'completed',
         }),
@@ -167,6 +169,12 @@ export async function updateClinicalEvaluation(
     }
     if (data.selectedSkinConcerns !== undefined) {
       updatePayload.selected_skin_concerns = data.selectedSkinConcerns;
+    }
+    if (data.selectedEBDDevices !== undefined) {
+      updatePayload.selected_ebd_devices = data.selectedEBDDevices;
+    }
+    if (data.selectedTreatments !== undefined) {
+      updatePayload.selected_treatments = data.selectedTreatments;
     }
     if (data.notes !== undefined) {
       updatePayload.notes = data.notes;

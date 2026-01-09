@@ -22,6 +22,17 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
     ),
   },
   {
+    id: 'custom-procedures',
+    label: 'Custom Procedures',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19.5 4.5l-1 1m0 0l-4-1-9 9 5 5 9-9-1-4z" />
+        <path d="M5.5 18.5l-1 1" />
+        <path d="M10 14l-2-2M12 12l-2-2" />
+      </svg>
+    ),
+  },
+  {
     id: 'notifications',
     label: 'Notifications',
     icon: (

@@ -36,3 +36,19 @@ export type { SelectedDeviceCardProps } from './SelectedDeviceCard';
 
 export { DocumentationTooltip } from './DocumentationTooltip';
 export type { DocumentationTooltipProps } from './DocumentationTooltip';
+
+// New multi-category treatment selection components
+export { TreatmentSelectionForm, getEmptyTreatmentSelectionForm } from './TreatmentSelectionForm';
+export type { TreatmentSelectionFormProps } from './TreatmentSelectionForm';
+
+export { TreatmentCategorySection } from './TreatmentCategorySection';
+export type { TreatmentCategorySectionProps } from './TreatmentCategorySection';
+
+export { TreatmentSelectionModal } from './TreatmentSelectionModal';
+export type { TreatmentSelectionModalProps } from './TreatmentSelectionModal';
+
+export { SelectedTreatmentCard } from './SelectedTreatmentCard';
+export type { SelectedTreatmentCardProps } from './SelectedTreatmentCard';
+
+export { CreateProcedureForm } from './CreateProcedureForm';
+export type { CreateProcedureFormProps } from './CreateProcedureForm';

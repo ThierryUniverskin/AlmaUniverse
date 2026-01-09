@@ -233,6 +233,7 @@ export interface Database {
           photo_session_id: string | null;
           selected_skin_concerns: string[];
           selected_ebd_devices: { deviceId: string; sessionCount: number | null; notes: string }[];
+          selected_treatments: { type: string; deviceId?: string; procedureId?: string; sessionCount: number | null; notes: string }[];
           notes: string | null;
           status: 'in_progress' | 'completed';
           created_at: string;
@@ -245,6 +246,7 @@ export interface Database {
           photo_session_id?: string | null;
           selected_skin_concerns?: string[];
           selected_ebd_devices?: { deviceId: string; sessionCount: number | null; notes: string }[];
+          selected_treatments?: { type: string; deviceId?: string; procedureId?: string; sessionCount: number | null; notes: string }[];
           notes?: string | null;
           status?: 'in_progress' | 'completed';
           created_at?: string;
@@ -257,6 +259,7 @@ export interface Database {
           photo_session_id?: string | null;
           selected_skin_concerns?: string[];
           selected_ebd_devices?: { deviceId: string; sessionCount: number | null; notes: string }[];
+          selected_treatments?: { type: string; deviceId?: string; procedureId?: string; sessionCount: number | null; notes: string }[];
           notes?: string | null;
           status?: 'in_progress' | 'completed';
           created_at?: string;
@@ -353,6 +356,44 @@ export interface Database {
           created_at?: string;
         };
       };
+      doctor_procedures: {
+        Row: {
+          id: string;
+          doctor_id: string;
+          category: 'toxin' | 'injectable' | 'other';
+          subcategory: string | null;
+          name: string;
+          brand: string | null;
+          description: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          doctor_id: string;
+          category: 'toxin' | 'injectable' | 'other';
+          subcategory?: string | null;
+          name: string;
+          brand?: string | null;
+          description?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          doctor_id?: string;
+          category?: 'toxin' | 'injectable' | 'other';
+          subcategory?: string | null;
+          name?: string;
+          brand?: string | null;
+          description?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 }
@@ -366,3 +407,4 @@ export type DbClinicalEvaluationSession = Database['public']['Tables']['clinical
 export type DbEBDDevice = Database['public']['Tables']['ebd_devices']['Row'];
 export type DbDoctorDevice = Database['public']['Tables']['doctor_devices']['Row'];
 export type DbCountryDevice = Database['public']['Tables']['country_devices']['Row'];
+export type DbDoctorProcedure = Database['public']['Tables']['doctor_procedures']['Row'];
