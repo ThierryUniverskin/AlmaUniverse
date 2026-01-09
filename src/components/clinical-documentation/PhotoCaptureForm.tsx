@@ -6,6 +6,7 @@ import { PhotoSourceSelector } from './PhotoSourceSelector';
 import { PhotoSlot } from './PhotoSlot';
 import { PhotoConsentSection } from './PhotoConsentSection';
 import { PhotoSessionsLoader } from './PhotoSessionsLoader';
+import { DocumentationTooltip } from './DocumentationTooltip';
 
 export interface PhotoCaptureFormProps {
   formData: PhotoSessionFormData;
@@ -100,26 +101,6 @@ export function PhotoCaptureForm({
         <p className="text-stone-500 text-sm">
           for {patientName}
         </p>
-      </div>
-
-      {/* Disclaimer */}
-      <div className="bg-stone-50 border border-stone-200 rounded-xl p-4">
-        <div className="flex gap-3">
-          <div className="flex-shrink-0 mt-0.5">
-            <svg className="h-5 w-5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 16v-4m0-4h.01" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-sm text-stone-600 font-medium mb-1">
-              Documentation Only
-            </p>
-            <p className="text-sm text-stone-500">
-              Capture standardized facial photos for documentation purposes.
-            </p>
-          </div>
-        </div>
       </div>
 
       {/* Photo Source Selection */}
@@ -273,10 +254,12 @@ export function PhotoCaptureForm({
         />
       )}
 
-      {/* Footer Note */}
-      <p className="text-xs text-stone-400 text-center">
-        For documentation purposes only
-      </p>
+      {/* Footer Note with Tooltip */}
+      <div className="text-center">
+        <DocumentationTooltip
+          message="Capture standardized facial photos for documentation purposes."
+        />
+      </div>
     </div>
   );
 }

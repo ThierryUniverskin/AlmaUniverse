@@ -33,3 +33,6 @@ export type { EBDDeviceModalProps } from './EBDDeviceModal';
 
 export { SelectedDeviceCard } from './SelectedDeviceCard';
 export type { SelectedDeviceCardProps } from './SelectedDeviceCard';
+
+export { DocumentationTooltip } from './DocumentationTooltip';
+export type { DocumentationTooltipProps } from './DocumentationTooltip';

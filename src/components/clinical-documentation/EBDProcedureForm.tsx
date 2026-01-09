@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { EBDProcedureFormData, SelectedEBDDevice, EBDDevice } from '@/types';
 import { EBDDeviceModal } from './EBDDeviceModal';
 import { SelectedDeviceCard } from './SelectedDeviceCard';
+import { DocumentationTooltip } from './DocumentationTooltip';
 
 export interface EBDProcedureFormProps {
   formData: EBDProcedureFormData;
@@ -103,28 +104,6 @@ export function EBDProcedureForm({
         </p>
       </div>
 
-      {/* Disclaimer */}
-      <div className="bg-stone-50 border border-stone-200 rounded-xl p-4">
-        <div className="flex gap-3">
-          <div className="flex-shrink-0 mt-0.5">
-            <svg className="h-5 w-5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 16v-4m0-4h.01" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-sm text-stone-600 font-medium mb-1">
-              Documentation Only
-            </p>
-            <p className="text-sm text-stone-500">
-              Select Energy-Based Device procedures for this clinical session.
-              All selections are entered by the physician for documentation purposes.
-              The system does not provide treatment recommendations.
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Selected Devices */}
       <div className="bg-white rounded-xl border border-stone-200 p-6">
         <h2 className="text-base font-semibold text-stone-900 mb-4">
@@ -185,10 +164,12 @@ export function EBDProcedureForm({
         Add EBD Device
       </button>
 
-      {/* Footer Note */}
-      <p className="text-xs text-stone-400 text-center">
-        All selections on this screen are entered by the physician for documentation purposes only.
-      </p>
+      {/* Footer Note with Tooltip */}
+      <div className="text-center">
+        <DocumentationTooltip
+          message="Select Energy-Based Device procedures for this clinical session. All selections are entered by the physician for documentation purposes. The system does not provide treatment recommendations."
+        />
+      </div>
 
       {/* Device Selection Modal */}
       <EBDDeviceModal
