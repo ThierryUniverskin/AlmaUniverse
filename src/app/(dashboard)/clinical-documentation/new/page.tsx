@@ -561,6 +561,7 @@ export default function ClinicalDocumentationPage() {
         onChange={setPhotoFormData}
         disabled={isSubmitting}
         patientName={documentingPatient ? `${documentingPatient.firstName} ${documentingPatient.lastName}` : ''}
+        patientId={documentingPatient?.id}
         onSkip={handleSkipPhotos}
       />
 

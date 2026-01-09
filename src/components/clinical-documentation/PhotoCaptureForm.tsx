@@ -1,16 +1,18 @@
 'use client';
 
 import React from 'react';
-import { PhotoSessionFormData } from '@/types';
+import { PhotoSessionFormData, PhotoSession } from '@/types';
 import { PhotoSourceSelector } from './PhotoSourceSelector';
 import { PhotoSlot } from './PhotoSlot';
 import { PhotoConsentSection } from './PhotoConsentSection';
+import { PhotoSessionsLoader } from './PhotoSessionsLoader';
 
 export interface PhotoCaptureFormProps {
   formData: PhotoSessionFormData;
   onChange: (data: PhotoSessionFormData) => void;
   disabled?: boolean;
   patientName: string;
+  patientId?: string;
   onSkip?: () => void;
 }
 
@@ -19,10 +21,23 @@ export function PhotoCaptureForm({
   onChange,
   disabled = false,
   patientName,
+  patientId,
   onSkip,
 }: PhotoCaptureFormProps) {
   const handleSourceSelect = (source: PhotoSessionFormData['source']) => {
     onChange({ ...formData, source });
+  };
+
+  // Load photos from a previous session
+  const handleLoadFromPrevious = (session: PhotoSession) => {
+    onChange({
+      ...formData,
+      source: session.source,
+      frontalPhoto: session.frontalPhotoUrl,
+      leftProfilePhoto: session.leftProfilePhotoUrl,
+      rightProfilePhoto: session.rightProfilePhotoUrl,
+      // Don't auto-set consent - doctor must re-confirm for new session
+    });
   };
 
   const handlePhotoCapture = (type: 'frontal' | 'left' | 'right', file: File) => {
@@ -117,6 +132,17 @@ export function PhotoCaptureForm({
           onSelect={handleSourceSelect}
           disabled={disabled}
         />
+
+        {/* Load from Previous Session */}
+        {patientId && (
+          <div className="mt-4 pt-4 border-t border-stone-100">
+            <PhotoSessionsLoader
+              patientId={patientId}
+              onLoadSession={handleLoadFromPrevious}
+              disabled={disabled}
+            />
+          </div>
+        )}
 
         {/* Skip Option */}
         {onSkip && (

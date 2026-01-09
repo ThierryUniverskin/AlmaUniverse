@@ -21,3 +21,6 @@ export type { SkinConcernsFormProps } from './SkinConcernsForm';
 
 export { PreviousSessionsLoader } from './PreviousSessionsLoader';
 export type { PreviousSessionsLoaderProps } from './PreviousSessionsLoader';
+
+export { PhotoSessionsLoader } from './PhotoSessionsLoader';
+export type { PhotoSessionsLoaderProps } from './PhotoSessionsLoader';
