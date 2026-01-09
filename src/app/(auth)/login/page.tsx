@@ -226,9 +226,6 @@ export default function LoginPage() {
               priority
             />
 
-            {/* Gradient Overlay for text readability */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40" />
-
             {/* Content Overlay */}
             <div className="relative z-10 h-full flex flex-col items-center justify-center px-12">
               {/* Center - Logo & Tagline */}
