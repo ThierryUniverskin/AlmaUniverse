@@ -154,8 +154,11 @@ export function PhotoSessionsLoader({
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-stone-700">
-                        {formatDate(session.createdAt)}
+                      <div className="flex items-center gap-2 text-sm font-medium text-stone-700">
+                        <span>{formatDate(session.createdAt)}</span>
+                        <span className="text-xs font-normal text-stone-400">
+                          via {session.source === 'almaiq' ? 'AlmaIQ' : 'App'}
+                        </span>
                       </div>
                       <div className="flex items-center gap-3 mt-1">
                         <PhotoIndicator hasPhoto={!!session.frontalPhotoUrl} label="Frontal" />
