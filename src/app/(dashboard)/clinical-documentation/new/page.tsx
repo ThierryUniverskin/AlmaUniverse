@@ -625,6 +625,8 @@ export default function ClinicalDocumentationPage() {
         disabled={isSubmitting}
         patientName={documentingPatient ? `${documentingPatient.firstName} ${documentingPatient.lastName}` : ''}
         selectedConcerns={skinConcernsData.selectedConcerns}
+        doctorId={authState.doctor?.id}
+        accessToken={authState.accessToken || undefined}
       />
 
       {/* Action Buttons */}

@@ -109,6 +109,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   doctor: Doctor | null;
   isLoading: boolean;
+  accessToken: string | null;
 }
 
 export interface LoginCredentials {

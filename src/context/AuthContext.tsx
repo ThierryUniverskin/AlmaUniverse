@@ -19,6 +19,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   doctor: null,
   isLoading: true,
+  accessToken: null,
 };
 
 // Convert database row to app Doctor type
@@ -97,6 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAuthenticated: false,
             doctor: null,
             isLoading: false,
+            accessToken: null,
           });
           return;
         }
@@ -112,6 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAuthenticated: false,
             doctor: null,
             isLoading: false,
+            accessToken: null,
           });
           return;
         }
@@ -123,6 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAuthenticated: false,
             doctor: null,
             isLoading: false,
+            accessToken: null,
           });
           return;
         }
@@ -158,6 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAuthenticated: true,
             doctor: dbToDoctor(doctor),
             isLoading: false,
+            accessToken: accessToken || null,
           });
         } else {
           console.log('[Auth] No doctor profile or error, setting unauthenticated');
@@ -167,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAuthenticated: false,
             doctor: null,
             isLoading: false,
+            accessToken: null,
           });
         }
       } catch (error) {
@@ -176,6 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAuthenticated: false,
             doctor: null,
             isLoading: false,
+            accessToken: null,
           });
         }
       }
@@ -205,6 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAuthenticated: true,
             doctor: dbToDoctor(doctor),
             isLoading: false,
+            accessToken: session.access_token || null,
           });
         }
       } else if (event === 'SIGNED_OUT') {
@@ -212,6 +220,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isAuthenticated: false,
           doctor: null,
           isLoading: false,
+          accessToken: null,
         });
       }
     });
@@ -274,6 +283,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               isAuthenticated: true,
               doctor: dbToDoctor(doctor),
               isLoading: false,
+              accessToken: data.access_token || null,
             });
           }
         }
@@ -299,6 +309,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: false,
       doctor: null,
       isLoading: false,
+      accessToken: null,
     });
   }, []);
 

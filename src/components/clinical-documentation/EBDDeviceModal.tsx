@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { EBDDevice } from '@/types';
 import { EBD_DEVICES, getFitzpatrickColor, getDowntimeColor, fetchEBDDevices } from '@/lib/ebdDevices';
+import { fetchDoctorActiveDevices } from '@/lib/doctorDevices';
 import { getConcernById } from '@/lib/skinConcerns';
 
 export interface EBDDeviceModalProps {
@@ -12,6 +13,8 @@ export interface EBDDeviceModalProps {
   onSelect: (device: EBDDevice) => void;
   selectedDeviceIds: string[];
   selectedConcerns?: string[];
+  doctorId?: string;
+  accessToken?: string;
 }
 
 export function EBDDeviceModal({
@@ -20,6 +23,8 @@ export function EBDDeviceModal({
   onSelect,
   selectedDeviceIds,
   selectedConcerns = [],
+  doctorId,
+  accessToken,
 }: EBDDeviceModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [mounted, setMounted] = useState(false);
@@ -31,15 +36,33 @@ export function EBDDeviceModal({
     setMounted(true);
   }, []);
 
-  // Fetch devices from database when modal opens (public data, no auth needed)
+  // Fetch devices when modal opens
+  // If doctor has configured devices in settings, show only those
+  // Otherwise fall back to showing all devices
   useEffect(() => {
     if (isOpen && mounted) {
       setIsLoading(true);
-      fetchEBDDevices()
-        .then(setDevices)
-        .finally(() => setIsLoading(false));
+
+      const loadDevices = async () => {
+        // Try to fetch doctor's configured devices first
+        if (doctorId && accessToken) {
+          const doctorDevices = await fetchDoctorActiveDevices(doctorId, accessToken);
+          if (doctorDevices.length > 0) {
+            setDevices(doctorDevices);
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // Fallback: fetch all devices if doctor hasn't configured any
+        const allDevices = await fetchEBDDevices();
+        setDevices(allDevices);
+        setIsLoading(false);
+      };
+
+      loadDevices();
     }
-  }, [isOpen, mounted]);
+  }, [isOpen, mounted, doctorId, accessToken]);
 
   // Focus search input when modal opens
   useEffect(() => {
@@ -282,6 +305,8 @@ export function EBDDeviceModal({
         <div className="px-6 py-3 border-t border-stone-100 bg-stone-50">
           <p className="text-xs text-stone-500 text-center">
             {filteredDevices.length} device{filteredDevices.length !== 1 ? 's' : ''} available
+            {' · '}
+            <span className="text-stone-400">Manage in Settings</span>
           </p>
         </div>
       </div>

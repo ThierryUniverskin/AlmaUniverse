@@ -12,6 +12,8 @@ export interface EBDProcedureFormProps {
   disabled?: boolean;
   patientName: string;
   selectedConcerns?: string[];
+  doctorId?: string;
+  accessToken?: string;
 }
 
 export function EBDProcedureForm({
@@ -20,6 +22,8 @@ export function EBDProcedureForm({
   disabled = false,
   patientName,
   selectedConcerns = [],
+  doctorId,
+  accessToken,
 }: EBDProcedureFormProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -178,6 +182,8 @@ export function EBDProcedureForm({
         onSelect={handleAddDevice}
         selectedDeviceIds={selectedDeviceIds}
         selectedConcerns={selectedConcerns}
+        doctorId={doctorId}
+        accessToken={accessToken}
       />
     </div>
   );
