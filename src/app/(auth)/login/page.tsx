@@ -237,7 +237,7 @@ export default function LoginPage() {
                   height={128}
                   className="h-32 w-auto mx-auto"
                 />
-                <p className="mt-6 text-xl text-white/90 font-light max-w-md leading-relaxed">
+                <p className="mt-6 text-xl text-white/90 font-normal max-w-md leading-relaxed">
                   An integrated clinical and practice ecosystem for intelligent aesthetic care
                 </p>
               </div>
