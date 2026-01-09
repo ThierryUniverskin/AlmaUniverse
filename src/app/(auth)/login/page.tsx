@@ -226,16 +226,24 @@ export default function LoginPage() {
               priority
             />
 
+            {/* Gradient Overlay for text readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40" />
+
             {/* Content Overlay */}
             <div className="relative z-10 h-full flex flex-col items-center justify-center px-12">
-              {/* Center - Logo */}
-              <Image
-                src="/images/Alma Universe logo@4x.png"
-                alt="Alma Universe"
-                width={400}
-                height={128}
-                className="h-32 w-auto"
-              />
+              {/* Center - Logo & Tagline */}
+              <div className="text-center">
+                <Image
+                  src="/images/Alma Universe logo@4x.png"
+                  alt="Alma Universe"
+                  width={400}
+                  height={128}
+                  className="h-32 w-auto mx-auto"
+                />
+                <p className="mt-6 text-xl text-white/90 font-light max-w-md leading-relaxed">
+                  An integrated clinical and practice ecosystem for intelligent aesthetic care
+                </p>
+              </div>
 
               {/* Footer Links */}
               <div className="absolute bottom-12 flex items-center gap-2 text-sm text-white/70">
