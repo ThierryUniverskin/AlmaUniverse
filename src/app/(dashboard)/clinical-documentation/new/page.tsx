@@ -11,6 +11,7 @@ import { Patient, PatientFormDataExtended, PatientMedicalHistory, PatientMedical
 import { validatePatientFormWithConsent } from '@/lib/validation';
 import { getMedicalHistory, saveMedicalHistory, updateMedicalHistory, historyToFormData } from '@/lib/medicalHistory';
 import { savePhotoSession } from '@/lib/photoSession';
+import { createClinicalEvaluation } from '@/lib/clinicalEvaluation';
 
 export default function ClinicalDocumentationPage() {
   const router = useRouter();
@@ -41,6 +42,9 @@ export default function ClinicalDocumentationPage() {
 
   // Step 4 state - Skin Concerns
   const [skinConcernsData, setSkinConcernsData] = useState<SkinConcernsFormData>(getEmptySkinConcernsForm());
+
+  // Track saved photo session ID for linking to clinical evaluation
+  const [savedPhotoSessionId, setSavedPhotoSessionId] = useState<string | null>(null);
 
   // Shared state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -317,6 +321,8 @@ export default function ClinicalDocumentationPage() {
       const result = await savePhotoSession(documentingPatient.id, photoFormData, doctorId);
 
       if (result) {
+        // Save the photo session ID for linking to clinical evaluation
+        setSavedPhotoSessionId(result.id);
         showToast('Photos saved successfully', 'success');
         setCurrentStep(4);
       } else {
@@ -331,25 +337,72 @@ export default function ClinicalDocumentationPage() {
   };
 
   // Handle Skip Skin Concerns (Step 4 - skip concerns and finish)
-  const handleSkipConcerns = () => {
-    if (!documentingPatient) return;
-    setHasUnsavedChanges(false);
-    showToast('Clinical documentation completed', 'success');
-    router.push(`/patients/${documentingPatient.id}`);
+  const handleSkipConcerns = async () => {
+    if (!documentingPatient || !authState.doctor) return;
+
+    setIsSubmitting(true);
+
+    try {
+      // Create clinical evaluation session without skin concerns
+      const session = await createClinicalEvaluation(
+        documentingPatient.id,
+        authState.doctor.id,
+        {
+          photoSessionId: savedPhotoSessionId,
+          selectedSkinConcerns: [],
+        }
+      );
+
+      if (session) {
+        setHasUnsavedChanges(false);
+        showToast('Clinical documentation completed', 'success');
+        router.push(`/patients/${documentingPatient.id}`);
+      } else {
+        showToast('Failed to save clinical evaluation', 'error');
+      }
+    } catch (error) {
+      console.error('Error saving clinical evaluation:', error);
+      showToast('Failed to save clinical evaluation', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Handle Save Session (Step 4 - save concerns and finish)
-  // Note: For MVP, concerns are stored in state only (not persisted to DB yet)
-  const handleSaveSession = () => {
-    if (!documentingPatient) return;
-    setHasUnsavedChanges(false);
-    const concernCount = skinConcernsData.selectedConcerns.length;
-    if (concernCount > 0) {
-      showToast(`Clinical documentation completed with ${concernCount} skin concern${concernCount > 1 ? 's' : ''} noted`, 'success');
-    } else {
-      showToast('Clinical documentation completed', 'success');
+  const handleSaveSession = async () => {
+    if (!documentingPatient || !authState.doctor) return;
+
+    setIsSubmitting(true);
+
+    try {
+      // Create clinical evaluation session with all data
+      const session = await createClinicalEvaluation(
+        documentingPatient.id,
+        authState.doctor.id,
+        {
+          photoSessionId: savedPhotoSessionId,
+          selectedSkinConcerns: skinConcernsData.selectedConcerns,
+        }
+      );
+
+      if (session) {
+        setHasUnsavedChanges(false);
+        const concernCount = skinConcernsData.selectedConcerns.length;
+        if (concernCount > 0) {
+          showToast(`Clinical documentation completed with ${concernCount} skin concern${concernCount > 1 ? 's' : ''} noted`, 'success');
+        } else {
+          showToast('Clinical documentation completed', 'success');
+        }
+        router.push(`/patients/${documentingPatient.id}`);
+      } else {
+        showToast('Failed to save clinical evaluation', 'error');
+      }
+    } catch (error) {
+      console.error('Error saving clinical evaluation:', error);
+      showToast('Failed to save clinical evaluation', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
-    router.push(`/patients/${documentingPatient.id}`);
   };
 
   // Render Step 1
@@ -543,6 +596,7 @@ export default function ClinicalDocumentationPage() {
         onChange={setSkinConcernsData}
         disabled={isSubmitting}
         patientName={documentingPatient ? `${documentingPatient.firstName} ${documentingPatient.lastName}` : ''}
+        patientId={documentingPatient?.id}
         onSkip={handleSkipConcerns}
       />
 
@@ -561,6 +615,8 @@ export default function ClinicalDocumentationPage() {
           size="lg"
           className="flex-1"
           onClick={handleSaveSession}
+          isLoading={isSubmitting}
+          disabled={isSubmitting}
         >
           Complete Session
         </Button>

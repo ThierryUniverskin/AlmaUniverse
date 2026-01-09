@@ -279,3 +279,24 @@ export interface SkinConcern {
 export interface SkinConcernsFormData {
   selectedConcerns: string[]; // Array of concern IDs in priority order
 }
+
+// Clinical Evaluation Session types
+export type ClinicalEvaluationStatus = 'in_progress' | 'completed';
+
+export interface ClinicalEvaluationSession {
+  id: string;
+  patientId: string;
+  doctorId: string;
+  photoSessionId: string | null;
+  selectedSkinConcerns: string[]; // Array of concern IDs in priority order
+  notes: string | null;
+  status: ClinicalEvaluationStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClinicalEvaluationSessionFormData {
+  photoSessionId?: string | null;
+  selectedSkinConcerns: string[];
+  notes?: string;
+}

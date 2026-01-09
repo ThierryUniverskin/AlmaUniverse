@@ -8,12 +8,14 @@ import {
   getConcernsByCategory,
   getConcernById,
 } from '@/lib/skinConcerns';
+import { PreviousSessionsLoader } from './PreviousSessionsLoader';
 
 export interface SkinConcernsFormProps {
   formData: SkinConcernsFormData;
   onChange: (data: SkinConcernsFormData) => void;
   disabled?: boolean;
   patientName: string;
+  patientId?: string;
   onSkip?: () => void;
 }
 
@@ -22,6 +24,7 @@ export function SkinConcernsForm({
   onChange,
   disabled = false,
   patientName,
+  patientId,
   onSkip,
 }: SkinConcernsFormProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -98,6 +101,14 @@ export function SkinConcernsForm({
   const isConcernSelected = (concernId: string) =>
     formData.selectedConcerns.includes(concernId);
 
+  // Load concerns from a previous session
+  const handleLoadFromPrevious = (concerns: string[]) => {
+    onChange({
+      ...formData,
+      selectedConcerns: concerns,
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -160,6 +171,15 @@ export function SkinConcernsForm({
           </div>
         </div>
       </div>
+
+      {/* Load from Previous Session */}
+      {patientId && (
+        <PreviousSessionsLoader
+          patientId={patientId}
+          onLoadSession={handleLoadFromPrevious}
+          disabled={disabled}
+        />
+      )}
 
       {/* Selected Concerns - Tag Area */}
       {formData.selectedConcerns.length > 0 && (

@@ -18,3 +18,6 @@ export type { PhotoConsentSectionProps } from './PhotoConsentSection';
 
 export { SkinConcernsForm, getEmptySkinConcernsForm } from './SkinConcernsForm';
 export type { SkinConcernsFormProps } from './SkinConcernsForm';
+
+export { PreviousSessionsLoader } from './PreviousSessionsLoader';
+export type { PreviousSessionsLoaderProps } from './PreviousSessionsLoader';

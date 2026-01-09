@@ -225,6 +225,41 @@ export interface Database {
           updated_at?: string;
         };
       };
+      clinical_evaluation_sessions: {
+        Row: {
+          id: string;
+          patient_id: string;
+          doctor_id: string;
+          photo_session_id: string | null;
+          selected_skin_concerns: string[];
+          notes: string | null;
+          status: 'in_progress' | 'completed';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          patient_id: string;
+          doctor_id: string;
+          photo_session_id?: string | null;
+          selected_skin_concerns?: string[];
+          notes?: string | null;
+          status?: 'in_progress' | 'completed';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          patient_id?: string;
+          doctor_id?: string;
+          photo_session_id?: string | null;
+          selected_skin_concerns?: string[];
+          notes?: string | null;
+          status?: 'in_progress' | 'completed';
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 }
@@ -234,3 +269,4 @@ export type DbDoctor = Database['public']['Tables']['doctors']['Row'];
 export type DbPatient = Database['public']['Tables']['patients']['Row'];
 export type DbPatientMedicalHistory = Database['public']['Tables']['patient_medical_history']['Row'];
 export type DbPhotoSession = Database['public']['Tables']['photo_sessions']['Row'];
+export type DbClinicalEvaluationSession = Database['public']['Tables']['clinical_evaluation_sessions']['Row'];

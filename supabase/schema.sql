@@ -81,6 +81,31 @@ CREATE TABLE photo_sessions (
 );
 
 -- ===========================================
+-- CLINICAL EVALUATION SESSIONS TABLE
+-- ===========================================
+-- Records each clinical documentation session with skin concerns
+
+CREATE TABLE clinical_evaluation_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+  doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
+
+  -- Links to related data (optional - may not have photos)
+  photo_session_id UUID REFERENCES photo_sessions(id) ON DELETE SET NULL,
+
+  -- Skin concerns stored as array of concern IDs in priority order
+  selected_skin_concerns TEXT[] DEFAULT '{}',
+
+  -- Session metadata
+  notes TEXT,
+  status TEXT DEFAULT 'completed' CHECK (status IN ('in_progress', 'completed')),
+
+  -- Timestamps
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ===========================================
 -- ROW LEVEL SECURITY (RLS)
 -- ===========================================
 -- This ensures doctors can only access their own data
@@ -88,6 +113,7 @@ CREATE TABLE photo_sessions (
 ALTER TABLE doctors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE photo_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clinical_evaluation_sessions ENABLE ROW LEVEL SECURITY;
 
 -- Doctors can only view/update their own profile
 CREATE POLICY "Doctors can view own profile"
@@ -152,6 +178,23 @@ CREATE POLICY "Doctors can delete own patients photo sessions"
     AND patients.doctor_id = auth.uid()
   ));
 
+-- Clinical evaluation sessions - doctors can only access their own sessions
+CREATE POLICY "Doctors can view own clinical evaluation sessions"
+  ON clinical_evaluation_sessions FOR SELECT
+  USING (auth.uid() = doctor_id);
+
+CREATE POLICY "Doctors can insert own clinical evaluation sessions"
+  ON clinical_evaluation_sessions FOR INSERT
+  WITH CHECK (auth.uid() = doctor_id);
+
+CREATE POLICY "Doctors can update own clinical evaluation sessions"
+  ON clinical_evaluation_sessions FOR UPDATE
+  USING (auth.uid() = doctor_id);
+
+CREATE POLICY "Doctors can delete own clinical evaluation sessions"
+  ON clinical_evaluation_sessions FOR DELETE
+  USING (auth.uid() = doctor_id);
+
 -- ===========================================
 -- INDEXES
 -- ===========================================
@@ -161,6 +204,9 @@ CREATE INDEX idx_patients_last_name ON patients(last_name);
 CREATE INDEX idx_patients_created_at ON patients(created_at);
 CREATE INDEX idx_photo_sessions_patient_id ON photo_sessions(patient_id);
 CREATE INDEX idx_photo_sessions_created_at ON photo_sessions(created_at);
+CREATE INDEX idx_clinical_sessions_patient_id ON clinical_evaluation_sessions(patient_id);
+CREATE INDEX idx_clinical_sessions_doctor_id ON clinical_evaluation_sessions(doctor_id);
+CREATE INDEX idx_clinical_sessions_created_at ON clinical_evaluation_sessions(created_at);
 
 -- ===========================================
 -- UPDATED_AT TRIGGER
@@ -185,6 +231,10 @@ CREATE TRIGGER patients_updated_at
 
 CREATE TRIGGER photo_sessions_updated_at
   BEFORE UPDATE ON photo_sessions
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER clinical_evaluation_sessions_updated_at
+  BEFORE UPDATE ON clinical_evaluation_sessions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- ===========================================
