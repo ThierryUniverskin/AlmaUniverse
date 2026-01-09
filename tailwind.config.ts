@@ -31,19 +31,19 @@ const config: Config = {
           900: '#1C1917',
           950: '#0C0A09',
         },
-        // Primary purple/violet - brand color (#442C5D)
+        // Primary purple/violet - brand color (#905CFF)
         purple: {
-          50: '#F7F5F9',
-          100: '#EDE9F2',
-          200: '#DDD6E6',
-          300: '#C4B6D4',
-          400: '#9E89B8',
-          500: '#7A6199',
-          600: '#5C4476',
-          700: '#442C5D',
-          800: '#38244D',
-          900: '#2B1C3C',
-          950: '#1A1024',
+          50: '#F8F5FF',
+          100: '#F0EAFF',
+          200: '#E2D6FF',
+          300: '#CBB8FF',
+          400: '#AD8AFF',
+          500: '#905CFF',
+          600: '#7C4AE6',
+          700: '#6A3BCC',
+          800: '#5730A8',
+          900: '#472788',
+          950: '#2D1A5C',
         },
         // Orange accent - for "Powered by SkinXs"
         orange: {
