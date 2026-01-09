@@ -312,6 +312,7 @@ export interface EBDDevice {
   fitzpatrick: string; // Fitzpatrick skin type range (e.g., "I-VI")
   downtime: 'None' | 'Minimal' | 'Some';
   tags: string[];
+  imageUrl?: string; // URL to device image
 }
 
 // Selected device with session details

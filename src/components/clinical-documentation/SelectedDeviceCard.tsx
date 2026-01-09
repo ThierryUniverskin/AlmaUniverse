@@ -46,9 +46,10 @@ export function SelectedDeviceCard({
         <div className="flex-shrink-0">
           <div className="w-20 h-[133px] rounded-lg overflow-hidden bg-white border border-stone-200">
             <img
-              src="/images/ebd-placeholder.webp"
+              src={ebdDevice?.imageUrl || `/images/ebd/${device.deviceId}.webp`}
               alt={deviceName}
               className="w-full h-full object-cover"
+              onError={(e) => { e.currentTarget.src = '/images/ebd-placeholder.webp'; }}
             />
           </div>
         </div>

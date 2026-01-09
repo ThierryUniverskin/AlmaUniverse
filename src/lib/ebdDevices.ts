@@ -224,6 +224,7 @@ function dbDeviceToEBDDevice(db: DbEBDDevice): EBDDevice {
     fitzpatrick: db.fitzpatrick ?? 'I-VI',
     downtime: db.downtime ?? 'None',
     tags: db.tags ?? [],
+    imageUrl: db.image_url ?? undefined,
   };
 }
 

@@ -213,7 +213,7 @@ export function EBDDeviceModal({
                       <div className="flex-shrink-0">
                         <div className="w-16 h-[107px] rounded-lg overflow-hidden bg-white border border-stone-200">
                           <img
-                            src="/images/ebd-placeholder.webp"
+                            src={device.imageUrl || '/images/ebd-placeholder.webp'}
                             alt={device.name}
                             className="w-full h-full object-cover"
                           />
