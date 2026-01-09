@@ -141,11 +141,11 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
               {/* AU Logo - visible by default */}
               <div className="group-hover:opacity-0 transition-opacity">
                 <Image
-                  src="/images/logo-icon.svg"
+                  src="/images/Alma Universe Icon copy@4x.png"
                   alt="Alma Universe"
                   width={32}
                   height={32}
-                  className="h-8 w-auto"
+                  className="h-8 w-8 object-contain"
                 />
               </div>
               {/* Toggle icon - visible on hover */}
@@ -159,7 +159,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
           ) : (
             <div className="flex items-center justify-between">
               <Image
-                src="/images/logo.svg"
+                src="/images/Alma Universe logo copy@4x.png"
                 alt="Alma Universe"
                 width={120}
                 height={36}

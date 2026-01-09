@@ -27,11 +27,11 @@ export default function DashboardPage() {
       {/* Content */}
       <div className="relative h-full flex flex-col items-center justify-center text-center px-10 lg:px-16 max-w-3xl mx-auto">
         <Image
-          src="/images/logo_white.svg"
+          src="/images/Alma Universe logo@4x.png"
           alt="Alma Universe"
-          width={180}
-          height={50}
-          className="mb-6"
+          width={320}
+          height={102}
+          className="h-24 w-auto mb-6"
         />
         <h1 className="text-3xl lg:text-4xl font-medium text-white !leading-[1.3] mb-5">
           Your Professional Platform for Clinical Documentation & Skin Wellness

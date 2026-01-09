@@ -49,7 +49,7 @@ export default function LoginPage() {
           {/* Header */}
           <header className="flex items-center justify-between px-8 py-5">
             <Image
-              src="/images/logo_white.svg"
+              src="/images/Alma Universe logo copy@4x.png"
               alt="Alma Universe"
               width={130}
               height={38}
@@ -230,11 +230,11 @@ export default function LoginPage() {
             <div className="relative z-10 h-full flex flex-col items-center justify-center px-12">
               {/* Center - Logo */}
               <Image
-                src="/images/logo_white.svg"
+                src="/images/Alma Universe logo@4x.png"
                 alt="Alma Universe"
-                width={320}
-                height={90}
-                className="h-24 w-auto"
+                width={400}
+                height={128}
+                className="h-32 w-auto"
               />
 
               {/* Footer Links */}
