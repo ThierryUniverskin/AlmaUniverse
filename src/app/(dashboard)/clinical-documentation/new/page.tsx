@@ -6,8 +6,8 @@ import { usePatients } from '@/context/PatientContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast, Button, ConfirmModal } from '@/components/ui';
 import { PatientSelectDropdown, InlinePatientForm } from '@/components/patients';
-import { StepProgress, MedicalHistoryForm, getEmptyMedicalHistoryForm, PhotoCaptureForm, getEmptyPhotoForm, SkinConcernsForm, getEmptySkinConcernsForm } from '@/components/clinical-documentation';
-import { Patient, PatientFormDataExtended, PatientMedicalHistory, PatientMedicalHistoryFormData, PhotoSessionFormData, SkinConcernsFormData } from '@/types';
+import { StepProgress, MedicalHistoryForm, getEmptyMedicalHistoryForm, PhotoCaptureForm, getEmptyPhotoForm, SkinConcernsForm, getEmptySkinConcernsForm, EBDProcedureForm, getEmptyEBDProcedureForm } from '@/components/clinical-documentation';
+import { Patient, PatientFormDataExtended, PatientMedicalHistory, PatientMedicalHistoryFormData, PhotoSessionFormData, SkinConcernsFormData, EBDProcedureFormData } from '@/types';
 import { validatePatientFormWithConsent } from '@/lib/validation';
 import { getMedicalHistory, saveMedicalHistory, updateMedicalHistory, historyToFormData } from '@/lib/medicalHistory';
 import { savePhotoSession } from '@/lib/photoSession';
@@ -23,7 +23,7 @@ export default function ClinicalDocumentationPage() {
   const doctorCountry = authState.doctor?.country || 'US';
 
   // Step management
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
 
   // Step 1 state - Patient Selection
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -42,6 +42,9 @@ export default function ClinicalDocumentationPage() {
 
   // Step 4 state - Skin Concerns
   const [skinConcernsData, setSkinConcernsData] = useState<SkinConcernsFormData>(getEmptySkinConcernsForm());
+
+  // Step 5 state - EBD Procedure Selection
+  const [ebdProcedureData, setEbdProcedureData] = useState<EBDProcedureFormData>(getEmptyEBDProcedureForm());
 
   // Track saved photo session ID for linking to clinical evaluation
   const [savedPhotoSessionId, setSavedPhotoSessionId] = useState<string | null>(null);
@@ -66,11 +69,11 @@ export default function ClinicalDocumentationPage() {
         ));
       setHasUnsavedChanges(!!hasChanges);
     } else {
-      // Steps 2, 3, 4: Always warn - user is in the middle of documenting a patient
+      // Steps 2, 3, 4, 5: Always warn - user is in the middle of documenting a patient
       // Even if no fields are changed, leaving would lose workflow progress
       setHasUnsavedChanges(true);
     }
-  }, [currentStep, selectedPatient, isNewPatientFormOpen, newPatientData, medicalHistoryData, photoFormData, skinConcernsData]);
+  }, [currentStep, selectedPatient, isNewPatientFormOpen, newPatientData, medicalHistoryData, photoFormData, skinConcernsData, ebdProcedureData]);
 
   // Scroll to top when changing steps
   useEffect(() => {
@@ -256,6 +259,9 @@ export default function ClinicalDocumentationPage() {
     } else if (currentStep === 4) {
       // Step 4 → Step 3
       setCurrentStep(3);
+    } else if (currentStep === 5) {
+      // Step 5 → Step 4
+      setCurrentStep(4);
     }
   };
 
@@ -336,39 +342,20 @@ export default function ClinicalDocumentationPage() {
     }
   };
 
-  // Handle Skip Skin Concerns (Step 4 - skip concerns and finish)
-  const handleSkipConcerns = async () => {
-    if (!documentingPatient || !authState.doctor) return;
-
-    setIsSubmitting(true);
-
-    try {
-      // Create clinical evaluation session without skin concerns
-      const session = await createClinicalEvaluation(
-        documentingPatient.id,
-        authState.doctor.id,
-        {
-          photoSessionId: savedPhotoSessionId,
-          selectedSkinConcerns: [],
-        }
-      );
-
-      if (session) {
-        setHasUnsavedChanges(false);
-        showToast('Clinical documentation completed', 'success');
-        router.push(`/patients/${documentingPatient.id}`);
-      } else {
-        showToast('Failed to save clinical evaluation', 'error');
-      }
-    } catch (error) {
-      console.error('Error saving clinical evaluation:', error);
-      showToast('Failed to save clinical evaluation', 'error');
-    } finally {
-      setIsSubmitting(false);
-    }
+  // Handle Skip Skin Concerns (Step 4 - skip concerns and go to Step 5)
+  const handleSkipConcerns = () => {
+    if (!documentingPatient) return;
+    showToast('Skin concerns skipped', 'info');
+    setCurrentStep(5);
   };
 
-  // Handle Save Session (Step 4 - save concerns and finish)
+  // Handle Continue (Step 4 → Step 5) - Continue to EBD device selection
+  const handleContinueToStep5 = () => {
+    if (!documentingPatient) return;
+    setCurrentStep(5);
+  };
+
+  // Handle Save Session (Step 5 - save all data and finish)
   const handleSaveSession = async () => {
     if (!documentingPatient || !authState.doctor) return;
 
@@ -382,17 +369,22 @@ export default function ClinicalDocumentationPage() {
         {
           photoSessionId: savedPhotoSessionId,
           selectedSkinConcerns: skinConcernsData.selectedConcerns,
+          selectedEBDDevices: ebdProcedureData.selectedDevices,
         }
       );
 
       if (session) {
         setHasUnsavedChanges(false);
         const concernCount = skinConcernsData.selectedConcerns.length;
-        if (concernCount > 0) {
-          showToast(`Clinical documentation completed with ${concernCount} skin concern${concernCount > 1 ? 's' : ''} noted`, 'success');
-        } else {
-          showToast('Clinical documentation completed', 'success');
+        const deviceCount = ebdProcedureData.selectedDevices.length;
+        let message = 'Clinical documentation completed';
+        if (concernCount > 0 || deviceCount > 0) {
+          const parts = [];
+          if (concernCount > 0) parts.push(`${concernCount} skin concern${concernCount > 1 ? 's' : ''}`);
+          if (deviceCount > 0) parts.push(`${deviceCount} EBD device${deviceCount > 1 ? 's' : ''}`);
+          message = `Clinical documentation completed with ${parts.join(' and ')} noted`;
         }
+        showToast(message, 'success');
         router.push(`/patients/${documentingPatient.id}`);
       } else {
         showToast('Failed to save clinical evaluation', 'error');
@@ -615,6 +607,40 @@ export default function ClinicalDocumentationPage() {
         <Button
           size="lg"
           className="flex-1"
+          onClick={handleContinueToStep5}
+          disabled={isSubmitting}
+        >
+          Continue
+        </Button>
+      </div>
+    </>
+  );
+
+  // Render Step 5
+  const renderStep5 = () => (
+    <>
+      <EBDProcedureForm
+        formData={ebdProcedureData}
+        onChange={setEbdProcedureData}
+        disabled={isSubmitting}
+        patientName={documentingPatient ? `${documentingPatient.firstName} ${documentingPatient.lastName}` : ''}
+        selectedConcerns={skinConcernsData.selectedConcerns}
+      />
+
+      {/* Action Buttons */}
+      <div className="flex gap-4 mt-8">
+        <Button
+          variant="outline"
+          size="lg"
+          className="flex-1"
+          onClick={handleBack}
+          disabled={isSubmitting}
+        >
+          Back
+        </Button>
+        <Button
+          size="lg"
+          className="flex-1"
           onClick={handleSaveSession}
           isLoading={isSubmitting}
           disabled={isSubmitting}
@@ -669,6 +695,7 @@ export default function ClinicalDocumentationPage() {
         {currentStep === 2 && renderStep2()}
         {currentStep === 3 && renderStep3()}
         {currentStep === 4 && renderStep4()}
+        {currentStep === 5 && renderStep5()}
       </div>
 
       {/* Unsaved Changes Modal */}

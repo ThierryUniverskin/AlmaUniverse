@@ -232,6 +232,7 @@ export interface Database {
           doctor_id: string;
           photo_session_id: string | null;
           selected_skin_concerns: string[];
+          selected_ebd_devices: { deviceId: string; sessionCount: number | null; notes: string }[];
           notes: string | null;
           status: 'in_progress' | 'completed';
           created_at: string;
@@ -243,6 +244,7 @@ export interface Database {
           doctor_id: string;
           photo_session_id?: string | null;
           selected_skin_concerns?: string[];
+          selected_ebd_devices?: { deviceId: string; sessionCount: number | null; notes: string }[];
           notes?: string | null;
           status?: 'in_progress' | 'completed';
           created_at?: string;
@@ -254,10 +256,101 @@ export interface Database {
           doctor_id?: string;
           photo_session_id?: string | null;
           selected_skin_concerns?: string[];
+          selected_ebd_devices?: { deviceId: string; sessionCount: number | null; notes: string }[];
           notes?: string | null;
           status?: 'in_progress' | 'completed';
           created_at?: string;
           updated_at?: string;
+        };
+      };
+      ebd_devices: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          image_url: string | null;
+          treats: string[];
+          fitzpatrick: string | null;
+          downtime: 'None' | 'Minimal' | 'Some' | null;
+          tags: string[];
+          product_family: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          image_url?: string | null;
+          treats?: string[];
+          fitzpatrick?: string | null;
+          downtime?: 'None' | 'Minimal' | 'Some' | null;
+          tags?: string[];
+          product_family?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          image_url?: string | null;
+          treats?: string[];
+          fitzpatrick?: string | null;
+          downtime?: 'None' | 'Minimal' | 'Some' | null;
+          tags?: string[];
+          product_family?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      doctor_devices: {
+        Row: {
+          id: string;
+          doctor_id: string;
+          device_id: string;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          doctor_id: string;
+          device_id: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          doctor_id?: string;
+          device_id?: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+      };
+      country_devices: {
+        Row: {
+          id: string;
+          country_code: string;
+          device_id: string;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          country_code: string;
+          device_id: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          country_code?: string;
+          device_id?: string;
+          is_active?: boolean;
+          created_at?: string;
         };
       };
     };
@@ -270,3 +363,6 @@ export type DbPatient = Database['public']['Tables']['patients']['Row'];
 export type DbPatientMedicalHistory = Database['public']['Tables']['patient_medical_history']['Row'];
 export type DbPhotoSession = Database['public']['Tables']['photo_sessions']['Row'];
 export type DbClinicalEvaluationSession = Database['public']['Tables']['clinical_evaluation_sessions']['Row'];
+export type DbEBDDevice = Database['public']['Tables']['ebd_devices']['Row'];
+export type DbDoctorDevice = Database['public']['Tables']['doctor_devices']['Row'];
+export type DbCountryDevice = Database['public']['Tables']['country_devices']['Row'];

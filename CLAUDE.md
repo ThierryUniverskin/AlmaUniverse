@@ -30,21 +30,23 @@ The app is fully functional with real authentication and database persistence vi
 | Toast notifications | Done | Success/error/info states |
 | Unsaved changes warning | Done | Modal on navigation |
 | Multi-tenant data | Done | RLS ensures doctors only see their patients |
-| Clinical Documentation | Done | 4-step flow: Patient → Health → Photos → Concerns |
+| Clinical Documentation | Done | 5-step flow: Patient → Health → Photos → Concerns → EBD Devices |
 
 ### Clinical Documentation Flow
 
-The clinical documentation wizard guides physicians through a 4-step process:
+The clinical documentation wizard guides physicians through a 5-step process:
 
 1. **Patient Selection** - Select existing or create new patient record
 2. **Medical History** - Capture reproductive, cancer, skin conditions, allergies, medications
 3. **Photo Collection** - Capture frontal + profile photos with remove.bg background removal
 4. **Skin Concerns** - Select from 17 medical skin conditions across 4 categories (drag & drop priority)
+5. **EBD Devices** - Select Energy-Based Device procedures (documentation only, NOT clinical decision support)
 
 Key files:
 - `src/app/(dashboard)/clinical-documentation/new/page.tsx` - Main wizard page
 - `src/components/clinical-documentation/` - Step components
 - `src/lib/skinConcerns.ts` - Skin concern categories and items
+- `src/lib/ebdDevices.ts` - EBD device catalog and database fetch
 - `src/lib/backgroundRemoval.ts` - remove.bg API integration
 
 ### Pending Features
@@ -107,9 +109,20 @@ src/
 ### Tables
 - `doctors` - User profiles (linked to auth.users)
 - `patients` - Patient records (linked to doctor via doctor_id)
+- `photo_sessions` - Patient photo sessions (frontal, left, right profiles)
+- `clinical_evaluation_sessions` - Clinical documentation sessions
+- `ebd_devices` - Master catalog of 19 Energy-Based Devices (lasers, IPL, plasma)
+- `doctor_devices` - Junction table: which devices each doctor has access to
+- `country_devices` - Junction table: which devices available per country
+
+### EBD Devices Database
+The EBD devices are stored in database with fallback to static data. To set up:
+1. Run `supabase/migrations/001_add_ebd_devices.sql` - Creates tables
+2. Run `supabase/seed-ebd-devices.sql` - Seeds 19 devices
 
 ### Row Level Security
 All tables have RLS enabled. Doctors can only access their own data.
+EBD devices are public read (catalog data).
 
 ### Environment Variables
 ```

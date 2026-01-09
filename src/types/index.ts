@@ -289,6 +289,7 @@ export interface ClinicalEvaluationSession {
   doctorId: string;
   photoSessionId: string | null;
   selectedSkinConcerns: string[]; // Array of concern IDs in priority order
+  selectedEBDDevices: SelectedEBDDevice[]; // Array of selected EBD devices
   notes: string | null;
   status: ClinicalEvaluationStatus;
   createdAt: string;
@@ -298,5 +299,29 @@ export interface ClinicalEvaluationSession {
 export interface ClinicalEvaluationSessionFormData {
   photoSessionId?: string | null;
   selectedSkinConcerns: string[];
+  selectedEBDDevices?: SelectedEBDDevice[];
   notes?: string;
+}
+
+// EBD Device types for clinical documentation
+export interface EBDDevice {
+  id: string;
+  name: string;
+  description: string;
+  treats: string[]; // Array of treatment concerns
+  fitzpatrick: string; // Fitzpatrick skin type range (e.g., "I-VI")
+  downtime: 'None' | 'Minimal' | 'Some';
+  tags: string[];
+}
+
+// Selected device with session details
+export interface SelectedEBDDevice {
+  deviceId: string;
+  sessionCount: number | null;
+  notes: string;
+}
+
+// Form data for Step 5
+export interface EBDProcedureFormData {
+  selectedDevices: SelectedEBDDevice[];
 }

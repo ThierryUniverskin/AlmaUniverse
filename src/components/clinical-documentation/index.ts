@@ -24,3 +24,12 @@ export type { PreviousSessionsLoaderProps } from './PreviousSessionsLoader';
 
 export { PhotoSessionsLoader } from './PhotoSessionsLoader';
 export type { PhotoSessionsLoaderProps } from './PhotoSessionsLoader';
+
+export { EBDProcedureForm, getEmptyEBDProcedureForm } from './EBDProcedureForm';
+export type { EBDProcedureFormProps } from './EBDProcedureForm';
+
+export { EBDDeviceModal } from './EBDDeviceModal';
+export type { EBDDeviceModalProps } from './EBDDeviceModal';
+
+export { SelectedDeviceCard } from './SelectedDeviceCard';
+export type { SelectedDeviceCardProps } from './SelectedDeviceCard';
