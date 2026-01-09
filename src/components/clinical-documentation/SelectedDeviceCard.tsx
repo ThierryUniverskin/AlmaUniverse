@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { SelectedEBDDevice } from '@/types';
 import { getEBDDeviceById, getFitzpatrickColor, getDowntimeColor } from '@/lib/ebdDevices';
 
@@ -19,6 +19,16 @@ export function SelectedDeviceCard({
 }: SelectedDeviceCardProps) {
   const ebdDevice = getEBDDeviceById(device.deviceId);
   const deviceName = ebdDevice?.name ?? device.deviceId;
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea based on content
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [device.notes]);
 
   const handleDecrement = () => {
     const currentCount = device.sessionCount ?? 1;
@@ -155,12 +165,13 @@ export function SelectedDeviceCard({
               Notes <span className="normal-case font-normal">(optional)</span>
             </label>
             <textarea
+              ref={textareaRef}
               value={device.notes}
               onChange={handleNotesChange}
               disabled={disabled}
               placeholder="Add notes..."
               rows={1}
-              className="w-full px-2.5 py-1.5 text-xs border border-stone-200 rounded-md resize-none
+              className="w-full px-2.5 py-1.5 text-xs border border-stone-200 rounded-md resize-none overflow-hidden
                        focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
                        disabled:bg-stone-50 disabled:text-stone-400
                        placeholder:text-stone-400"

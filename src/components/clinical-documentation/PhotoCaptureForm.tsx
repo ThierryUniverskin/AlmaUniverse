@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { PhotoSessionFormData, PhotoSession } from '@/types';
 import { PhotoSourceSelector } from './PhotoSourceSelector';
 import { PhotoSlot } from './PhotoSlot';
@@ -25,14 +25,21 @@ export function PhotoCaptureForm({
   patientId,
   onSkip,
 }: PhotoCaptureFormProps) {
+  // Keep a ref to the latest formData to avoid stale closure issues
+  // when multiple photos are being processed concurrently
+  const formDataRef = useRef(formData);
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
+
   const handleSourceSelect = (source: PhotoSessionFormData['source']) => {
-    onChange({ ...formData, source });
+    onChange({ ...formDataRef.current, source });
   };
 
   // Load photos from a previous session
   const handleLoadFromPrevious = (session: PhotoSession) => {
     onChange({
-      ...formData,
+      ...formDataRef.current,
       source: session.source,
       frontalPhoto: session.frontalPhotoUrl,
       leftProfilePhoto: session.leftProfilePhotoUrl,
@@ -43,16 +50,17 @@ export function PhotoCaptureForm({
 
   const handlePhotoCapture = (type: 'frontal' | 'left' | 'right', file: File) => {
     const key = type === 'frontal' ? 'frontalPhoto' : type === 'left' ? 'leftProfilePhoto' : 'rightProfilePhoto';
-    onChange({ ...formData, [key]: file });
+    // Use ref to get latest formData, avoiding stale closure when multiple uploads complete
+    onChange({ ...formDataRef.current, [key]: file });
   };
 
   const handlePhotoRemove = (type: 'frontal' | 'left' | 'right') => {
     const key = type === 'frontal' ? 'frontalPhoto' : type === 'left' ? 'leftProfilePhoto' : 'rightProfilePhoto';
-    onChange({ ...formData, [key]: null });
+    onChange({ ...formDataRef.current, [key]: null });
   };
 
   const handleConsentChange = (consent: boolean) => {
-    onChange({ ...formData, photoConsentGiven: consent });
+    onChange({ ...formDataRef.current, photoConsentGiven: consent });
   };
 
   // Check if source is selected and it's 'app' (the only functional one in v1)
