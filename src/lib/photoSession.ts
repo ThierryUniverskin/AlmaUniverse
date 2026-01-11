@@ -1,5 +1,6 @@
 import { PhotoSession, PhotoSessionFormData, PhotoSource, PhotoConsentLog, PHOTO_CONSENT_VERSION } from '@/types';
 import { DbPhotoSession } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 // Convert database row to app type
 function dbToPhotoSession(row: DbPhotoSession): PhotoSession {
@@ -35,7 +36,7 @@ export async function uploadPhoto(
 ): Promise<string | null> {
   const accessToken = getAccessToken();
   if (!accessToken) {
-    console.error('[PhotoSession] No access token');
+    logger.error('[PhotoSession] No access token');
     return null;
   }
 
@@ -60,14 +61,14 @@ export async function uploadPhoto(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[PhotoSession] Failed to upload photo:', response.status, errorText);
+      logger.error('[PhotoSession] Failed to upload photo:', response.status, errorText);
       return null;
     }
 
     // Return the storage path (not full URL, we'll generate signed URLs when needed)
     return path;
   } catch (error) {
-    console.error('[PhotoSession] Error uploading photo:', error);
+    logger.error('[PhotoSession] Error uploading photo:', error);
     return null;
   }
 }
@@ -76,7 +77,7 @@ export async function uploadPhoto(
 export async function getSignedUrl(path: string): Promise<string | null> {
   const accessToken = getAccessToken();
   if (!accessToken) {
-    console.error('[PhotoSession] No access token');
+    logger.error('[PhotoSession] No access token');
     return null;
   }
 
@@ -96,14 +97,14 @@ export async function getSignedUrl(path: string): Promise<string | null> {
     );
 
     if (!response.ok) {
-      console.error('[PhotoSession] Failed to get signed URL:', response.status);
+      logger.error('[PhotoSession] Failed to get signed URL:', response.status);
       return null;
     }
 
     const data = await response.json();
     return data.signedURL ? `${supabaseUrl}/storage/v1${data.signedURL}` : null;
   } catch (error) {
-    console.error('[PhotoSession] Error getting signed URL:', error);
+    logger.error('[PhotoSession] Error getting signed URL:', error);
     return null;
   }
 }
@@ -120,7 +121,7 @@ export async function createPhotoSession(
 ): Promise<PhotoSession | null> {
   const accessToken = getAccessToken();
   if (!accessToken) {
-    console.error('[PhotoSession] No access token');
+    logger.error('[PhotoSession] No access token');
     return null;
   }
 
@@ -148,14 +149,14 @@ export async function createPhotoSession(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[PhotoSession] Failed to create session:', response.status, errorText);
+      logger.error('[PhotoSession] Failed to create session:', response.status, errorText);
       return null;
     }
 
     const result = await response.json();
     return result[0] ? dbToPhotoSession(result[0]) : null;
   } catch (error) {
-    console.error('[PhotoSession] Error creating session:', error);
+    logger.error('[PhotoSession] Error creating session:', error);
     return null;
   }
 }
@@ -164,7 +165,7 @@ export async function createPhotoSession(
 export async function getPhotoSessions(patientId: string): Promise<PhotoSession[]> {
   const accessToken = getAccessToken();
   if (!accessToken) {
-    console.error('[PhotoSession] No access token');
+    logger.error('[PhotoSession] No access token');
     return [];
   }
 
@@ -182,14 +183,14 @@ export async function getPhotoSessions(patientId: string): Promise<PhotoSession[
     );
 
     if (!response.ok) {
-      console.error('[PhotoSession] Failed to fetch sessions:', response.status);
+      logger.error('[PhotoSession] Failed to fetch sessions:', response.status);
       return [];
     }
 
     const data = await response.json();
     return data.map(dbToPhotoSession);
   } catch (error) {
-    console.error('[PhotoSession] Error fetching sessions:', error);
+    logger.error('[PhotoSession] Error fetching sessions:', error);
     return [];
   }
 }
@@ -202,7 +203,7 @@ async function logPhotoConsent(
 ): Promise<boolean> {
   const accessToken = getAccessToken();
   if (!accessToken) {
-    console.error('[PhotoSession] No access token for consent logging');
+    logger.error('[PhotoSession] No access token for consent logging');
     return false;
   }
 
@@ -236,16 +237,16 @@ async function logPhotoConsent(
 
     if (!response.ok) {
       // Log to console but don't fail the operation if table doesn't exist yet
-      console.warn('[PhotoSession] Could not log consent to database:', response.status);
-      console.log('[PhotoSession] Consent logged locally:', consentLog);
+      logger.warn('[PhotoSession] Could not log consent to database:', response.status);
+      logger.debug('[PhotoSession] Consent logged locally:', consentLog);
       return true; // Continue even if DB logging fails
     }
 
-    console.log('[PhotoSession] Consent logged successfully:', consentLog);
+    logger.debug('[PhotoSession] Consent logged successfully:', consentLog);
     return true;
   } catch (error) {
-    console.warn('[PhotoSession] Error logging consent:', error);
-    console.log('[PhotoSession] Consent logged locally:', consentLog);
+    logger.warn('[PhotoSession] Error logging consent:', error);
+    logger.debug('[PhotoSession] Consent logged locally:', consentLog);
     return true; // Continue even if DB logging fails
   }
 }
@@ -275,7 +276,7 @@ export async function savePhotoSession(
   if (formData.frontalPhoto instanceof File) {
     const path = await uploadPhoto(patientId, sessionId, 'frontal', formData.frontalPhoto);
     if (!path) {
-      console.error('[PhotoSession] Failed to upload frontal photo');
+      logger.error('[PhotoSession] Failed to upload frontal photo');
       return null;
     }
     photoUrls.frontalPhotoUrl = path;
@@ -305,7 +306,7 @@ export async function savePhotoSession(
 
   // Create the session record
   if (!formData.source) {
-    console.error('Photo source is required');
+    logger.error('Photo source is required');
     return null;
   }
   return createPhotoSession(patientId, formData.source, photoUrls);

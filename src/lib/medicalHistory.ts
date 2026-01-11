@@ -1,5 +1,6 @@
 import { PatientMedicalHistory, PatientMedicalHistoryFormData, KnownAllergyType, CancerType, RecoveryTimePreference } from '@/types';
 import { DbPatientMedicalHistory } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 // Convert database row to app type
 function dbToMedicalHistory(row: DbPatientMedicalHistory): PatientMedicalHistory {
@@ -60,7 +61,7 @@ function getAccessToken(): string | null {
 export async function getMedicalHistory(patientId: string): Promise<PatientMedicalHistory | null> {
   const accessToken = getAccessToken();
   if (!accessToken) {
-    console.error('[MedicalHistory] No access token');
+    logger.error('[MedicalHistory] No access token');
     return null;
   }
 
@@ -78,14 +79,14 @@ export async function getMedicalHistory(patientId: string): Promise<PatientMedic
     );
 
     if (!response.ok) {
-      console.error('[MedicalHistory] Failed to fetch:', response.status);
+      logger.error('[MedicalHistory] Failed to fetch:', response.status);
       return null;
     }
 
     const data = await response.json();
     return data[0] ? dbToMedicalHistory(data[0]) : null;
   } catch (error) {
-    console.error('[MedicalHistory] Error fetching:', error);
+    logger.error('[MedicalHistory] Error fetching:', error);
     return null;
   }
 }
@@ -97,7 +98,7 @@ export async function saveMedicalHistory(
 ): Promise<PatientMedicalHistory | null> {
   const accessToken = getAccessToken();
   if (!accessToken) {
-    console.error('[MedicalHistory] No access token');
+    logger.error('[MedicalHistory] No access token');
     return null;
   }
 
@@ -122,14 +123,14 @@ export async function saveMedicalHistory(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[MedicalHistory] Failed to save:', response.status, errorText);
+      logger.error('[MedicalHistory] Failed to save:', response.status, errorText);
       return null;
     }
 
     const result = await response.json();
     return result[0] ? dbToMedicalHistory(result[0]) : null;
   } catch (error) {
-    console.error('[MedicalHistory] Error saving:', error);
+    logger.error('[MedicalHistory] Error saving:', error);
     return null;
   }
 }
@@ -141,7 +142,7 @@ export async function updateMedicalHistory(
 ): Promise<PatientMedicalHistory | null> {
   const accessToken = getAccessToken();
   if (!accessToken) {
-    console.error('[MedicalHistory] No access token');
+    logger.error('[MedicalHistory] No access token');
     return null;
   }
 
@@ -163,14 +164,14 @@ export async function updateMedicalHistory(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[MedicalHistory] Failed to update:', response.status, errorText);
+      logger.error('[MedicalHistory] Failed to update:', response.status, errorText);
       return null;
     }
 
     const result = await response.json();
     return result[0] ? dbToMedicalHistory(result[0]) : null;
   } catch (error) {
-    console.error('[MedicalHistory] Error updating:', error);
+    logger.error('[MedicalHistory] Error updating:', error);
     return null;
   }
 }

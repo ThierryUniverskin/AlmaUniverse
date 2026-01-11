@@ -5,6 +5,7 @@ import { Patient, PatientFormData, PatientFilters, PatientStats } from '@/types'
 import { DbPatient } from '@/types/database';
 import { getSupabase } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
+import { logger } from '@/lib/logger';
 
 interface PatientContextValue {
   patients: Patient[];
@@ -60,7 +61,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     }
 
     setIsLoading(true);
-    console.log('[Patients] Fetching patients for doctor:', authState.doctor.id);
+    logger.debug('[Patients] Fetching patients for doctor:', authState.doctor.id);
 
     try {
       // Use direct fetch to avoid Supabase client hanging issues
@@ -81,15 +82,15 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (!response.ok) {
-        console.error('Failed to load patients:', response.status);
+        logger.error('Failed to load patients:', response.status);
         setPatientsState([]);
       } else {
         const data = await response.json();
-        console.log('[Patients] Loaded', data.length, 'patients');
+        logger.debug('[Patients] Loaded', data.length, 'patients');
         setPatientsState(data.map(dbToPatient));
       }
     } catch (error) {
-      console.error('Error fetching patients:', error);
+      logger.error('Error fetching patients:', error);
       setPatientsState([]);
     } finally {
       setIsLoading(false);
@@ -166,7 +167,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
   const addPatient = useCallback(
     async (data: PatientFormData): Promise<Patient | null> => {
       if (!authState.doctor) {
-        console.error('No doctor authenticated');
+        logger.error('No doctor authenticated');
         return null;
       }
 
@@ -202,7 +203,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
 
         if (!response.ok) {
           const errorData = await response.text();
-          console.error('Failed to add patient:', response.status, errorData);
+          logger.error('Failed to add patient:', response.status, errorData);
           return null;
         }
 
@@ -210,7 +211,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
         const newPatient = result?.[0];
 
         if (!newPatient) {
-          console.error('No patient returned');
+          logger.error('No patient returned');
           return null;
         }
 
@@ -218,7 +219,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
         setPatientsState(prev => [patient, ...prev]);
         return patient;
       } catch (error) {
-        console.error('Error adding patient:', error);
+        logger.error('Error adding patient:', error);
         return null;
       }
     },
@@ -261,7 +262,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
         );
 
         if (!response.ok) {
-          console.error('Failed to update patient:', response.status);
+          logger.error('Failed to update patient:', response.status);
           return null;
         }
 
@@ -269,7 +270,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
         const updatedPatient = result?.[0];
 
         if (!updatedPatient) {
-          console.error('No patient returned');
+          logger.error('No patient returned');
           return null;
         }
 
@@ -277,7 +278,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
         setPatientsState(prev => prev.map(p => p.id === id ? patient : p));
         return patient;
       } catch (error) {
-        console.error('Error updating patient:', error);
+        logger.error('Error updating patient:', error);
         return null;
       }
     },
@@ -309,14 +310,14 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
         );
 
         if (!response.ok) {
-          console.error('Failed to delete patient:', response.status);
+          logger.error('Failed to delete patient:', response.status);
           return false;
         }
 
         setPatientsState(prev => prev.filter(p => p.id !== id));
         return true;
       } catch (error) {
-        console.error('Error deleting patient:', error);
+        logger.error('Error deleting patient:', error);
         return false;
       }
     },

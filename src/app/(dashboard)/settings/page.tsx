@@ -7,6 +7,7 @@ import { Button, LoadingSpinner, useToast, ConfirmModal } from '@/components/ui'
 import { SettingsSidebar, ClinicDevicesSection, CustomProceduresSection } from '@/components/settings';
 import { EBDDevice } from '@/types';
 import { fetchDevicesByCountry, fetchDoctorDeviceIds, saveDoctorDevices } from '@/lib/doctorDevices';
+import { logger } from '@/lib/logger';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -52,7 +53,7 @@ export default function SettingsPage() {
         setInitialSelectedIds(effectiveSelection);
         dataLoadedRef.current = true;
       } catch (error) {
-        console.error('Error loading devices:', error);
+        logger.error('Error loading devices:', error);
         showToast('Failed to load devices', 'error');
       } finally {
         setIsLoading(false);

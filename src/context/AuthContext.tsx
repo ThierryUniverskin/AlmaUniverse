@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { AuthState, Doctor, LoginCredentials, DoctorProfileFormData, PasswordChangeFormData } from '@/types';
 import { DbDoctor } from '@/types/database';
 import { getSupabase } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface AuthContextValue {
   state: AuthState;
@@ -84,16 +85,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Get initial session - read from localStorage directly to avoid getSession() hanging
     const initAuth = async () => {
-      console.log('[Auth] Starting init...');
+      logger.debug('[Auth] Starting init...');
 
       try {
         // Check localStorage for existing session
         const storageKey = `sb-${new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0]}-auth-token`;
         const storedSession = localStorage.getItem(storageKey);
-        console.log('[Auth] Stored session:', storedSession ? 'found' : 'none');
+        logger.debug('[Auth] Stored session:', storedSession ? 'found' : 'none');
 
         if (!storedSession) {
-          console.log('[Auth] No stored session, setting unauthenticated');
+          logger.debug('[Auth] No stored session, setting unauthenticated');
           setState({
             isAuthenticated: false,
             doctor: null,
@@ -108,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           sessionData = JSON.parse(storedSession);
         } catch {
-          console.log('[Auth] Invalid session data, clearing');
+          logger.debug('[Auth] Invalid session data, clearing');
           localStorage.removeItem(storageKey);
           setState({
             isAuthenticated: false,
@@ -121,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const userId = sessionData?.user?.id;
         if (!userId) {
-          console.log('[Auth] No user ID in session');
+          logger.debug('[Auth] No user ID in session');
           setState({
             isAuthenticated: false,
             doctor: null,
@@ -134,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!isMounted) return;
 
         // Fetch doctor profile using direct fetch (bypass Supabase client which hangs)
-        console.log('[Auth] Fetching doctor profile for user:', userId);
+        logger.debug('[Auth] Fetching doctor profile for user:', userId);
         const accessToken = sessionData?.access_token;
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
@@ -152,12 +153,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const doctors = await response.json();
         const doctor = doctors?.[0] || null;
         const error = response.ok ? null : { message: 'Failed to fetch doctor' };
-        console.log('[Auth] Doctor profile result:', doctor ? 'found' : 'not found', error);
+        logger.debug('[Auth] Doctor profile result:', doctor ? 'found' : 'not found', error);
 
         if (!isMounted) return;
 
         if (doctor && !error) {
-          console.log('[Auth] Setting authenticated state');
+          logger.debug('[Auth] Setting authenticated state');
           setState({
             isAuthenticated: true,
             doctor: dbToDoctor(doctor),
@@ -165,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             accessToken: accessToken || null,
           });
         } else {
-          console.log('[Auth] No doctor profile or error, setting unauthenticated');
+          logger.debug('[Auth] No doctor profile or error, setting unauthenticated');
           // Clear invalid session
           localStorage.removeItem(storageKey);
           setState({
@@ -176,7 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         }
       } catch (error) {
-        console.error('[Auth] Init error:', error);
+        logger.error('[Auth] Init error:', error);
         if (isMounted) {
           setState({
             isAuthenticated: false,
@@ -290,7 +291,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         return { success: true };
       } catch (err) {
-        console.error('Login error:', err);
+        logger.error('Login error:', err);
         return { success: false, error: 'Login failed' };
       }
     },
@@ -303,7 +304,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const storageKey = `sb-${new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0]}-auth-token`;
       localStorage.removeItem(storageKey);
     } catch (error) {
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
     }
     setState({
       isAuthenticated: false,
@@ -362,7 +363,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         return { success: true };
       } catch (err) {
-        console.error('Update doctor error:', err);
+        logger.error('Update doctor error:', err);
         return { success: false, error: 'Failed to update profile' };
       }
     },
@@ -420,7 +421,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         return { success: true };
       } catch (err) {
-        console.error('Change password error:', err);
+        logger.error('Change password error:', err);
         return { success: false, error: 'Failed to change password' };
       }
     },

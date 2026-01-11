@@ -4,6 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { ClinicalEvaluationSession } from '@/types';
 import { getClinicalEvaluations } from '@/lib/clinicalEvaluation';
 import { getConcernById } from '@/lib/skinConcerns';
+import { logger } from '@/lib/logger';
 
 export interface PreviousSessionsLoaderProps {
   patientId: string;
@@ -42,7 +43,7 @@ export function PreviousSessionsLoader({
           .slice(0, 5);
         setSessions(sessionsWithConcerns);
       } catch (err) {
-        console.error('[PreviousSessionsLoader] Error fetching sessions:', err);
+        logger.error('[PreviousSessionsLoader] Error fetching sessions:', err);
         setError('Failed to load previous sessions');
       } finally {
         setIsLoading(false);

@@ -85,6 +85,8 @@ src/
 │   │   ├── account/       # My Account page
 │   │   ├── dashboard/     # Dashboard home
 │   │   └── patients/      # Patient management
+│   ├── api/               # API routes (server-side)
+│   │   └── remove-background/  # Background removal proxy
 │   ├── layout.tsx         # Root layout with providers
 │   └── page.tsx           # Entry redirect
 ├── components/
@@ -139,6 +141,7 @@ EBD devices are public read (catalog data).
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
+REMOVE_BG_API_KEY=xxx  # Server-side only (for photo background removal)
 ```
 
 Set in `.env.local` (local) and Vercel dashboard (production).
@@ -180,6 +183,38 @@ This uploads the build to Vercel and deploys to https://alma-universe.vercel.app
 - `error-*` - Red for errors
 
 **Typography:** Inter (sans-serif)
+
+---
+
+## Compliance
+
+**Status:** Pre-compliance - requires remediation before commercial deployment
+
+### Compliance Documentation
+
+| Document | Location |
+|----------|----------|
+| Unified Compliance Roadmap | `docs/compliance/COMPLIANCE_ROADMAP.md` |
+| Compliance Tracker | `docs/compliance/COMPLIANCE_TRACKER.md` |
+
+### Key Compliance Areas
+
+| Area | Status | Priority Items |
+|------|--------|----------------|
+| **Security** | Partial | Next.js updated, API key secured, logging improved |
+| **SaMD Avoidance** | Needs Work | Remove "AI-powered" language, rename "treats" field |
+| **GDPR** | Non-Compliant | Privacy policy, data export, consent mechanisms |
+| **HIPAA** | Non-Compliant | BAAs, audit logging, session timeout |
+| **US State Laws** | Non-Compliant | Breach notification, state-specific requirements |
+
+### Critical Blockers (P0)
+
+1. Replace remove.bg with HIPAA-compliant solution
+2. Sign BAA with Supabase (upgrade to Pro)
+3. Create Privacy Policy and Terms of Service
+4. Remove SaMD-triggering language ("AI-powered", "treats")
+
+See `docs/compliance/COMPLIANCE_ROADMAP.md` for full details.
 
 ---
 

@@ -102,8 +102,47 @@ function isValidUrlSlug(slug: string): boolean {
 }
 
 // Validate website URL (without protocol)
+// Uses URL API for proper parsing and validation
 function isValidWebsiteUrl(url: string): boolean {
-  return /^[a-zA-Z0-9][a-zA-Z0-9-_.]+\.[a-zA-Z]{2,}(\/.*)?$/.test(url);
+  if (!url || url.trim().length === 0) return false;
+
+  // Basic character validation - reject obviously malicious characters
+  if (/[<>"'`\s\\]/.test(url)) return false;
+
+  try {
+    // Add https:// for parsing (user inputs without protocol)
+    const fullUrl = url.startsWith('http://') || url.startsWith('https://')
+      ? url
+      : `https://${url}`;
+
+    const parsed = new URL(fullUrl);
+
+    // Must be http or https protocol
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return false;
+    }
+
+    // Hostname must have at least one dot (not localhost, not IP-like without validation)
+    if (!parsed.hostname.includes('.')) {
+      return false;
+    }
+
+    // Reject common malicious patterns
+    // - Username/password in URL (could be used for phishing)
+    if (parsed.username || parsed.password) {
+      return false;
+    }
+
+    // Hostname should be valid domain format
+    const hostnameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
+    if (!hostnameRegex.test(parsed.hostname)) {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // Validate phone number structure

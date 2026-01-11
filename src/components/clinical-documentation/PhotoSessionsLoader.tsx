@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { PhotoSession } from '@/types';
 import { getPhotoSessions, getSignedUrl } from '@/lib/photoSession';
+import { logger } from '@/lib/logger';
 
 export interface PhotoSessionsLoaderProps {
   patientId: string;
@@ -42,7 +43,7 @@ export function PhotoSessionsLoader({
           .slice(0, 5);
         setSessions(sessionsWithPhotos);
       } catch (err) {
-        console.error('[PhotoSessionsLoader] Error fetching sessions:', err);
+        logger.error('[PhotoSessionsLoader] Error fetching sessions:', err);
         setError('Failed to load previous sessions');
       } finally {
         setIsLoading(false);
@@ -72,7 +73,7 @@ export function PhotoSessionsLoader({
       onLoadSession(sessionWithUrls);
       setIsExpanded(false);
     } catch (err) {
-      console.error('[PhotoSessionsLoader] Error loading session:', err);
+      logger.error('[PhotoSessionsLoader] Error loading session:', err);
     } finally {
       setIsLoadingSession(null);
     }

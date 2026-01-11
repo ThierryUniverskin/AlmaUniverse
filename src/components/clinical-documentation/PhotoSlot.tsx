@@ -3,7 +3,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PhotoType } from '@/types';
-import { removeBackground } from '@/lib/backgroundRemoval';
+import { removeBackground, validateImageFile, FileValidationError } from '@/lib/backgroundRemoval';
 
 export interface PhotoSlotProps {
   type: PhotoType;
@@ -42,6 +42,7 @@ export function PhotoSlot({
   const [mounted, setMounted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   // For portal mounting
   useEffect(() => {
@@ -89,6 +90,21 @@ export function PhotoSlot({
       fileInputRef.current.value = '';
     }
 
+    // Clear any previous error
+    setError(null);
+
+    // Validate file before processing
+    try {
+      validateImageFile(file);
+    } catch (err) {
+      if (err instanceof FileValidationError) {
+        setError(err.message);
+      } else {
+        setError('Invalid file');
+      }
+      return;
+    }
+
     // Start processing
     setIsProcessing(true);
     setProcessingProgress(0);
@@ -121,11 +137,18 @@ export function PhotoSlot({
       // Small delay to show 100% before hiding
       await new Promise(resolve => setTimeout(resolve, 200));
       onCapture(processedFile);
-    } catch (error) {
-      console.error('Background removal failed:', error);
+    } catch (err) {
       clearInterval(progressInterval);
-      // Fallback: use original image if processing fails
-      onCapture(file);
+
+      // Show validation errors to user, fallback for other errors
+      if (err instanceof FileValidationError) {
+        setError(err.message);
+      } else if (err instanceof Error && err.message.includes('File size')) {
+        setError(err.message);
+      } else {
+        // Fallback: use original image if background removal fails
+        onCapture(file);
+      }
     } finally {
       setIsProcessing(false);
       setProcessingProgress(0);
@@ -300,12 +323,31 @@ export function PhotoSlot({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
           onChange={handleFileSelect}
           className="hidden"
           disabled={disabled || isProcessing}
         />
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <svg className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+          </svg>
+          <div className="flex-1">
+            <p className="text-sm text-red-700">{error}</p>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="text-xs text-red-600 hover:text-red-800 underline mt-1"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Image Preview Modal - rendered via portal */}
       {mounted && showFullscreen && previewUrl && createPortal(

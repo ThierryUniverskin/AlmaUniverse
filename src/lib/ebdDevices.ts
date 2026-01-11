@@ -1,5 +1,6 @@
 import { EBDDevice } from '@/types';
 import { DbEBDDevice } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 // Static list of 19 EBD (Energy-Based Device) procedures
 // Sorted alphabetically by name
@@ -232,7 +233,7 @@ export async function fetchEBDDeviceById(id: string, accessToken?: string): Prom
       imageUrl: db.image_url ?? undefined,
     };
   } catch (error) {
-    console.error('Error fetching device by ID:', error);
+    logger.error('Error fetching device by ID:', error);
     return getEBDDeviceById(id) || null;
   }
 }
@@ -287,7 +288,7 @@ export async function fetchEBDDevices(accessToken?: string): Promise<EBDDevice[]
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.warn('Supabase not configured, using static device data');
+    logger.warn('Supabase not configured, using static device data');
     return EBD_DEVICES;
   }
 
@@ -308,7 +309,7 @@ export async function fetchEBDDevices(accessToken?: string): Promise<EBDDevice[]
 
     if (!response.ok) {
       // Table might not exist yet - fall back to static data
-      console.warn('Could not fetch EBD devices from database, using static data');
+      logger.warn('Could not fetch EBD devices from database, using static data');
       return EBD_DEVICES;
     }
 
@@ -316,13 +317,13 @@ export async function fetchEBDDevices(accessToken?: string): Promise<EBDDevice[]
 
     if (data.length === 0) {
       // No devices in database - fall back to static data
-      console.warn('No devices found in database, using static data');
+      logger.warn('No devices found in database, using static data');
       return EBD_DEVICES;
     }
 
     return data.map(dbDeviceToEBDDevice);
   } catch (error) {
-    console.error('Error fetching EBD devices:', error);
+    logger.error('Error fetching EBD devices:', error);
     return EBD_DEVICES;
   }
 }

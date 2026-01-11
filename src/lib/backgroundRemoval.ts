@@ -1,35 +1,54 @@
-const BACKGROUND_COLOR = 'E5E5E5'; // Light gray (without #)
+const MAX_FILE_SIZE = 30 * 1024 * 1024; // 30MB
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/heic',
+  'image/heif',
+];
+
+export class FileValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'FileValidationError';
+  }
+}
+
+/**
+ * Validate image file before upload
+ */
+export function validateImageFile(file: File): void {
+  if (file.size > MAX_FILE_SIZE) {
+    throw new FileValidationError(`File size exceeds maximum of ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
+  }
+
+  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    throw new FileValidationError('Invalid file type. Allowed: JPEG, PNG, WebP, GIF, HEIC');
+  }
+}
 
 /**
  * Remove background from an image and replace with light gray.
- * Uses remove.bg API for high-quality results.
+ * Uses server-side API route to keep API key secure.
  */
 export async function removeBackground(imageFile: File): Promise<File> {
+  // Client-side validation for immediate feedback
+  validateImageFile(imageFile);
+
   // Prepare form data
   const formData = new FormData();
   formData.append('image_file', imageFile);
-  formData.append('size', 'auto');
-  formData.append('format', 'jpg');
-  formData.append('bg_color', BACKGROUND_COLOR);
 
-  // Call remove.bg API
-  const apiKey = process.env.NEXT_PUBLIC_REMOVE_BG_API_KEY;
-  if (!apiKey) {
-    throw new Error('NEXT_PUBLIC_REMOVE_BG_API_KEY is not configured');
-  }
-
-  const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+  // Call our server-side API route (keeps API key secure)
+  const response = await fetch('/api/remove-background', {
     method: 'POST',
-    headers: {
-      'X-Api-Key': apiKey,
-    },
     body: formData,
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error('remove.bg API error:', response.status, errorText);
-    throw new Error(`Background removal failed: ${response.status}`);
+    const error = await response.json().catch(() => ({ error: 'Background removal failed' }));
+    throw new Error(error.error || `Background removal failed: ${response.status}`);
   }
 
   // Get the result as blob

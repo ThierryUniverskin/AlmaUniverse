@@ -1,6 +1,7 @@
 import { EBDDevice } from '@/types';
 import { DbEBDDevice, DbDoctorDevice } from '@/types/database';
 import { EBD_DEVICES } from './ebdDevices';
+import { logger } from '@/lib/logger';
 
 // Convert database row to EBDDevice type
 function dbDeviceToEBDDevice(db: DbEBDDevice): EBDDevice {
@@ -28,12 +29,12 @@ export async function fetchDevicesByCountry(
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.warn('Supabase not configured, returning all devices');
+    logger.warn('Supabase not configured, returning all devices');
     return EBD_DEVICES;
   }
 
   if (!countryCode) {
-    console.warn('No country code provided, returning all devices');
+    logger.warn('No country code provided, returning all devices');
     return EBD_DEVICES;
   }
 
@@ -51,7 +52,7 @@ export async function fetchDevicesByCountry(
     );
 
     if (!countryResponse.ok) {
-      console.warn('Could not fetch country devices, returning all devices');
+      logger.warn('Could not fetch country devices, returning all devices');
       return EBD_DEVICES;
     }
 
@@ -59,7 +60,7 @@ export async function fetchDevicesByCountry(
 
     if (countryDevices.length === 0) {
       // No devices configured for country - return all devices as fallback
-      console.warn(`No devices configured for country ${countryCode}, returning all devices`);
+      logger.warn(`No devices configured for country ${countryCode}, returning all devices`);
       return EBD_DEVICES;
     }
 
@@ -78,14 +79,14 @@ export async function fetchDevicesByCountry(
     );
 
     if (!devicesResponse.ok) {
-      console.warn('Could not fetch device details, returning all devices');
+      logger.warn('Could not fetch device details, returning all devices');
       return EBD_DEVICES;
     }
 
     const devices: DbEBDDevice[] = await devicesResponse.json();
     return devices.map(dbDeviceToEBDDevice);
   } catch (error) {
-    console.error('Error fetching devices by country:', error);
+    logger.error('Error fetching devices by country:', error);
     return EBD_DEVICES;
   }
 }
@@ -117,14 +118,14 @@ export async function fetchDoctorDeviceIds(
     );
 
     if (!response.ok) {
-      console.warn('Could not fetch doctor devices');
+      logger.warn('Could not fetch doctor devices');
       return [];
     }
 
     const data: { device_id: string }[] = await response.json();
     return data.map(d => d.device_id);
   } catch (error) {
-    console.error('Error fetching doctor device IDs:', error);
+    logger.error('Error fetching doctor device IDs:', error);
     return [];
   }
 }
@@ -265,7 +266,7 @@ export async function saveDoctorDevices(
 
     return { success: true };
   } catch (error) {
-    console.error('Error saving doctor devices:', error);
+    logger.error('Error saving doctor devices:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -309,14 +310,14 @@ export async function fetchDoctorActiveDevices(
     );
 
     if (!response.ok) {
-      console.warn('Could not fetch device details');
+      logger.warn('Could not fetch device details');
       return [];
     }
 
     const devices: DbEBDDevice[] = await response.json();
     return devices.map(dbDeviceToEBDDevice);
   } catch (error) {
-    console.error('Error fetching doctor active devices:', error);
+    logger.error('Error fetching doctor active devices:', error);
     return [];
   }
 }

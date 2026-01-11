@@ -3,6 +3,7 @@
 
 import { DoctorProcedure, DoctorProcedureFormData, TreatmentCategory, OtherProcedureSubcategory } from '@/types';
 import { DbDoctorProcedure } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 // Convert database row to DoctorProcedure type
 function dbToProcedure(db: DbDoctorProcedure): DoctorProcedure {
@@ -50,14 +51,14 @@ export async function fetchAllDoctorProcedures(
     );
 
     if (!response.ok) {
-      console.warn('Could not fetch doctor procedures');
+      logger.warn('Could not fetch doctor procedures');
       return [];
     }
 
     const data: DbDoctorProcedure[] = await response.json();
     return data.map(dbToProcedure);
   } catch (error) {
-    console.error('Error fetching doctor procedures:', error);
+    logger.error('Error fetching doctor procedures:', error);
     return [];
   }
 }
@@ -90,14 +91,14 @@ export async function fetchDoctorProceduresByCategory(
     );
 
     if (!response.ok) {
-      console.warn(`Could not fetch doctor procedures for category ${category}`);
+      logger.warn(`Could not fetch doctor procedures for category ${category}`);
       return [];
     }
 
     const data: DbDoctorProcedure[] = await response.json();
     return data.map(dbToProcedure);
   } catch (error) {
-    console.error('Error fetching doctor procedures by category:', error);
+    logger.error('Error fetching doctor procedures by category:', error);
     return [];
   }
 }
@@ -139,7 +140,7 @@ export async function getDoctorProcedureById(
 
     return dbToProcedure(data[0]);
   } catch (error) {
-    console.error('Error fetching procedure by ID:', error);
+    logger.error('Error fetching procedure by ID:', error);
     return null;
   }
 }
@@ -156,17 +157,17 @@ export async function createDoctorProcedure(
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.error('Supabase not configured');
+    logger.error('Supabase not configured');
     return null;
   }
 
   if (!doctorId) {
-    console.error('Doctor ID required');
+    logger.error('Doctor ID required');
     return null;
   }
 
   if (!data.name.trim()) {
-    console.error('Procedure name required');
+    logger.error('Procedure name required');
     return null;
   }
 
@@ -197,7 +198,7 @@ export async function createDoctorProcedure(
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('Failed to create procedure:', error);
+      logger.error('Failed to create procedure:', error);
       return null;
     }
 
@@ -208,7 +209,7 @@ export async function createDoctorProcedure(
 
     return dbToProcedure(created[0]);
   } catch (error) {
-    console.error('Error creating procedure:', error);
+    logger.error('Error creating procedure:', error);
     return null;
   }
 }
@@ -260,7 +261,7 @@ export async function updateDoctorProcedure(
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('Failed to update procedure:', error);
+      logger.error('Failed to update procedure:', error);
       return null;
     }
 
@@ -271,7 +272,7 @@ export async function updateDoctorProcedure(
 
     return dbToProcedure(updated[0]);
   } catch (error) {
-    console.error('Error updating procedure:', error);
+    logger.error('Error updating procedure:', error);
     return null;
   }
 }
@@ -305,7 +306,7 @@ export async function deleteDoctorProcedure(
 
     return response.ok;
   } catch (error) {
-    console.error('Error deleting procedure:', error);
+    logger.error('Error deleting procedure:', error);
     return false;
   }
 }
@@ -341,7 +342,7 @@ export async function toggleProcedureActive(
     );
 
     if (!response.ok) {
-      console.error('Failed to toggle procedure active status');
+      logger.error('Failed to toggle procedure active status');
       return null;
     }
 
@@ -352,7 +353,7 @@ export async function toggleProcedureActive(
 
     return dbToProcedure(updated[0]);
   } catch (error) {
-    console.error('Error toggling procedure active status:', error);
+    logger.error('Error toggling procedure active status:', error);
     return null;
   }
 }
@@ -391,7 +392,7 @@ export async function fetchProceduresByIds(
     const data: DbDoctorProcedure[] = await response.json();
     return data.map(dbToProcedure);
   } catch (error) {
-    console.error('Error fetching procedures by IDs:', error);
+    logger.error('Error fetching procedures by IDs:', error);
     return [];
   }
 }

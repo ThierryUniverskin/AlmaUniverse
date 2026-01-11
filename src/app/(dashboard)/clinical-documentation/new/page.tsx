@@ -8,6 +8,7 @@ import { useToast, Button, ConfirmModal } from '@/components/ui';
 import { PatientSelectDropdown, InlinePatientForm } from '@/components/patients';
 import { StepProgress, MedicalHistoryForm, getEmptyMedicalHistoryForm, PhotoCaptureForm, getEmptyPhotoForm, SkinConcernsForm, getEmptySkinConcernsForm, TreatmentSelectionForm, getEmptyTreatmentSelectionForm } from '@/components/clinical-documentation';
 import { Patient, PatientFormDataExtended, PatientMedicalHistory, PatientMedicalHistoryFormData, PhotoSessionFormData, SkinConcernsFormData, TreatmentSelectionFormData } from '@/types';
+import { logger } from '@/lib/logger';
 import { validatePatientFormWithConsent } from '@/lib/validation';
 import { getMedicalHistory, saveMedicalHistory, updateMedicalHistory, historyToFormData } from '@/lib/medicalHistory';
 import { savePhotoSession } from '@/lib/photoSession';
@@ -237,7 +238,7 @@ export default function ClinicalDocumentationPage() {
       setIsMedicalHistoryLoading(false);
       setCurrentStep(2);
     } catch (error) {
-      console.error('Error in handleContinue:', error);
+      logger.error('Error in handleContinue:', error);
       showToast('An error occurred', 'error');
     } finally {
       setIsSubmitting(false);
@@ -289,7 +290,7 @@ export default function ClinicalDocumentationPage() {
         showToast('Failed to save medical history', 'error');
       }
     } catch (error) {
-      console.error('Error saving medical history:', error);
+      logger.error('Error saving medical history:', error);
       showToast('Failed to save medical history', 'error');
     } finally {
       setIsSubmitting(false);
@@ -335,7 +336,7 @@ export default function ClinicalDocumentationPage() {
         showToast('Failed to save photos', 'error');
       }
     } catch (error) {
-      console.error('Error saving photos:', error);
+      logger.error('Error saving photos:', error);
       showToast('Failed to save photos', 'error');
     } finally {
       setIsSubmitting(false);
@@ -390,7 +391,7 @@ export default function ClinicalDocumentationPage() {
         showToast('Failed to save clinical evaluation', 'error');
       }
     } catch (error) {
-      console.error('Error saving clinical evaluation:', error);
+      logger.error('Error saving clinical evaluation:', error);
       showToast('Failed to save clinical evaluation', 'error');
     } finally {
       setIsSubmitting(false);

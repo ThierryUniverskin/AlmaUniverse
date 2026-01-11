@@ -1,5 +1,6 @@
 import { ClinicalEvaluationSession, ClinicalEvaluationSessionFormData, ClinicalEvaluationStatus, SelectedTreatment } from '@/types';
 import { DbClinicalEvaluationSession } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 // Convert database row to app type
 function dbToClinicalEvaluation(row: DbClinicalEvaluationSession): ClinicalEvaluationSession {
@@ -37,7 +38,7 @@ export async function createClinicalEvaluation(
 ): Promise<ClinicalEvaluationSession | null> {
   const accessToken = getAccessToken();
   if (!accessToken) {
-    console.error('[ClinicalEvaluation] No access token');
+    logger.error('[ClinicalEvaluation] No access token');
     return null;
   }
 
@@ -68,14 +69,14 @@ export async function createClinicalEvaluation(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[ClinicalEvaluation] Failed to create session:', response.status, errorText);
+      logger.error('[ClinicalEvaluation] Failed to create session:', response.status, errorText);
       return null;
     }
 
     const result = await response.json();
     return result[0] ? dbToClinicalEvaluation(result[0]) : null;
   } catch (error) {
-    console.error('[ClinicalEvaluation] Error creating session:', error);
+    logger.error('[ClinicalEvaluation] Error creating session:', error);
     return null;
   }
 }
@@ -84,7 +85,7 @@ export async function createClinicalEvaluation(
 export async function getClinicalEvaluations(patientId: string): Promise<ClinicalEvaluationSession[]> {
   const accessToken = getAccessToken();
   if (!accessToken) {
-    console.error('[ClinicalEvaluation] No access token');
+    logger.error('[ClinicalEvaluation] No access token');
     return [];
   }
 
@@ -102,14 +103,14 @@ export async function getClinicalEvaluations(patientId: string): Promise<Clinica
     );
 
     if (!response.ok) {
-      console.error('[ClinicalEvaluation] Failed to fetch sessions:', response.status);
+      logger.error('[ClinicalEvaluation] Failed to fetch sessions:', response.status);
       return [];
     }
 
     const data = await response.json();
     return data.map(dbToClinicalEvaluation);
   } catch (error) {
-    console.error('[ClinicalEvaluation] Error fetching sessions:', error);
+    logger.error('[ClinicalEvaluation] Error fetching sessions:', error);
     return [];
   }
 }
@@ -118,7 +119,7 @@ export async function getClinicalEvaluations(patientId: string): Promise<Clinica
 export async function getClinicalEvaluation(sessionId: string): Promise<ClinicalEvaluationSession | null> {
   const accessToken = getAccessToken();
   if (!accessToken) {
-    console.error('[ClinicalEvaluation] No access token');
+    logger.error('[ClinicalEvaluation] No access token');
     return null;
   }
 
@@ -136,14 +137,14 @@ export async function getClinicalEvaluation(sessionId: string): Promise<Clinical
     );
 
     if (!response.ok) {
-      console.error('[ClinicalEvaluation] Failed to fetch session:', response.status);
+      logger.error('[ClinicalEvaluation] Failed to fetch session:', response.status);
       return null;
     }
 
     const data = await response.json();
     return data[0] ? dbToClinicalEvaluation(data[0]) : null;
   } catch (error) {
-    console.error('[ClinicalEvaluation] Error fetching session:', error);
+    logger.error('[ClinicalEvaluation] Error fetching session:', error);
     return null;
   }
 }
@@ -155,7 +156,7 @@ export async function updateClinicalEvaluation(
 ): Promise<ClinicalEvaluationSession | null> {
   const accessToken = getAccessToken();
   if (!accessToken) {
-    console.error('[ClinicalEvaluation] No access token');
+    logger.error('[ClinicalEvaluation] No access token');
     return null;
   }
 
@@ -196,14 +197,14 @@ export async function updateClinicalEvaluation(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[ClinicalEvaluation] Failed to update session:', response.status, errorText);
+      logger.error('[ClinicalEvaluation] Failed to update session:', response.status, errorText);
       return null;
     }
 
     const result = await response.json();
     return result[0] ? dbToClinicalEvaluation(result[0]) : null;
   } catch (error) {
-    console.error('[ClinicalEvaluation] Error updating session:', error);
+    logger.error('[ClinicalEvaluation] Error updating session:', error);
     return null;
   }
 }
@@ -212,7 +213,7 @@ export async function updateClinicalEvaluation(
 export async function deleteClinicalEvaluation(sessionId: string): Promise<boolean> {
   const accessToken = getAccessToken();
   if (!accessToken) {
-    console.error('[ClinicalEvaluation] No access token');
+    logger.error('[ClinicalEvaluation] No access token');
     return false;
   }
 
@@ -230,13 +231,13 @@ export async function deleteClinicalEvaluation(sessionId: string): Promise<boole
     );
 
     if (!response.ok) {
-      console.error('[ClinicalEvaluation] Failed to delete session:', response.status);
+      logger.error('[ClinicalEvaluation] Failed to delete session:', response.status);
       return false;
     }
 
     return true;
   } catch (error) {
-    console.error('[ClinicalEvaluation] Error deleting session:', error);
+    logger.error('[ClinicalEvaluation] Error deleting session:', error);
     return false;
   }
 }
