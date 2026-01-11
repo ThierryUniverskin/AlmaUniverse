@@ -35,7 +35,13 @@
       "Bash(npm uninstall:*)",
       "WebFetch(domain:almalasers.com)",
       "WebFetch(domain:lp.almalasers.com)",
-      "WebFetch(domain:www.remove.bg)"
+      "WebFetch(domain:www.remove.bg)",
+      "Bash(lsof:*)",
+      "Bash(source:*)",
+      "Bash(git push:*)",
+      "Bash(xargs kill -9)",
+      "Bash(grep:*)",
+      "Bash(npm audit:*)"
     ]
   }
 }
