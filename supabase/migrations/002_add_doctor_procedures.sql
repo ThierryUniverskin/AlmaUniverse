@@ -49,22 +49,22 @@ CREATE INDEX IF NOT EXISTS idx_doctor_procedures_is_active ON doctor_procedures(
 -- Enable RLS
 ALTER TABLE doctor_procedures ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies
+-- RLS Policies (optimized with SELECT subquery for performance)
 CREATE POLICY "Doctors can view own procedures"
   ON doctor_procedures FOR SELECT
-  USING (auth.uid() = doctor_id);
+  USING ((SELECT auth.uid()) = doctor_id);
 
 CREATE POLICY "Doctors can insert own procedures"
   ON doctor_procedures FOR INSERT
-  WITH CHECK (auth.uid() = doctor_id);
+  WITH CHECK ((SELECT auth.uid()) = doctor_id);
 
 CREATE POLICY "Doctors can update own procedures"
   ON doctor_procedures FOR UPDATE
-  USING (auth.uid() = doctor_id);
+  USING ((SELECT auth.uid()) = doctor_id);
 
 CREATE POLICY "Doctors can delete own procedures"
   ON doctor_procedures FOR DELETE
-  USING (auth.uid() = doctor_id);
+  USING ((SELECT auth.uid()) = doctor_id);
 
 -- Updated_at trigger (reuse existing function if available)
 DO $$

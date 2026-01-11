@@ -177,32 +177,32 @@ ALTER TABLE clinical_evaluation_sessions ENABLE ROW LEVEL SECURITY;
 -- Doctors can only view/update their own profile
 CREATE POLICY "Doctors can view own profile"
   ON doctors FOR SELECT
-  USING (auth.uid() = id);
+  USING ((SELECT auth.uid()) = id);
 
 CREATE POLICY "Doctors can insert own profile"
   ON doctors FOR INSERT
-  WITH CHECK (auth.uid() = id);
+  WITH CHECK ((SELECT auth.uid()) = id);
 
 CREATE POLICY "Doctors can update own profile"
   ON doctors FOR UPDATE
-  USING (auth.uid() = id);
+  USING ((SELECT auth.uid()) = id);
 
 -- Doctors can only access their own patients
 CREATE POLICY "Doctors can view own patients"
   ON patients FOR SELECT
-  USING (auth.uid() = doctor_id);
+  USING ((SELECT auth.uid()) = doctor_id);
 
 CREATE POLICY "Doctors can insert own patients"
   ON patients FOR INSERT
-  WITH CHECK (auth.uid() = doctor_id);
+  WITH CHECK ((SELECT auth.uid()) = doctor_id);
 
 CREATE POLICY "Doctors can update own patients"
   ON patients FOR UPDATE
-  USING (auth.uid() = doctor_id);
+  USING ((SELECT auth.uid()) = doctor_id);
 
 CREATE POLICY "Doctors can delete own patients"
   ON patients FOR DELETE
-  USING (auth.uid() = doctor_id);
+  USING ((SELECT auth.uid()) = doctor_id);
 
 -- Photo sessions - doctors can only access their own patients' photos
 CREATE POLICY "Doctors can view own patients photo sessions"
@@ -210,7 +210,7 @@ CREATE POLICY "Doctors can view own patients photo sessions"
   USING (EXISTS (
     SELECT 1 FROM patients
     WHERE patients.id = photo_sessions.patient_id
-    AND patients.doctor_id = auth.uid()
+    AND patients.doctor_id = (SELECT auth.uid())
   ));
 
 CREATE POLICY "Doctors can insert own patients photo sessions"
@@ -218,7 +218,7 @@ CREATE POLICY "Doctors can insert own patients photo sessions"
   WITH CHECK (EXISTS (
     SELECT 1 FROM patients
     WHERE patients.id = photo_sessions.patient_id
-    AND patients.doctor_id = auth.uid()
+    AND patients.doctor_id = (SELECT auth.uid())
   ));
 
 CREATE POLICY "Doctors can update own patients photo sessions"
@@ -226,7 +226,7 @@ CREATE POLICY "Doctors can update own patients photo sessions"
   USING (EXISTS (
     SELECT 1 FROM patients
     WHERE patients.id = photo_sessions.patient_id
-    AND patients.doctor_id = auth.uid()
+    AND patients.doctor_id = (SELECT auth.uid())
   ));
 
 CREATE POLICY "Doctors can delete own patients photo sessions"
@@ -234,25 +234,25 @@ CREATE POLICY "Doctors can delete own patients photo sessions"
   USING (EXISTS (
     SELECT 1 FROM patients
     WHERE patients.id = photo_sessions.patient_id
-    AND patients.doctor_id = auth.uid()
+    AND patients.doctor_id = (SELECT auth.uid())
   ));
 
 -- Clinical evaluation sessions - doctors can only access their own sessions
 CREATE POLICY "Doctors can view own clinical evaluation sessions"
   ON clinical_evaluation_sessions FOR SELECT
-  USING (auth.uid() = doctor_id);
+  USING ((SELECT auth.uid()) = doctor_id);
 
 CREATE POLICY "Doctors can insert own clinical evaluation sessions"
   ON clinical_evaluation_sessions FOR INSERT
-  WITH CHECK (auth.uid() = doctor_id);
+  WITH CHECK ((SELECT auth.uid()) = doctor_id);
 
 CREATE POLICY "Doctors can update own clinical evaluation sessions"
   ON clinical_evaluation_sessions FOR UPDATE
-  USING (auth.uid() = doctor_id);
+  USING ((SELECT auth.uid()) = doctor_id);
 
 CREATE POLICY "Doctors can delete own clinical evaluation sessions"
   ON clinical_evaluation_sessions FOR DELETE
-  USING (auth.uid() = doctor_id);
+  USING ((SELECT auth.uid()) = doctor_id);
 
 -- EBD Devices - Public read access (catalog data)
 ALTER TABLE ebd_devices ENABLE ROW LEVEL SECURITY;
@@ -266,19 +266,19 @@ ALTER TABLE doctor_devices ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Doctors can view own device assignments"
   ON doctor_devices FOR SELECT
-  USING (auth.uid() = doctor_id);
+  USING ((SELECT auth.uid()) = doctor_id);
 
 CREATE POLICY "Doctors can insert own device assignments"
   ON doctor_devices FOR INSERT
-  WITH CHECK (auth.uid() = doctor_id);
+  WITH CHECK ((SELECT auth.uid()) = doctor_id);
 
 CREATE POLICY "Doctors can update own device assignments"
   ON doctor_devices FOR UPDATE
-  USING (auth.uid() = doctor_id);
+  USING ((SELECT auth.uid()) = doctor_id);
 
 CREATE POLICY "Doctors can delete own device assignments"
   ON doctor_devices FOR DELETE
-  USING (auth.uid() = doctor_id);
+  USING ((SELECT auth.uid()) = doctor_id);
 
 -- Country Devices - Public read access (availability data)
 ALTER TABLE country_devices ENABLE ROW LEVEL SECURITY;
