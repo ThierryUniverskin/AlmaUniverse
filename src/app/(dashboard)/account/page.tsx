@@ -274,6 +274,7 @@ export default function AccountPage() {
                   onChange={handleFormChange}
                   errors={errors}
                   email={state.doctor.email}
+                  savedCountry={state.doctor.country}
                 />
               ) : (
                 <SecurityForm onSubmit={handlePasswordChange} isSubmitting={isSubmitting} />

@@ -19,10 +19,14 @@ interface PersonalInfoFormProps {
   onChange: (data: DoctorProfileFormData) => void;
   errors: ValidationError[];
   email: string; // Read-only email display
+  savedCountry?: string; // Country from database - if set, cannot be changed
 }
 
-function PersonalInfoForm({ formData, onChange, errors, email }: PersonalInfoFormProps) {
+function PersonalInfoForm({ formData, onChange, errors, email, savedCountry }: PersonalInfoFormProps) {
   const [showTooltip, setShowTooltip] = useState(false);
+
+  // Country is locked if already set in database
+  const isCountryLocked = !!savedCountry;
 
   const handleChange = (field: keyof DoctorProfileFormData, value: unknown) => {
     onChange({ ...formData, [field]: value });
@@ -135,6 +139,8 @@ function PersonalInfoForm({ formData, onChange, errors, email }: PersonalInfoFor
             value={formData.country || ''}
             onChange={(e) => handleChange('country', e.target.value || undefined)}
             options={COUNTRY_OPTIONS}
+            disabled={isCountryLocked}
+            hint={isCountryLocked ? 'Country cannot be changed once set' : undefined}
           />
           <Select
             label="Language"
