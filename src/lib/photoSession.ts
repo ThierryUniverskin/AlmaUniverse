@@ -73,13 +73,39 @@ export async function uploadPhoto(
   }
 }
 
+// Extract storage path from a URL (handles signed URLs and full URLs)
+export function extractStoragePath(urlOrPath: string): string {
+  // If it's already a simple path (no http), return as-is
+  if (!urlOrPath.startsWith('http')) {
+    return urlOrPath;
+  }
+
+  try {
+    const url = new URL(urlOrPath);
+    // Handle signed URLs: /storage/v1/object/sign/patient-photos/{path}?token=...
+    // Handle public URLs: /storage/v1/object/public/patient-photos/{path}
+    const match = url.pathname.match(/\/storage\/v1\/object\/(?:sign|public)\/patient-photos\/(.+)/);
+    if (match) {
+      return match[1];
+    }
+    // Fallback: return the original if we can't parse it
+    logger.warn('[PhotoSession] Could not extract path from URL:', urlOrPath);
+    return urlOrPath;
+  } catch {
+    return urlOrPath;
+  }
+}
+
 // Get a signed URL for a photo
-export async function getSignedUrl(path: string): Promise<string | null> {
+export async function getSignedUrl(pathOrUrl: string): Promise<string | null> {
   const accessToken = getAccessToken();
   if (!accessToken) {
     logger.error('[PhotoSession] No access token');
     return null;
   }
+
+  // Extract storage path if a full URL was passed
+  const path = extractStoragePath(pathOrUrl);
 
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -281,7 +307,8 @@ export async function savePhotoSession(
     }
     photoUrls.frontalPhotoUrl = path;
   } else if (typeof formData.frontalPhoto === 'string') {
-    photoUrls.frontalPhotoUrl = formData.frontalPhoto;
+    // Extract storage path from URL if needed (handles signed URLs from previous sessions)
+    photoUrls.frontalPhotoUrl = extractStoragePath(formData.frontalPhoto);
   }
 
   // Upload left profile photo (optional)
@@ -291,7 +318,8 @@ export async function savePhotoSession(
       photoUrls.leftProfilePhotoUrl = path;
     }
   } else if (typeof formData.leftProfilePhoto === 'string') {
-    photoUrls.leftProfilePhotoUrl = formData.leftProfilePhoto;
+    // Extract storage path from URL if needed
+    photoUrls.leftProfilePhotoUrl = extractStoragePath(formData.leftProfilePhoto);
   }
 
   // Upload right profile photo (optional)
@@ -301,7 +329,8 @@ export async function savePhotoSession(
       photoUrls.rightProfilePhotoUrl = path;
     }
   } else if (typeof formData.rightProfilePhoto === 'string') {
-    photoUrls.rightProfilePhotoUrl = formData.rightProfilePhoto;
+    // Extract storage path from URL if needed
+    photoUrls.rightProfilePhotoUrl = extractStoragePath(formData.rightProfilePhoto);
   }
 
   // Create the session record
