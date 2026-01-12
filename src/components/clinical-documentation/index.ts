@@ -52,3 +52,15 @@ export type { SelectedTreatmentCardProps } from './SelectedTreatmentCard';
 
 export { CreateProcedureForm } from './CreateProcedureForm';
 export type { CreateProcedureFormProps } from './CreateProcedureForm';
+
+// Step 6 - Session Summary & Skin Wellness components
+export { SessionSummaryCard } from './SessionSummaryCard';
+export type { SessionSummaryCardProps } from './SessionSummaryCard';
+
+export { SkinWellnessContextBreak } from './SkinWellnessContextBreak';
+
+export { SkinWellnessConsentModal } from './SkinWellnessConsentModal';
+export type { SkinWellnessConsentModalProps } from './SkinWellnessConsentModal';
+
+export { SessionSummaryStep } from './SessionSummaryStep';
+export type { SessionSummaryStepProps } from './SessionSummaryStep';

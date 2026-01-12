@@ -394,4 +394,17 @@ export interface SelectedTreatment {
 // Form data for Treatment Selection (Step 5 - new version)
 export interface TreatmentSelectionFormData {
   selectedTreatments: SelectedTreatment[];
+  generalNotes: string; // General notes for the entire session
+}
+
+// ===========================================
+// Skin Wellness Mode Types
+// ===========================================
+
+// Skin Wellness entry data - ONLY allowed fields for data isolation (SaMD compliance)
+// This enforces that no clinical/diagnostic data is passed to Skin Wellness Mode
+export interface SkinWellnessEntryData {
+  photoSessionId: string;
+  patientId: string;
+  consentConfirmed: boolean;
 }

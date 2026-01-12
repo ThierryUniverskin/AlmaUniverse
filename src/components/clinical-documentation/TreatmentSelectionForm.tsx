@@ -221,5 +221,6 @@ export function TreatmentSelectionForm({
 export function getEmptyTreatmentSelectionForm(): TreatmentSelectionFormData {
   return {
     selectedTreatments: [],
+    generalNotes: '',
   };
 }

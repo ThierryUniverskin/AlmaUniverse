@@ -6,7 +6,8 @@ import { usePatients } from '@/context/PatientContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast, Button, ConfirmModal } from '@/components/ui';
 import { PatientSelectDropdown, InlinePatientForm } from '@/components/patients';
-import { StepProgress, MedicalHistoryForm, getEmptyMedicalHistoryForm, PhotoCaptureForm, getEmptyPhotoForm, SkinConcernsForm, getEmptySkinConcernsForm, TreatmentSelectionForm, getEmptyTreatmentSelectionForm } from '@/components/clinical-documentation';
+import { StepProgress, MedicalHistoryForm, getEmptyMedicalHistoryForm, PhotoCaptureForm, getEmptyPhotoForm, SkinConcernsForm, getEmptySkinConcernsForm, TreatmentSelectionForm, getEmptyTreatmentSelectionForm, SessionSummaryStep, SkinWellnessConsentModal } from '@/components/clinical-documentation';
+import { buildSkinWellnessUrl } from '@/lib/skinWellness';
 import { Patient, PatientFormDataExtended, PatientMedicalHistory, PatientMedicalHistoryFormData, PhotoSessionFormData, SkinConcernsFormData, TreatmentSelectionFormData } from '@/types';
 import { logger } from '@/lib/logger';
 import { validatePatientFormWithConsent } from '@/lib/validation';
@@ -24,7 +25,10 @@ export default function ClinicalDocumentationPage() {
   const doctorCountry = authState.doctor?.country || 'US';
 
   // Step management
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
+
+  // Step 6 state - Session Summary
+  const [showWellnessConsentModal, setShowWellnessConsentModal] = useState(false);
 
   // Step 1 state - Patient Selection
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -263,6 +267,9 @@ export default function ClinicalDocumentationPage() {
     } else if (currentStep === 5) {
       // Step 5 → Step 4
       setCurrentStep(4);
+    } else if (currentStep === 6) {
+      // Step 6 → Step 5
+      setCurrentStep(5);
     }
   };
 
@@ -356,8 +363,14 @@ export default function ClinicalDocumentationPage() {
     setCurrentStep(5);
   };
 
-  // Handle Save Session (Step 5 - save all data and finish)
-  const handleSaveSession = async () => {
+  // Handle Continue (Step 5 → Step 6) - Go to session summary
+  const handleContinueToStep6 = () => {
+    if (!documentingPatient) return;
+    setCurrentStep(6);
+  };
+
+  // Handle Finish Session (Step 6 - save all data and return to patient page)
+  const handleFinishSession = async () => {
     if (!documentingPatient || !authState.doctor) return;
 
     setIsSubmitting(true);
@@ -371,6 +384,7 @@ export default function ClinicalDocumentationPage() {
           photoSessionId: savedPhotoSessionId,
           selectedSkinConcerns: skinConcernsData.selectedConcerns,
           selectedTreatments: treatmentData.selectedTreatments,
+          notes: treatmentData.generalNotes || undefined,
         }
       );
 
@@ -387,6 +401,61 @@ export default function ClinicalDocumentationPage() {
         }
         showToast(message, 'success');
         router.push(`/patients/${documentingPatient.id}`);
+      } else {
+        showToast('Failed to save clinical evaluation', 'error');
+      }
+    } catch (error) {
+      logger.error('Error saving clinical evaluation:', error);
+      showToast('Failed to save clinical evaluation', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle Continue to Skin Wellness Mode (Step 6)
+  const handleContinueToWellness = () => {
+    // Check if photo consent was given
+    if (!photoFormData.photoConsentGiven) {
+      // Show consent modal
+      setShowWellnessConsentModal(true);
+      return;
+    }
+
+    // Navigate to Skin Wellness Mode
+    navigateToWellness();
+  };
+
+  // Handle consent confirmation from modal
+  const handleWellnessConsentConfirm = () => {
+    setShowWellnessConsentModal(false);
+    navigateToWellness();
+  };
+
+  // Navigate to Skin Wellness Mode (saves session first, then navigates)
+  const navigateToWellness = async () => {
+    if (!documentingPatient || !authState.doctor || !savedPhotoSessionId) return;
+
+    setIsSubmitting(true);
+
+    try {
+      // Save clinical evaluation first
+      const session = await createClinicalEvaluation(
+        documentingPatient.id,
+        authState.doctor.id,
+        {
+          photoSessionId: savedPhotoSessionId,
+          selectedSkinConcerns: skinConcernsData.selectedConcerns,
+          selectedTreatments: treatmentData.selectedTreatments,
+          notes: treatmentData.generalNotes || undefined,
+        }
+      );
+
+      if (session) {
+        setHasUnsavedChanges(false);
+        showToast('Clinical documentation saved', 'success');
+        // Navigate to Skin Wellness Mode with ONLY photoSessionId and patientId (data isolation)
+        const wellnessUrl = buildSkinWellnessUrl(savedPhotoSessionId, documentingPatient.id);
+        router.push(wellnessUrl);
       } else {
         showToast('Failed to save clinical evaluation', 'error');
       }
@@ -644,15 +713,38 @@ export default function ClinicalDocumentationPage() {
         <Button
           size="lg"
           className="flex-1"
-          onClick={handleSaveSession}
-          isLoading={isSubmitting}
+          onClick={handleContinueToStep6}
           disabled={isSubmitting}
         >
-          Complete Session
+          Continue
         </Button>
       </div>
     </>
   );
+
+  // Render Step 6
+  const renderStep6 = () => {
+    if (!documentingPatient) return null;
+
+    return (
+      <SessionSummaryStep
+        patient={documentingPatient}
+        skinConcerns={skinConcernsData.selectedConcerns}
+        treatments={treatmentData.selectedTreatments}
+        photoSessionId={savedPhotoSessionId}
+        photoConsentGiven={photoFormData.photoConsentGiven}
+        photoData={photoFormData}
+        generalNotes={treatmentData.generalNotes}
+        onGeneralNotesChange={(notes) => setTreatmentData(prev => ({ ...prev, generalNotes: notes }))}
+        onFinishSession={handleFinishSession}
+        onContinueToWellness={handleContinueToWellness}
+        onBack={handleBack}
+        isSubmitting={isSubmitting}
+        doctorId={authState.doctor?.id}
+        accessToken={authState.accessToken || undefined}
+      />
+    );
+  };
 
   return (
     <div className="min-h-full relative">
@@ -699,7 +791,15 @@ export default function ClinicalDocumentationPage() {
         {currentStep === 3 && renderStep3()}
         {currentStep === 4 && renderStep4()}
         {currentStep === 5 && renderStep5()}
+        {currentStep === 6 && renderStep6()}
       </div>
+
+      {/* Skin Wellness Consent Modal */}
+      <SkinWellnessConsentModal
+        isOpen={showWellnessConsentModal}
+        onConfirm={handleWellnessConsentConfirm}
+        onCancel={() => setShowWellnessConsentModal(false)}
+      />
 
       {/* Unsaved Changes Modal */}
       <ConfirmModal
