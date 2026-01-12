@@ -232,7 +232,6 @@ export interface Database {
           doctor_id: string;
           photo_session_id: string | null;
           selected_skin_concerns: string[];
-          selected_ebd_devices: { deviceId: string; sessionCount: number | null; notes: string }[];
           selected_treatments: { type: string; deviceId?: string; procedureId?: string; sessionCount: number | null; notes: string }[];
           notes: string | null;
           status: 'in_progress' | 'completed';
@@ -245,7 +244,6 @@ export interface Database {
           doctor_id: string;
           photo_session_id?: string | null;
           selected_skin_concerns?: string[];
-          selected_ebd_devices?: { deviceId: string; sessionCount: number | null; notes: string }[];
           selected_treatments?: { type: string; deviceId?: string; procedureId?: string; sessionCount: number | null; notes: string }[];
           notes?: string | null;
           status?: 'in_progress' | 'completed';
@@ -258,7 +256,6 @@ export interface Database {
           doctor_id?: string;
           photo_session_id?: string | null;
           selected_skin_concerns?: string[];
-          selected_ebd_devices?: { deviceId: string; sessionCount: number | null; notes: string }[];
           selected_treatments?: { type: string; deviceId?: string; procedureId?: string; sessionCount: number | null; notes: string }[];
           notes?: string | null;
           status?: 'in_progress' | 'completed';

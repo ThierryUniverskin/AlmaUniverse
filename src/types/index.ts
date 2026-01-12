@@ -290,8 +290,7 @@ export interface ClinicalEvaluationSession {
   doctorId: string;
   photoSessionId: string | null;
   selectedSkinConcerns: string[]; // Array of concern IDs in priority order
-  selectedEBDDevices: SelectedEBDDevice[]; // Array of selected EBD devices (legacy)
-  selectedTreatments: SelectedTreatment[]; // Array of all treatments (new multi-category)
+  selectedTreatments: SelectedTreatment[]; // Array of all treatments (multi-category)
   notes: string | null;
   status: ClinicalEvaluationStatus;
   createdAt: string;
@@ -301,8 +300,7 @@ export interface ClinicalEvaluationSession {
 export interface ClinicalEvaluationSessionFormData {
   photoSessionId?: string | null;
   selectedSkinConcerns: string[];
-  selectedEBDDevices?: SelectedEBDDevice[];
-  selectedTreatments?: SelectedTreatment[]; // New multi-category treatments
+  selectedTreatments?: SelectedTreatment[];
   notes?: string;
 }
 

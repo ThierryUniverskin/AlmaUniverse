@@ -152,8 +152,8 @@ CREATE TABLE clinical_evaluation_sessions (
   -- Skin concerns stored as array of concern IDs in priority order
   selected_skin_concerns TEXT[] DEFAULT '{}',
 
-  -- EBD devices stored as JSONB array: [{ deviceId, sessionCount, notes }]
-  selected_ebd_devices JSONB DEFAULT '[]',
+  -- Treatments stored as JSONB array: [{ type, deviceId?, procedureId?, sessionCount, notes }]
+  selected_treatments JSONB DEFAULT '[]',
 
   -- Session metadata
   notes TEXT,
