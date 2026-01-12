@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Input, Select, Textarea } from '@/components/ui';
+import { Input, Textarea, StyledSelect } from '@/components/ui';
 import { PhoneInput } from './PhoneInput';
 import { DoctorProfileFormData, PhoneNumber, Address } from '@/types';
 import { ValidationError, getFieldError } from '@/lib/validation';
@@ -55,12 +55,14 @@ function PersonalInfoForm({ formData, onChange, errors, email, savedCountry }: P
         {/* Title + First Name + Last Name (row 1) */}
         <div className="grid grid-cols-12 gap-4 mb-6">
           <div className="col-span-12 sm:col-span-3">
-            <Select
-              label="Title"
-              name="title"
-              value={formData.title || ''}
-              onChange={(e) => handleChange('title', e.target.value || undefined)}
+            <label className="block text-sm font-medium text-stone-700 mb-2 tracking-snug">
+              Title
+            </label>
+            <StyledSelect
               options={TITLE_OPTIONS}
+              value={formData.title || ''}
+              onChange={(value) => handleChange('title', value || undefined)}
+              placeholder="Select..."
             />
           </div>
           <div className="col-span-12 sm:col-span-4">
@@ -133,22 +135,32 @@ function PersonalInfoForm({ formData, onChange, errors, email, savedCountry }: P
 
         {/* Other personal fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Select
-            label="Country"
-            name="country"
-            value={formData.country || ''}
-            onChange={(e) => handleChange('country', e.target.value || undefined)}
-            options={COUNTRY_OPTIONS}
-            disabled={isCountryLocked}
-            hint={isCountryLocked ? 'Country cannot be changed once set' : undefined}
-          />
-          <Select
-            label="Language"
-            name="language"
-            value={formData.language || ''}
-            onChange={(e) => handleChange('language', e.target.value || undefined)}
-            options={LANGUAGE_OPTIONS}
-          />
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2 tracking-snug">
+              Country
+            </label>
+            <StyledSelect
+              options={COUNTRY_OPTIONS}
+              value={formData.country || ''}
+              onChange={(value) => handleChange('country', value || undefined)}
+              placeholder="Select country..."
+              disabled={isCountryLocked}
+            />
+            {isCountryLocked && (
+              <p className="mt-2 text-sm text-stone-500">Country cannot be changed once set</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2 tracking-snug">
+              Language
+            </label>
+            <StyledSelect
+              options={LANGUAGE_OPTIONS}
+              value={formData.language || ''}
+              onChange={(value) => handleChange('language', value || undefined)}
+              placeholder="Select language..."
+            />
+          </div>
         </div>
       </section>
 
@@ -282,13 +294,17 @@ function PersonalInfoForm({ formData, onChange, errors, email, savedCountry }: P
             onChange={(e) => handleChange('medicalLicenseNumber', e.target.value)}
             placeholder="e.g., MD-2020-CA-45678"
           />
-          <Select
-            label="Specialization"
-            name="specialization"
-            value={formData.specialization || ''}
-            onChange={(e) => handleChange('specialization', e.target.value || undefined)}
-            options={SPECIALIZATION_OPTIONS}
-          />
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2 tracking-snug">
+              Specialization
+            </label>
+            <StyledSelect
+              options={SPECIALIZATION_OPTIONS}
+              value={formData.specialization || ''}
+              onChange={(value) => handleChange('specialization', value || undefined)}
+              placeholder="Select specialization..."
+            />
+          </div>
         </div>
       </section>
 
@@ -353,13 +369,17 @@ function PersonalInfoForm({ formData, onChange, errors, email, savedCountry }: P
             onChange={(e) => handleAddressChange('postalCode', e.target.value)}
             placeholder="M5V 2T6"
           />
-          <Select
-            label="Country"
-            name="addressCountry"
-            value={formData.officeAddress?.country || ''}
-            onChange={(e) => handleAddressChange('country', e.target.value)}
-            options={COUNTRY_OPTIONS}
-          />
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2 tracking-snug">
+              Country
+            </label>
+            <StyledSelect
+              options={COUNTRY_OPTIONS}
+              value={formData.officeAddress?.country || ''}
+              onChange={(value) => handleAddressChange('country', value)}
+              placeholder="Select country..."
+            />
+          </div>
         </div>
       </section>
     </div>
