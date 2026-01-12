@@ -83,8 +83,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ['var(--font-mont)', 'system-ui', 'sans-serif'],
-        sans: ['var(--font-mont)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
         mono: ['SF Mono', 'Monaco', 'Consolas', 'monospace'],
       },
       fontSize: {
