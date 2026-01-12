@@ -1,30 +1,24 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Button, LoadingSpinner, useToast, ConfirmModal } from '@/components/ui';
+import { LoadingSpinner, useToast } from '@/components/ui';
 import { SettingsSidebar, ClinicDevicesSection, CustomProceduresSection } from '@/components/settings';
 import { EBDDevice } from '@/types';
 import { fetchDevicesByCountry, fetchDoctorDeviceIds, saveDoctorDevices } from '@/lib/doctorDevices';
 import { logger } from '@/lib/logger';
 
 export default function SettingsPage() {
-  const router = useRouter();
   const { state } = useAuth();
   const { showToast } = useToast();
 
   const [activeSection, setActiveSection] = useState('clinic-devices');
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [showLeaveModal, setShowLeaveModal] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [togglingDeviceId, setTogglingDeviceId] = useState<string | null>(null);
 
   // Device state
   const [availableDevices, setAvailableDevices] = useState<EBDDevice[]>([]);
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>([]);
-  const [initialSelectedIds, setInitialSelectedIds] = useState<string[]>([]);
 
   // Ref to track if data has been loaded
   const dataLoadedRef = useRef(false);
@@ -50,7 +44,6 @@ export default function SettingsPage() {
           : countryDevices.map(d => d.id);
 
         setSelectedDeviceIds(effectiveSelection);
-        setInitialSelectedIds(effectiveSelection);
         dataLoadedRef.current = true;
       } catch (error) {
         logger.error('Error loading devices:', error);
@@ -63,92 +56,33 @@ export default function SettingsPage() {
     loadDevices();
   }, [state.doctor, state.accessToken, showToast]);
 
-  // Warn user about unsaved changes when leaving page
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
-
-  // Intercept link clicks for in-app navigation
-  useEffect(() => {
-    const handleLinkClick = (e: MouseEvent) => {
-      if (!hasUnsavedChanges) return;
-
-      const target = e.target as HTMLElement;
-      const link = target.closest('a');
-
-      if (link && link.href && !link.href.includes('/settings')) {
-        const url = new URL(link.href);
-        if (url.origin === window.location.origin) {
-          e.preventDefault();
-          e.stopPropagation();
-          setPendingNavigation(url.pathname);
-          setShowLeaveModal(true);
-        }
-      }
-    };
-
-    document.addEventListener('click', handleLinkClick, true);
-    return () => document.removeEventListener('click', handleLinkClick, true);
-  }, [hasUnsavedChanges]);
-
-  const handleConfirmLeave = () => {
-    setShowLeaveModal(false);
-    setHasUnsavedChanges(false);
-    if (pendingNavigation) {
-      router.push(pendingNavigation);
-    }
-    setPendingNavigation(null);
-  };
-
-  const handleCancelLeave = () => {
-    setShowLeaveModal(false);
-    setPendingNavigation(null);
-  };
-
-  const handleDeviceToggle = useCallback((deviceId: string) => {
-    setSelectedDeviceIds(prev => {
-      const newSelection = prev.includes(deviceId)
-        ? prev.filter(id => id !== deviceId)
-        : [...prev, deviceId];
-      return newSelection;
-    });
-    setHasUnsavedChanges(true);
-  }, []);
-
-  const handleSaveChanges = async () => {
+  // Auto-save device toggle
+  const handleDeviceToggle = useCallback(async (deviceId: string) => {
     if (!state.doctor || !state.accessToken) return;
 
-    setIsSaving(true);
+    // Optimistically update UI
+    const newSelection = selectedDeviceIds.includes(deviceId)
+      ? selectedDeviceIds.filter(id => id !== deviceId)
+      : [...selectedDeviceIds, deviceId];
+
+    setSelectedDeviceIds(newSelection);
+    setTogglingDeviceId(deviceId);
+
+    // Save to database
     const result = await saveDoctorDevices(
       state.doctor.id,
-      selectedDeviceIds,
+      newSelection,
       state.accessToken
     );
-    setIsSaving(false);
 
-    if (result.success) {
-      showToast('Device settings saved successfully', 'success');
-      setInitialSelectedIds(selectedDeviceIds);
-      setHasUnsavedChanges(false);
-    } else {
-      showToast(result.error || 'Failed to save device settings', 'error');
+    setTogglingDeviceId(null);
+
+    if (!result.success) {
+      // Revert on failure
+      setSelectedDeviceIds(selectedDeviceIds);
+      showToast('Failed to update device', 'error');
     }
-  };
-
-  const handleDiscard = () => {
-    setSelectedDeviceIds(initialSelectedIds);
-    setHasUnsavedChanges(false);
-    showToast('Changes discarded', 'success');
-  };
+  }, [state.doctor, state.accessToken, selectedDeviceIds, showToast]);
 
   if (state.isLoading || !state.doctor) {
     return (
@@ -207,24 +141,6 @@ export default function SettingsPage() {
               <p className="text-sm text-stone-500">Configure your clinic preferences and device availability.</p>
             </div>
           </div>
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              onClick={handleDiscard}
-              disabled={!hasUnsavedChanges || isSaving}
-            >
-              Discard
-            </Button>
-            <Button
-              onClick={handleSaveChanges}
-              isLoading={isSaving}
-              disabled={!hasUnsavedChanges || isSaving}
-            >
-              Save Changes
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -248,6 +164,7 @@ export default function SettingsPage() {
                 onDeviceToggle={handleDeviceToggle}
                 isLoading={isLoading}
                 doctorCountry={state.doctor.country}
+                togglingDeviceId={togglingDeviceId}
               />
             )}
             {activeSection === 'custom-procedures' && state.accessToken && (
@@ -259,18 +176,6 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-
-      {/* Unsaved Changes Modal */}
-      <ConfirmModal
-        isOpen={showLeaveModal}
-        title="Unsaved Changes"
-        message="You have unsaved changes. Are you sure you want to leave this page? Your changes will be lost."
-        confirmLabel="Leave Page"
-        cancelLabel="Stay"
-        variant="warning"
-        onConfirm={handleConfirmLeave}
-        onCancel={handleCancelLeave}
-      />
     </div>
   );
 }

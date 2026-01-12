@@ -12,6 +12,7 @@ export interface ClinicDevicesSectionProps {
   onDeviceToggle: (deviceId: string) => void;
   isLoading: boolean;
   doctorCountry?: string | null;
+  togglingDeviceId?: string | null;
 }
 
 export function ClinicDevicesSection({
@@ -20,6 +21,7 @@ export function ClinicDevicesSection({
   onDeviceToggle,
   isLoading,
   doctorCountry,
+  togglingDeviceId,
 }: ClinicDevicesSectionProps) {
   const countryLabel = doctorCountry
     ? COUNTRY_OPTIONS.find(c => c.value === doctorCountry)?.label || doctorCountry
@@ -108,6 +110,8 @@ export function ClinicDevicesSection({
               device={device}
               isSelected={selectedDeviceIds.includes(device.id)}
               onToggle={() => onDeviceToggle(device.id)}
+              isToggling={togglingDeviceId === device.id}
+              disabled={togglingDeviceId !== null && togglingDeviceId !== device.id}
             />
           ))}
         </div>
@@ -116,7 +120,7 @@ export function ClinicDevicesSection({
       {/* Footer Note */}
       {availableDevices.length > 0 && (
         <p className="text-xs text-stone-400 text-center pt-4">
-          Changes will take effect after saving. Devices not selected will not appear in clinical documentation.
+          Changes are saved automatically. Devices not selected will not appear in clinical documentation.
         </p>
       )}
     </div>
