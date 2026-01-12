@@ -7,6 +7,7 @@ import { getConcernById } from '@/lib/skinConcerns';
 import { getCategoryLabel } from '@/lib/treatmentCategories';
 import { fetchEBDDeviceById } from '@/lib/ebdDevices';
 import { getDoctorProcedureById } from '@/lib/doctorProcedures';
+import { formatPrice, calculateTotalPrice } from '@/lib/pricing';
 
 export interface SessionSummaryCardProps {
   patientName: string;
@@ -19,6 +20,7 @@ export interface SessionSummaryCardProps {
   rightProfilePhoto?: string | null;
   doctorId?: string;
   accessToken?: string;
+  countryCode?: string | null;
 }
 
 // Resolved treatment with name and image
@@ -28,6 +30,7 @@ interface ResolvedTreatment {
   category: TreatmentCategory;
   imageUrl?: string | null;
   notes?: string;
+  pricePerSessionCents?: number;
 }
 
 // Photo type labels
@@ -47,6 +50,7 @@ export function SessionSummaryCard({
   leftProfilePhoto,
   rightProfilePhoto,
   accessToken,
+  countryCode,
 }: SessionSummaryCardProps) {
   const [resolvedTreatments, setResolvedTreatments] = useState<ResolvedTreatment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -81,7 +85,6 @@ export function SessionSummaryCard({
           const procedure = await getDoctorProcedureById(treatment.procedureId, accessToken);
           if (procedure) {
             name = procedure.brand ? `${procedure.name} (${procedure.brand})` : procedure.name;
-            // Doctor procedures don't have images, will show placeholder
           }
         }
 
@@ -91,6 +94,7 @@ export function SessionSummaryCard({
           category: treatment.type,
           imageUrl,
           notes: treatment.notes || undefined,
+          pricePerSessionCents: treatment.pricePerSessionCents,
         });
       }
 
@@ -119,12 +123,13 @@ export function SessionSummaryCard({
   const categoryOrder: TreatmentCategory[] = ['ebd', 'toxin', 'injectable', 'other'];
   const orderedCategories = categoryOrder.filter(cat => treatmentsByCategory[cat]?.length > 0);
 
-  // Format session count display
-  const formatSessionCount = (count: number | null) => {
-    if (!count) return '';
-    if (count === 1) return '(1 session)';
-    return `(${count} sessions)`;
-  };
+  // Calculate grand total
+  const grandTotal = resolvedTreatments.reduce((sum, treatment) => {
+    if (treatment.pricePerSessionCents != null && treatment.pricePerSessionCents > 0) {
+      return sum + (treatment.pricePerSessionCents * (treatment.sessionCount || 1));
+    }
+    return sum;
+  }, 0);
 
   return (
     <div className="bg-white border border-stone-200 rounded-2xl shadow-soft overflow-hidden">
@@ -234,69 +239,115 @@ export function SessionSummaryCard({
           </div>
         )}
 
-        {/* Treatments */}
+        {/* Treatments - Card-based layout focused on treatment details */}
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-2">
+          <label className="block text-sm font-medium text-stone-700 mb-3">
             Documented Treatments
           </label>
 
           {isLoading ? (
-            <div className="animate-pulse space-y-2">
-              <div className="h-4 bg-stone-100 rounded w-3/4" />
-              <div className="h-4 bg-stone-100 rounded w-1/2" />
+            <div className="animate-pulse space-y-3">
+              <div className="h-20 bg-stone-100 rounded-xl" />
+              <div className="h-20 bg-stone-100 rounded-xl" />
             </div>
           ) : orderedCategories.length > 0 ? (
             <div className="space-y-4">
               {orderedCategories.map(category => (
                 <div key={category}>
-                  <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">
-                    {getCategoryLabel(category)}
-                  </span>
-                  <div className="mt-2 space-y-2">
-                    {treatmentsByCategory[category].map((treatment, index) => (
-                      <div
-                        key={index}
-                        className="flex items-start gap-3 p-3 bg-stone-50 rounded-xl border border-stone-100"
-                      >
-                        {/* Treatment image */}
-                        {treatment.imageUrl ? (
-                          <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-white border border-stone-200">
-                            <img
-                              src={treatment.imageUrl}
-                              alt={treatment.name}
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                        ) : (
-                          <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
-                            <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
-                            </svg>
-                          </div>
-                        )}
-                        {/* Treatment details */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-stone-800">
-                              {treatment.name}
-                            </span>
-                            {formatSessionCount(treatment.sessionCount) && (
-                              <span className="text-xs text-stone-400">
-                                {formatSessionCount(treatment.sessionCount)}
-                              </span>
+                  {/* Category header */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-semibold text-stone-500 uppercase tracking-wide">
+                      {getCategoryLabel(category)}
+                    </span>
+                    <div className="flex-1 h-px bg-stone-200" />
+                  </div>
+
+                  {/* Treatment cards */}
+                  <div className="space-y-3">
+                    {treatmentsByCategory[category].map((treatment, index) => {
+                      const sessionCount = treatment.sessionCount || 1;
+                      const hasPrice = treatment.pricePerSessionCents != null && treatment.pricePerSessionCents > 0;
+                      const lineTotal = hasPrice ? calculateTotalPrice(treatment.pricePerSessionCents, sessionCount) : 0;
+
+                      return (
+                        <div
+                          key={index}
+                          className="bg-stone-50 border border-stone-200 rounded-xl p-4"
+                        >
+                          <div className="flex gap-4">
+                            {/* Treatment image - larger */}
+                            {treatment.imageUrl ? (
+                              <div className="flex-shrink-0 w-16 h-[80px] rounded-lg overflow-hidden bg-white border border-stone-200">
+                                <img
+                                  src={treatment.imageUrl}
+                                  alt={treatment.name}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex-shrink-0 w-16 h-[80px] rounded-lg bg-gradient-to-br from-purple-50 to-violet-100 border border-purple-100 flex items-center justify-center">
+                                <svg className="w-7 h-7 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+                                </svg>
+                              </div>
                             )}
+
+                            {/* Treatment details */}
+                            <div className="flex-1 min-w-0">
+                              {/* Name and sessions */}
+                              <div className="flex items-start justify-between gap-2 mb-1">
+                                <h4 className="text-sm font-semibold text-stone-900">
+                                  {treatment.name}
+                                </h4>
+                                <span className="flex-shrink-0 inline-flex items-center px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                                  {sessionCount} session{sessionCount !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+
+                              {/* Notes - prominently displayed */}
+                              {treatment.notes && (
+                                <div className="mt-2 p-2.5 bg-white border border-stone-200 rounded-lg">
+                                  <p className="text-xs text-stone-600 leading-relaxed">
+                                    <span className="font-medium text-stone-500">Notes: </span>
+                                    {treatment.notes}
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Price - subtle, at the bottom */}
+                              {hasPrice && (
+                                <div className="mt-2 flex items-center gap-2 text-xs text-stone-500">
+                                  <span>{formatPrice(treatment.pricePerSessionCents, countryCode)}/session</span>
+                                  {sessionCount > 1 && (
+                                    <>
+                                      <span>×</span>
+                                      <span>{sessionCount}</span>
+                                      <span>=</span>
+                                      <span className="font-medium text-stone-700">{formatPrice(lineTotal, countryCode)}</span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          {treatment.notes && (
-                            <p className="text-xs text-stone-500 mt-1 line-clamp-2">
-                              {treatment.notes}
-                            </p>
-                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}
+
+              {/* Grand Total - subtle footer */}
+              {grandTotal > 0 && (
+                <div className="pt-4 mt-2 border-t border-stone-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-stone-600">Estimated Total</span>
+                    <span className="text-base font-semibold text-stone-900">
+                      {formatPrice(grandTotal, countryCode)}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-sm text-stone-400 italic">No treatments documented</p>

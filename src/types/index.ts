@@ -314,6 +314,7 @@ export interface EBDDevice {
   downtime: 'None' | 'Minimal' | 'Some';
   tags: string[];
   imageUrl?: string; // URL to device image
+  defaultPriceCents?: number; // Default price per session in cents
 }
 
 // Selected device with session details
@@ -321,6 +322,21 @@ export interface SelectedEBDDevice {
   deviceId: string;
   sessionCount: number | null;
   notes: string;
+}
+
+// Doctor's device pricing information
+export interface DoctorDeviceWithPrice {
+  deviceId: string;
+  priceCents: number | null; // null means use default
+  isActive: boolean;
+}
+
+// Country-specific default price for EBD device
+export interface EBDDeviceCountryPrice {
+  id: string;
+  deviceId: string;
+  countryCode: string;
+  defaultPriceCents: number;
 }
 
 // Form data for Step 5 (legacy - kept for backward compatibility)
@@ -366,6 +382,7 @@ export interface DoctorProcedure {
   name: string;
   brand?: string;
   description?: string;
+  priceCents: number; // Price per session in cents
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -378,6 +395,7 @@ export interface DoctorProcedureFormData {
   name: string;
   brand?: string;
   description?: string;
+  priceCents: number; // Price per session in cents (required)
 }
 
 // Selected treatment (unified type for all categories)
@@ -387,6 +405,7 @@ export interface SelectedTreatment {
   procedureId?: string;   // For custom procedures (doctor_procedures.id)
   sessionCount: number | null;
   notes: string;
+  pricePerSessionCents?: number; // Price at time of selection (for display and historical accuracy)
 }
 
 // Form data for Treatment Selection (Step 5 - new version)

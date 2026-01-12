@@ -137,3 +137,21 @@ export const RECOVERY_TIME_OPTIONS = [
   { value: '3-5-days', label: '3–5 days' },
   { value: 'more-than-5-days', label: 'More than 5 days' },
 ] as const;
+
+// Currency configuration per country
+// position: 'prefix' = $100, 'suffix' = 100€
+export const COUNTRY_CURRENCY_MAP: Record<string, { code: string; symbol: string; position: 'prefix' | 'suffix' }> = {
+  'US': { code: 'USD', symbol: '$', position: 'prefix' },
+  'CA': { code: 'CAD', symbol: '$', position: 'prefix' },
+  'GB': { code: 'GBP', symbol: '£', position: 'prefix' },
+  'AU': { code: 'AUD', symbol: '$', position: 'prefix' },
+  'DE': { code: 'EUR', symbol: '€', position: 'suffix' },
+  'FR': { code: 'EUR', symbol: '€', position: 'suffix' },
+  'ES': { code: 'EUR', symbol: '€', position: 'suffix' },
+  'IT': { code: 'EUR', symbol: '€', position: 'suffix' },
+  'MX': { code: 'MXN', symbol: '$', position: 'prefix' },
+  'BR': { code: 'BRL', symbol: 'R$', position: 'prefix' },
+  'IN': { code: 'INR', symbol: '₹', position: 'prefix' },
+  'JP': { code: 'JPY', symbol: '¥', position: 'prefix' },
+  'CN': { code: 'CNY', symbol: '¥', position: 'prefix' },
+} as const;

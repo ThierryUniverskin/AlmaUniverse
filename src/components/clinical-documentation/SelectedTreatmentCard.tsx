@@ -5,6 +5,7 @@ import { SelectedTreatment, EBDDevice, DoctorProcedure, TreatmentCategory } from
 import { fetchEBDDeviceById, getFitzpatrickColor, getDowntimeColor } from '@/lib/ebdDevices';
 import { getDoctorProcedureById } from '@/lib/doctorProcedures';
 import { getSubcategoryLabel, getCategorySingularLabel } from '@/lib/treatmentCategories';
+import { formatPrice, calculateTotalPrice } from '@/lib/pricing';
 
 export interface SelectedTreatmentCardProps {
   treatment: SelectedTreatment;
@@ -13,6 +14,7 @@ export interface SelectedTreatmentCardProps {
   disabled?: boolean;
   doctorId?: string;
   accessToken?: string;
+  countryCode?: string | null;
 }
 
 // Category icon component
@@ -59,6 +61,7 @@ export function SelectedTreatmentCard({
   disabled = false,
   doctorId,
   accessToken,
+  countryCode,
 }: SelectedTreatmentCardProps) {
   const [device, setDevice] = useState<EBDDevice | null>(null);
   const [procedure, setProcedure] = useState<DoctorProcedure | null>(null);
@@ -131,6 +134,11 @@ export function SelectedTreatmentCard({
     ? device?.description
     : procedure?.description || (procedure?.subcategory ? getSubcategoryLabel(procedure.subcategory) : '');
   const displayBrand = treatment.type !== 'ebd' ? procedure?.brand : undefined;
+
+  // Price calculations
+  const sessionCount = treatment.sessionCount || 1;
+  const hasPrice = treatment.pricePerSessionCents != null && treatment.pricePerSessionCents > 0;
+  const totalPrice = hasPrice ? calculateTotalPrice(treatment.pricePerSessionCents, sessionCount) : 0;
 
   if (isLoadingDetails) {
     return (
@@ -256,7 +264,7 @@ export function SelectedTreatmentCard({
                 </svg>
               </button>
               <span className="px-3 py-1.5 text-sm font-medium text-stone-900 min-w-[2rem] text-center">
-                {treatment.sessionCount || 1}
+                {sessionCount}
               </span>
               <button
                 type="button"
@@ -292,6 +300,22 @@ export function SelectedTreatmentCard({
           </div>
         </div>
       </div>
+
+      {/* Price Row - dedicated section at bottom */}
+      {hasPrice && (
+        <div className="border-t border-stone-100 pt-3 mt-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs text-stone-500">
+              <span>{formatPrice(treatment.pricePerSessionCents, countryCode)}</span>
+              <span>×</span>
+              <span>{sessionCount} session{sessionCount !== 1 ? 's' : ''}</span>
+            </div>
+            <div className="text-sm font-semibold text-purple-700">
+              {formatPrice(totalPrice, countryCode)}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

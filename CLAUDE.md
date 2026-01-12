@@ -30,21 +30,23 @@ The app is fully functional with real authentication and database persistence vi
 | Toast notifications | Done | Success/error/info states |
 | Unsaved changes warning | Done | Modal on navigation |
 | Multi-tenant data | Done | RLS ensures doctors only see their patients |
-| Clinical Documentation | Done | 5-step flow: Patient → Health → Photos → Concerns → EBD Devices |
+| Clinical Documentation | Done | 6-step flow: Patient → Health → Photos → Concerns → Treatments → Summary |
+| Treatment Pricing | Done | Multi-currency, per-country defaults, doctor customization |
 
 ### Clinical Documentation Flow
 
-The clinical documentation wizard guides physicians through a 5-step process:
+The clinical documentation wizard guides physicians through a 6-step process:
 
 1. **Patient Selection** - Select existing or create new patient record
 2. **Medical History** - Capture reproductive, cancer, skin conditions, allergies, medications
 3. **Photo Collection** - Capture frontal + profile photos with remove.bg background removal
 4. **Skin Concerns** - Select from 17 medical skin conditions across 4 categories (drag & drop priority)
-5. **Treatment Selection** - Select treatments from 4 categories (accordion UI):
-   - **EBD Devices** - Alma device catalog (read-only from database)
+5. **Treatment Selection** - Select treatments from 4 categories with pricing:
+   - **EBD Devices** - Alma device catalog with per-session pricing
    - **Toxins** - Custom doctor procedures (e.g., Botox, Dysport)
    - **Injectables** - Custom doctor procedures (e.g., Juvederm, Restylane)
    - **Other Aesthetic Procedures** - Custom procedures with subcategories
+6. **Summary** - Review all documented information with treatment cards and totals
 
 Key files:
 - `src/app/(dashboard)/clinical-documentation/new/page.tsx` - Main wizard page
@@ -54,6 +56,26 @@ Key files:
 - `src/lib/doctorProcedures.ts` - Custom procedures CRUD
 - `src/lib/treatmentCategories.ts` - Treatment category constants
 - `src/lib/backgroundRemoval.ts` - remove.bg API integration
+- `src/lib/pricing.ts` - Multi-currency pricing utilities
+
+### Treatment Pricing System
+
+Multi-currency pricing with country-specific defaults:
+
+- **Price storage**: All prices stored in cents (integers) to avoid floating-point issues
+- **Multi-currency**: USD ($), EUR (€), GBP (£), etc. based on doctor's country
+- **Price hierarchy**: Doctor's custom price → Country default → Global default
+- **Editable in Settings only**: Prices are read-only during clinical documentation
+
+Database tables:
+- `ebd_devices.default_price_cents` - Global default price per device
+- `ebd_device_country_prices` - Country-specific default prices (device_id, country_code, price)
+- `doctor_devices.price_cents` - Doctor's custom price (NULL = use default)
+- `doctor_procedures.price_cents` - Required price for custom procedures
+
+Migrations:
+- `007_add_treatment_pricing.sql` - Adds price columns to existing tables
+- `008_add_device_country_prices.sql` - Creates country-specific pricing table with seed data
 
 ### Pending Features
 
@@ -119,10 +141,11 @@ src/
 - `patients` - Patient records (linked to doctor via doctor_id)
 - `photo_sessions` - Patient photo sessions (frontal, left, right profiles)
 - `clinical_evaluation_sessions` - Clinical documentation sessions
-- `ebd_devices` - Master catalog of 19 Energy-Based Devices (lasers, IPL, plasma)
-- `doctor_devices` - Junction table: which devices each doctor has access to
+- `ebd_devices` - Master catalog of 19 Energy-Based Devices (with default_price_cents)
+- `ebd_device_country_prices` - Country-specific default prices per device
+- `doctor_devices` - Junction table: devices per doctor (with custom price_cents)
 - `country_devices` - Junction table: which devices available per country
-- `doctor_procedures` - Custom procedures (Toxins, Injectables, Other) per doctor
+- `doctor_procedures` - Custom procedures per doctor (with price_cents)
 
 ### EBD Devices Database
 The EBD devices are stored in database with fallback to static data. To set up:

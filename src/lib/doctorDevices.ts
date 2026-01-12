@@ -14,7 +14,15 @@ function dbDeviceToEBDDevice(db: DbEBDDevice): EBDDevice {
     downtime: db.downtime ?? 'None',
     tags: db.tags ?? [],
     imageUrl: db.image_url ?? undefined,
+    defaultPriceCents: db.default_price_cents ?? undefined,
   };
+}
+
+// Type for doctor device with price information
+export interface DoctorDeviceWithPrice {
+  deviceId: string;
+  priceCents: number | null; // null means use default
+  isActive: boolean;
 }
 
 /**
@@ -319,5 +327,160 @@ export async function fetchDoctorActiveDevices(
   } catch (error) {
     logger.error('Error fetching doctor active devices:', error);
     return [];
+  }
+}
+
+/**
+ * Fetch doctor's devices with their price information
+ * Returns device_id, price_cents, and is_active for each device
+ */
+export async function fetchDoctorDevicesWithPrices(
+  doctorId: string,
+  accessToken: string
+): Promise<DoctorDeviceWithPrice[]> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey || !doctorId) {
+    return [];
+  }
+
+  try {
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/doctor_devices?doctor_id=eq.${doctorId}&select=device_id,price_cents,is_active`,
+      {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      logger.warn('Could not fetch doctor devices with prices');
+      return [];
+    }
+
+    const data: { device_id: string; price_cents: number | null; is_active: boolean }[] = await response.json();
+    return data.map(d => ({
+      deviceId: d.device_id,
+      priceCents: d.price_cents,
+      isActive: d.is_active,
+    }));
+  } catch (error) {
+    logger.error('Error fetching doctor devices with prices:', error);
+    return [];
+  }
+}
+
+/**
+ * Update the price for a specific doctor device
+ */
+export async function updateDoctorDevicePrice(
+  doctorId: string,
+  deviceId: string,
+  priceCents: number | null,
+  accessToken: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    return { success: false, error: 'Supabase not configured' };
+  }
+
+  if (!doctorId || !deviceId) {
+    return { success: false, error: 'Doctor ID and Device ID required' };
+  }
+
+  try {
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/doctor_devices?doctor_id=eq.${doctorId}&device_id=eq.${deviceId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({ price_cents: priceCents }),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Failed to update device price: ${error}`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    logger.error('Error updating doctor device price:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Get the effective price for a device (doctor's price or default)
+ */
+export async function getDevicePrice(
+  doctorId: string,
+  deviceId: string,
+  accessToken: string
+): Promise<number | null> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey || !doctorId || !deviceId) {
+    return null;
+  }
+
+  try {
+    // First try to get doctor's custom price
+    const doctorDeviceResponse = await fetch(
+      `${supabaseUrl}/rest/v1/doctor_devices?doctor_id=eq.${doctorId}&device_id=eq.${deviceId}&select=price_cents`,
+      {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (doctorDeviceResponse.ok) {
+      const data: { price_cents: number | null }[] = await doctorDeviceResponse.json();
+      if (data.length > 0 && data[0].price_cents !== null) {
+        return data[0].price_cents;
+      }
+    }
+
+    // Fall back to default price from ebd_devices
+    const deviceResponse = await fetch(
+      `${supabaseUrl}/rest/v1/ebd_devices?id=eq.${deviceId}&select=default_price_cents`,
+      {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (deviceResponse.ok) {
+      const data: { default_price_cents: number | null }[] = await deviceResponse.json();
+      if (data.length > 0) {
+        return data[0].default_price_cents;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    logger.error('Error getting device price:', error);
+    return null;
   }
 }

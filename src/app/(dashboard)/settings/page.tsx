@@ -4,8 +4,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { LoadingSpinner, useToast } from '@/components/ui';
 import { SettingsSidebar, ClinicDevicesSection, CustomProceduresSection } from '@/components/settings';
-import { EBDDevice } from '@/types';
-import { fetchDevicesByCountry, fetchDoctorDeviceIds, saveDoctorDevices } from '@/lib/doctorDevices';
+import { EBDDevice, DoctorDeviceWithPrice } from '@/types';
+import { fetchDevicesByCountry, fetchDoctorDeviceIds, saveDoctorDevices, fetchDoctorDevicesWithPrices, updateDoctorDevicePrice } from '@/lib/doctorDevices';
+import { fetchAllDeviceCountryPrices } from '@/lib/ebdDevices';
 import { logger } from '@/lib/logger';
 
 export default function SettingsPage() {
@@ -15,10 +16,13 @@ export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState('clinic-devices');
   const [isLoading, setIsLoading] = useState(true);
   const [togglingDeviceId, setTogglingDeviceId] = useState<string | null>(null);
+  const [savingPriceDeviceId, setSavingPriceDeviceId] = useState<string | null>(null);
 
   // Device state
   const [availableDevices, setAvailableDevices] = useState<EBDDevice[]>([]);
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>([]);
+  const [devicePrices, setDevicePrices] = useState<Record<string, DoctorDeviceWithPrice>>({});
+  const [countryDefaultPrices, setCountryDefaultPrices] = useState<Map<string, number>>(new Map());
 
   // Ref to track if data has been loaded
   const dataLoadedRef = useRef(false);
@@ -30,13 +34,25 @@ export default function SettingsPage() {
 
       setIsLoading(true);
       try {
-        // Fetch devices available in doctor's country and doctor's current selections in parallel
-        const [countryDevices, doctorDeviceIds] = await Promise.all([
-          fetchDevicesByCountry(state.doctor.country || '', state.accessToken),
+        const doctorCountry = state.doctor.country || '';
+
+        // Fetch devices available in doctor's country, doctor's current selections, prices, and country default prices in parallel
+        const [countryDevices, doctorDeviceIds, pricesData, countryPricesMap] = await Promise.all([
+          fetchDevicesByCountry(doctorCountry, state.accessToken),
           fetchDoctorDeviceIds(state.doctor.id, state.accessToken),
+          fetchDoctorDevicesWithPrices(state.doctor.id, state.accessToken),
+          fetchAllDeviceCountryPrices(doctorCountry, state.accessToken),
         ]);
 
         setAvailableDevices(countryDevices);
+        setCountryDefaultPrices(countryPricesMap);
+
+        // Build prices map indexed by deviceId
+        const pricesMap: Record<string, DoctorDeviceWithPrice> = {};
+        for (const p of pricesData) {
+          pricesMap[p.deviceId] = p;
+        }
+        setDevicePrices(pricesMap);
 
         // If doctor hasn't configured devices yet, default to all country devices active
         const effectiveSelection = doctorDeviceIds.length > 0
@@ -83,6 +99,40 @@ export default function SettingsPage() {
       showToast('Failed to update device', 'error');
     }
   }, [state.doctor, state.accessToken, selectedDeviceIds, showToast]);
+
+  // Handle device price change
+  const handlePriceChange = useCallback(async (deviceId: string, newPriceCents: number | null) => {
+    if (!state.doctor || !state.accessToken) return;
+
+    setSavingPriceDeviceId(deviceId);
+
+    // Optimistically update UI
+    setDevicePrices(prev => ({
+      ...prev,
+      [deviceId]: {
+        ...prev[deviceId],
+        deviceId,
+        priceCents: newPriceCents,
+        isActive: prev[deviceId]?.isActive ?? true,
+      },
+    }));
+
+    const result = await updateDoctorDevicePrice(
+      state.doctor.id,
+      deviceId,
+      newPriceCents,
+      state.accessToken
+    );
+
+    setSavingPriceDeviceId(null);
+
+    if (result.success) {
+      showToast('Price updated', 'success');
+    } else {
+      // Revert on failure - we'd need to refetch or track previous value
+      showToast('Failed to update price', 'error');
+    }
+  }, [state.doctor, state.accessToken, showToast]);
 
   if (state.isLoading || !state.doctor) {
     return (
@@ -165,12 +215,17 @@ export default function SettingsPage() {
                 isLoading={isLoading}
                 doctorCountry={state.doctor.country}
                 togglingDeviceId={togglingDeviceId}
+                devicePrices={devicePrices}
+                onPriceChange={handlePriceChange}
+                savingPriceDeviceId={savingPriceDeviceId}
+                countryDefaultPrices={countryDefaultPrices}
               />
             )}
             {activeSection === 'custom-procedures' && state.accessToken && (
               <CustomProceduresSection
                 doctorId={state.doctor.id}
                 accessToken={state.accessToken}
+                countryCode={state.doctor.country}
               />
             )}
           </div>

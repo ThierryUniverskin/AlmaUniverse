@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { DoctorProcedure, DoctorProcedureFormData, OtherProcedureSubcategory } from '@/types';
 import { OTHER_SUBCATEGORIES, getCategorySingularLabel } from '@/lib/treatmentCategories';
+import { getCurrencySymbol, parsePriceToCents, centsToInputValue, DEFAULT_PROCEDURE_PRICE_CENTS } from '@/lib/pricing';
 
 export interface ProcedureFormModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ export interface ProcedureFormModalProps {
   procedure: DoctorProcedure | null; // null for create, object for edit
   category: 'toxin' | 'injectable' | 'other';
   isSubmitting: boolean;
+  countryCode?: string;
 }
 
 export function ProcedureFormModal({
@@ -21,6 +23,7 @@ export function ProcedureFormModal({
   procedure,
   category,
   isSubmitting,
+  countryCode,
 }: ProcedureFormModalProps) {
   const [mounted, setMounted] = useState(false);
   const [formData, setFormData] = useState<DoctorProcedureFormData>({
@@ -29,8 +32,11 @@ export function ProcedureFormModal({
     brand: '',
     description: '',
     subcategory: undefined,
+    priceCents: DEFAULT_PROCEDURE_PRICE_CENTS,
   });
-  const [errors, setErrors] = useState<{ name?: string }>({});
+  const [priceInput, setPriceInput] = useState(centsToInputValue(DEFAULT_PROCEDURE_PRICE_CENTS));
+  const [errors, setErrors] = useState<{ name?: string; price?: string }>({});
+  const currencySymbol = getCurrencySymbol(countryCode);
 
   useEffect(() => {
     setMounted(true);
@@ -47,7 +53,9 @@ export function ProcedureFormModal({
           brand: procedure.brand || '',
           description: procedure.description || '',
           subcategory: procedure.subcategory,
+          priceCents: procedure.priceCents,
         });
+        setPriceInput(centsToInputValue(procedure.priceCents));
       } else {
         // Create mode - reset form
         setFormData({
@@ -56,7 +64,9 @@ export function ProcedureFormModal({
           brand: '',
           description: '',
           subcategory: undefined,
+          priceCents: DEFAULT_PROCEDURE_PRICE_CENTS,
         });
+        setPriceInput(centsToInputValue(DEFAULT_PROCEDURE_PRICE_CENTS));
       }
       setErrors({});
     }
@@ -91,11 +101,24 @@ export function ProcedureFormModal({
   const singularLabel = getCategorySingularLabel(category);
   const isEditMode = !!procedure;
 
+  const handlePriceChange = (value: string) => {
+    setPriceInput(value);
+    const cents = parsePriceToCents(value);
+    if (cents !== null) {
+      setFormData({ ...formData, priceCents: cents });
+      if (errors.price) setErrors({ ...errors, price: undefined });
+    }
+  };
+
   const validateForm = (): boolean => {
-    const newErrors: { name?: string } = {};
+    const newErrors: { name?: string; price?: string } = {};
 
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
+    }
+
+    if (!formData.priceCents || formData.priceCents <= 0) {
+      newErrors.price = 'Price is required';
     }
 
     setErrors(newErrors);
@@ -224,6 +247,32 @@ export function ProcedureFormModal({
                          focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
                          placeholder:text-stone-400"
               />
+            </div>
+
+            {/* Price per session */}
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">
+                Price per session <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm">
+                  {currencySymbol}
+                </span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={priceInput}
+                  onChange={(e) => handlePriceChange(e.target.value)}
+                  placeholder="250"
+                  className={`w-full pl-8 pr-3 py-2.5 text-sm border rounded-lg
+                             focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                             placeholder:text-stone-400
+                             ${errors.price ? 'border-red-300 bg-red-50' : 'border-stone-200'}`}
+                />
+              </div>
+              {errors.price && (
+                <p className="mt-1 text-xs text-red-600">{errors.price}</p>
+              )}
             </div>
           </div>
 

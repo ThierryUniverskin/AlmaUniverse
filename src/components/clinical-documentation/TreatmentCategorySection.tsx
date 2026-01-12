@@ -17,6 +17,7 @@ export interface TreatmentCategorySectionProps {
   disabled?: boolean;
   doctorId?: string;
   accessToken?: string;
+  countryCode?: string | null;
 }
 
 // Category-specific icons
@@ -79,6 +80,7 @@ export function TreatmentCategorySection({
   disabled = false,
   doctorId,
   accessToken,
+  countryCode,
 }: TreatmentCategorySectionProps) {
   const singularLabel = getCategorySingularLabel(category.id);
 
@@ -136,6 +138,7 @@ export function TreatmentCategorySection({
                   disabled={disabled}
                   doctorId={doctorId}
                   accessToken={accessToken}
+                  countryCode={countryCode}
                 />
               ))}
             </div>

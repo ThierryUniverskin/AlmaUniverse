@@ -1,5 +1,5 @@
-import { EBDDevice } from '@/types';
-import { DbEBDDevice } from '@/types/database';
+import { EBDDevice, EBDDeviceCountryPrice } from '@/types';
+import { DbEBDDevice, DbEBDDeviceCountryPrice } from '@/types/database';
 import { logger } from '@/lib/logger';
 
 // Static list of 19 EBD (Energy-Based Device) procedures
@@ -231,6 +231,7 @@ export async function fetchEBDDeviceById(id: string, accessToken?: string): Prom
       downtime: (db.downtime as 'None' | 'Minimal' | 'Some') ?? 'None',
       tags: db.tags ?? [],
       imageUrl: db.image_url ?? undefined,
+      defaultPriceCents: db.default_price_cents ?? undefined,
     };
   } catch (error) {
     logger.error('Error fetching device by ID:', error);
@@ -279,6 +280,7 @@ function dbDeviceToEBDDevice(db: DbEBDDevice): EBDDevice {
     downtime: db.downtime ?? 'None',
     tags: db.tags ?? [],
     imageUrl: db.image_url ?? undefined,
+    defaultPriceCents: db.default_price_cents ?? undefined,
   };
 }
 
@@ -325,5 +327,106 @@ export async function fetchEBDDevices(accessToken?: string): Promise<EBDDevice[]
   } catch (error) {
     logger.error('Error fetching EBD devices:', error);
     return EBD_DEVICES;
+  }
+}
+
+// Fetch country-specific default price for a device
+// Returns the country price if available, otherwise falls back to device's global default
+export async function fetchDeviceCountryPrice(
+  deviceId: string,
+  countryCode: string,
+  accessToken?: string
+): Promise<number | null> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey || !deviceId || !countryCode) {
+    return null;
+  }
+
+  try {
+    const headers: Record<string, string> = {
+      'apikey': supabaseKey,
+      'Content-Type': 'application/json',
+    };
+
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    // Try to get country-specific price first
+    const countryPriceResponse = await fetch(
+      `${supabaseUrl}/rest/v1/ebd_device_country_prices?device_id=eq.${deviceId}&country_code=eq.${countryCode}&select=default_price_cents`,
+      { headers }
+    );
+
+    if (countryPriceResponse.ok) {
+      const countryPriceData: { default_price_cents: number }[] = await countryPriceResponse.json();
+      if (countryPriceData.length > 0) {
+        return countryPriceData[0].default_price_cents;
+      }
+    }
+
+    // Fall back to device's global default price
+    const deviceResponse = await fetch(
+      `${supabaseUrl}/rest/v1/ebd_devices?id=eq.${deviceId}&select=default_price_cents`,
+      { headers }
+    );
+
+    if (deviceResponse.ok) {
+      const deviceData: { default_price_cents: number | null }[] = await deviceResponse.json();
+      if (deviceData.length > 0 && deviceData[0].default_price_cents != null) {
+        return deviceData[0].default_price_cents;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    logger.error('Error fetching device country price:', error);
+    return null;
+  }
+}
+
+// Fetch all country prices for all devices in a specific country
+// Returns a map of deviceId -> defaultPriceCents
+export async function fetchAllDeviceCountryPrices(
+  countryCode: string,
+  accessToken?: string
+): Promise<Map<string, number>> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const priceMap = new Map<string, number>();
+
+  if (!supabaseUrl || !supabaseKey || !countryCode) {
+    return priceMap;
+  }
+
+  try {
+    const headers: Record<string, string> = {
+      'apikey': supabaseKey,
+      'Content-Type': 'application/json',
+    };
+
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    // Fetch all country-specific prices for this country
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/ebd_device_country_prices?country_code=eq.${countryCode}&select=device_id,default_price_cents`,
+      { headers }
+    );
+
+    if (response.ok) {
+      const data: { device_id: string; default_price_cents: number }[] = await response.json();
+      for (const row of data) {
+        priceMap.set(row.device_id, row.default_price_cents);
+      }
+    }
+
+    return priceMap;
+  } catch (error) {
+    logger.error('Error fetching device country prices:', error);
+    return priceMap;
   }
 }

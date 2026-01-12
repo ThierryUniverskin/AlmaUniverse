@@ -2,13 +2,20 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { SelectedTreatment, TreatmentCategory, EBDDevice, DoctorProcedure, DoctorProcedureFormData } from '@/types';
-import { EBD_DEVICES, getFitzpatrickColor, getDowntimeColor, fetchEBDDevices } from '@/lib/ebdDevices';
-import { fetchDoctorActiveDevices } from '@/lib/doctorDevices';
+import { SelectedTreatment, TreatmentCategory, EBDDevice, DoctorProcedure, DoctorProcedureFormData, DoctorDeviceWithPrice } from '@/types';
+import { EBD_DEVICES, getFitzpatrickColor, getDowntimeColor, fetchEBDDevices, fetchAllDeviceCountryPrices } from '@/lib/ebdDevices';
+import { fetchDoctorActiveDevices, fetchDoctorDevicesWithPrices } from '@/lib/doctorDevices';
 import { fetchDoctorProceduresByCategory, createDoctorProcedure } from '@/lib/doctorProcedures';
 import { getCategoryLabel, getCategorySingularLabel, getSubcategoryLabel, isCustomProcedureCategory } from '@/lib/treatmentCategories';
 import { getConcernById } from '@/lib/skinConcerns';
 import { CreateProcedureForm } from './CreateProcedureForm';
+import { formatPrice } from '@/lib/pricing';
+
+// Helper to get effective device price (custom price or default)
+function getEffectiveDevicePrice(customPriceCents: number | null | undefined, defaultPriceCents: number | undefined): number | undefined {
+  if (customPriceCents != null) return customPriceCents;
+  return defaultPriceCents;
+}
 
 export interface TreatmentSelectionModalProps {
   isOpen: boolean;
@@ -20,6 +27,7 @@ export interface TreatmentSelectionModalProps {
   selectedConcerns?: string[];
   doctorId?: string;
   accessToken?: string;
+  countryCode?: string | null;
 }
 
 export function TreatmentSelectionModal({
@@ -32,11 +40,14 @@ export function TreatmentSelectionModal({
   selectedConcerns = [],
   doctorId,
   accessToken,
+  countryCode,
 }: TreatmentSelectionModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [mounted, setMounted] = useState(false);
   const [devices, setDevices] = useState<EBDDevice[]>([]);
   const [procedures, setProcedures] = useState<DoctorProcedure[]>([]);
+  const [devicePrices, setDevicePrices] = useState<Record<string, DoctorDeviceWithPrice>>({});
+  const [countryDefaultPrices, setCountryDefaultPrices] = useState<Map<string, number>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -55,9 +66,22 @@ export function TreatmentSelectionModal({
 
       const loadData = async () => {
         if (category === 'ebd') {
-          // Fetch EBD devices
+          // Fetch EBD devices, doctor prices, and country default prices
           if (doctorId && accessToken) {
-            const doctorDevices = await fetchDoctorActiveDevices(doctorId, accessToken);
+            const [doctorDevices, pricesData, countryPricesMap] = await Promise.all([
+              fetchDoctorActiveDevices(doctorId, accessToken),
+              fetchDoctorDevicesWithPrices(doctorId, accessToken),
+              countryCode ? fetchAllDeviceCountryPrices(countryCode, accessToken) : Promise.resolve(new Map<string, number>()),
+            ]);
+
+            // Build prices map
+            const pricesMap: Record<string, DoctorDeviceWithPrice> = {};
+            for (const p of pricesData) {
+              pricesMap[p.deviceId] = p;
+            }
+            setDevicePrices(pricesMap);
+            setCountryDefaultPrices(countryPricesMap);
+
             if (doctorDevices.length > 0) {
               setDevices(doctorDevices);
               setProcedures([]);
@@ -85,7 +109,7 @@ export function TreatmentSelectionModal({
 
       loadData();
     }
-  }, [isOpen, mounted, category, doctorId, accessToken]);
+  }, [isOpen, mounted, category, doctorId, accessToken, countryCode]);
 
   // Focus search input when modal opens
   useEffect(() => {
@@ -147,11 +171,18 @@ export function TreatmentSelectionModal({
   if (!mounted || !isOpen || !category) return null;
 
   const handleSelectDevice = (device: EBDDevice) => {
+    // Get price: doctor's custom price if set, otherwise country-specific default, otherwise device global default
+    const priceInfo = devicePrices[device.id];
+    const countryDefault = countryDefaultPrices.get(device.id);
+    const effectiveDefault = countryDefault ?? device.defaultPriceCents;
+    const pricePerSessionCents = getEffectiveDevicePrice(priceInfo?.priceCents, effectiveDefault);
+
     const treatment: SelectedTreatment = {
       type: 'ebd',
       deviceId: device.id,
       sessionCount: 1,
       notes: '',
+      pricePerSessionCents,
     };
     onSelect(treatment);
     onClose();
@@ -163,6 +194,7 @@ export function TreatmentSelectionModal({
       procedureId: procedure.id,
       sessionCount: 1,
       notes: '',
+      pricePerSessionCents: procedure.priceCents,
     };
     onSelect(treatment);
     onClose();
@@ -228,6 +260,7 @@ export function TreatmentSelectionModal({
             onSubmit={handleCreateProcedure}
             onCancel={() => setShowCreateForm(false)}
             isSubmitting={isCreating}
+            countryCode={countryCode ?? undefined}
           />
         ) : (
           <>
@@ -300,6 +333,10 @@ export function TreatmentSelectionModal({
                           const isAlreadySelected = selectedIds.includes(device.id);
                           const fitzColors = getFitzpatrickColor(device.fitzpatrick);
                           const downtimeColors = getDowntimeColor(device.downtime);
+                          const priceInfo = devicePrices[device.id];
+                          const countryDefault = countryDefaultPrices.get(device.id);
+                          const effectiveDefault = countryDefault ?? device.defaultPriceCents;
+                          const devicePrice = getEffectiveDevicePrice(priceInfo?.priceCents, effectiveDefault);
 
                           return (
                             <div
@@ -324,9 +361,16 @@ export function TreatmentSelectionModal({
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-start justify-between gap-3 mb-1">
-                                    <h3 className="text-sm font-semibold text-stone-900 leading-tight">
-                                      {device.name}
-                                    </h3>
+                                    <div>
+                                      <h3 className="text-sm font-semibold text-stone-900 leading-tight">
+                                        {device.name}
+                                      </h3>
+                                      {devicePrice != null && devicePrice > 0 && (
+                                        <p className="text-xs font-medium text-purple-600">
+                                          {formatPrice(devicePrice, countryCode)}/session
+                                        </p>
+                                      )}
+                                    </div>
                                     <button
                                       type="button"
                                       onClick={() => handleSelectDevice(device)}
@@ -408,6 +452,11 @@ export function TreatmentSelectionModal({
                                     </h3>
                                     {procedure.brand && (
                                       <span className="text-xs text-stone-500">{procedure.brand}</span>
+                                    )}
+                                    {procedure.priceCents > 0 && (
+                                      <p className="text-xs font-medium text-purple-600 mt-0.5">
+                                        {formatPrice(procedure.priceCents, countryCode)}/session
+                                      </p>
                                     )}
                                     {procedure.description && (
                                       <p className="text-[11px] text-stone-500 mt-1">

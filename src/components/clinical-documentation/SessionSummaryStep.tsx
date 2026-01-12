@@ -20,6 +20,7 @@ export interface SessionSummaryStepProps {
   isSubmitting: boolean;
   doctorId?: string;
   accessToken?: string;
+  countryCode?: string | null;
 }
 
 /**
@@ -45,6 +46,7 @@ export function SessionSummaryStep({
   isSubmitting,
   doctorId,
   accessToken,
+  countryCode,
 }: SessionSummaryStepProps) {
   const patientName = `${patient.firstName} ${patient.lastName}`;
   const sessionDateTime = new Date().toLocaleString('en-US', {
@@ -110,6 +112,7 @@ export function SessionSummaryStep({
         rightProfilePhoto={getPhotoUrl(photoData.rightProfilePhoto)}
         doctorId={doctorId}
         accessToken={accessToken}
+        countryCode={countryCode}
       />
 
       {/* General Notes Section */}

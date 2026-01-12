@@ -14,12 +14,14 @@ export interface CustomProceduresSectionProps {
   doctorId: string;
   accessToken: string;
   onProceduresChange?: () => void;
+  countryCode?: string | null;
 }
 
 export function CustomProceduresSection({
   doctorId,
   accessToken,
   onProceduresChange,
+  countryCode,
 }: CustomProceduresSectionProps) {
   const { showToast } = useToast();
 
@@ -224,6 +226,7 @@ export function CustomProceduresSection({
               onToggleActive={() => handleToggleActive(procedure)}
               isDeleting={deletingId === procedure.id}
               isToggling={togglingId === procedure.id}
+              countryCode={countryCode ?? undefined}
             />
           ))}
         </div>
@@ -237,6 +240,7 @@ export function CustomProceduresSection({
         procedure={editingProcedure}
         category={activeTab}
         isSubmitting={isSubmitting}
+        countryCode={countryCode ?? undefined}
       />
     </div>
   );

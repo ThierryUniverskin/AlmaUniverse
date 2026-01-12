@@ -6,6 +6,7 @@ import { TREATMENT_CATEGORIES } from '@/lib/treatmentCategories';
 import { TreatmentCategorySection } from './TreatmentCategorySection';
 import { TreatmentSelectionModal } from './TreatmentSelectionModal';
 import { DocumentationTooltip } from './DocumentationTooltip';
+import { formatPrice } from '@/lib/pricing';
 
 export interface TreatmentSelectionFormProps {
   formData: TreatmentSelectionFormData;
@@ -15,6 +16,7 @@ export interface TreatmentSelectionFormProps {
   selectedConcerns?: string[];
   doctorId?: string;
   accessToken?: string;
+  countryCode?: string | null;
 }
 
 export function TreatmentSelectionForm({
@@ -25,9 +27,18 @@ export function TreatmentSelectionForm({
   selectedConcerns = [],
   doctorId,
   accessToken,
+  countryCode,
 }: TreatmentSelectionFormProps) {
   // Accordion expansion state - EBD expanded by default
   const [expandedSections, setExpandedSections] = useState<TreatmentCategory[]>(['ebd']);
+
+  // Calculate running total
+  const runningTotal = formData.selectedTreatments.reduce((sum, treatment) => {
+    if (treatment.pricePerSessionCents != null && treatment.pricePerSessionCents > 0) {
+      return sum + (treatment.pricePerSessionCents * (treatment.sessionCount || 1));
+    }
+    return sum;
+  }, 0);
 
   // Modal state
   const [activeModal, setActiveModal] = useState<TreatmentCategory | null>(null);
@@ -190,9 +201,27 @@ export function TreatmentSelectionForm({
             disabled={disabled}
             doctorId={doctorId}
             accessToken={accessToken}
+            countryCode={countryCode}
           />
         ))}
       </div>
+
+      {/* Running Total */}
+      {formData.selectedTreatments.length > 0 && runningTotal > 0 && (
+        <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-purple-900">
+              Estimated Total
+            </span>
+            <span className="text-lg font-semibold text-purple-700">
+              {formatPrice(runningTotal, countryCode)}
+            </span>
+          </div>
+          <p className="text-xs text-purple-600 mt-1">
+            Based on {formData.selectedTreatments.length} treatment{formData.selectedTreatments.length > 1 ? 's' : ''} selected
+          </p>
+        </div>
+      )}
 
       {/* Footer Note with Tooltip */}
       <div className="text-center">
@@ -212,6 +241,7 @@ export function TreatmentSelectionForm({
         selectedConcerns={selectedConcerns}
         doctorId={doctorId}
         accessToken={accessToken}
+        countryCode={countryCode}
       />
     </div>
   );

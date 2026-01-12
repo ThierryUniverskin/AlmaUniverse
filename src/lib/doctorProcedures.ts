@@ -15,6 +15,7 @@ function dbToProcedure(db: DbDoctorProcedure): DoctorProcedure {
     name: db.name,
     brand: db.brand ?? undefined,
     description: db.description ?? undefined,
+    priceCents: db.price_cents,
     isActive: db.is_active,
     createdAt: db.created_at,
     updatedAt: db.updated_at,
@@ -179,6 +180,7 @@ export async function createDoctorProcedure(
       name: data.name.trim(),
       brand: data.brand?.trim() || null,
       description: data.description?.trim() || null,
+      price_cents: data.priceCents,
       is_active: true,
     };
 
@@ -243,6 +245,9 @@ export async function updateDoctorProcedure(
     }
     if (data.subcategory !== undefined) {
       updateData.subcategory = data.subcategory || null;
+    }
+    if (data.priceCents !== undefined) {
+      updateData.price_cents = data.priceCents;
     }
 
     const response = await fetch(

@@ -232,7 +232,7 @@ export interface Database {
           doctor_id: string;
           photo_session_id: string | null;
           selected_skin_concerns: string[];
-          selected_treatments: { type: string; deviceId?: string; procedureId?: string; sessionCount: number | null; notes: string }[];
+          selected_treatments: { type: string; deviceId?: string; procedureId?: string; sessionCount: number | null; notes: string; pricePerSessionCents?: number }[];
           notes: string | null;
           status: 'in_progress' | 'completed';
           created_at: string;
@@ -244,7 +244,7 @@ export interface Database {
           doctor_id: string;
           photo_session_id?: string | null;
           selected_skin_concerns?: string[];
-          selected_treatments?: { type: string; deviceId?: string; procedureId?: string; sessionCount: number | null; notes: string }[];
+          selected_treatments?: { type: string; deviceId?: string; procedureId?: string; sessionCount: number | null; notes: string; pricePerSessionCents?: number }[];
           notes?: string | null;
           status?: 'in_progress' | 'completed';
           created_at?: string;
@@ -256,7 +256,7 @@ export interface Database {
           doctor_id?: string;
           photo_session_id?: string | null;
           selected_skin_concerns?: string[];
-          selected_treatments?: { type: string; deviceId?: string; procedureId?: string; sessionCount: number | null; notes: string }[];
+          selected_treatments?: { type: string; deviceId?: string; procedureId?: string; sessionCount: number | null; notes: string; pricePerSessionCents?: number }[];
           notes?: string | null;
           status?: 'in_progress' | 'completed';
           created_at?: string;
@@ -275,6 +275,7 @@ export interface Database {
           tags: string[];
           product_family: string | null;
           is_active: boolean;
+          default_price_cents: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -289,6 +290,7 @@ export interface Database {
           tags?: string[];
           product_family?: string | null;
           is_active?: boolean;
+          default_price_cents?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -303,6 +305,7 @@ export interface Database {
           tags?: string[];
           product_family?: string | null;
           is_active?: boolean;
+          default_price_cents?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -313,6 +316,7 @@ export interface Database {
           doctor_id: string;
           device_id: string;
           is_active: boolean;
+          price_cents: number | null;
           created_at: string;
         };
         Insert: {
@@ -320,6 +324,7 @@ export interface Database {
           doctor_id: string;
           device_id: string;
           is_active?: boolean;
+          price_cents?: number | null;
           created_at?: string;
         };
         Update: {
@@ -327,6 +332,7 @@ export interface Database {
           doctor_id?: string;
           device_id?: string;
           is_active?: boolean;
+          price_cents?: number | null;
           created_at?: string;
         };
       };
@@ -362,6 +368,7 @@ export interface Database {
           name: string;
           brand: string | null;
           description: string | null;
+          price_cents: number;
           is_active: boolean;
           created_at: string;
           updated_at: string;
@@ -374,6 +381,7 @@ export interface Database {
           name: string;
           brand?: string | null;
           description?: string | null;
+          price_cents: number;
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -386,7 +394,34 @@ export interface Database {
           name?: string;
           brand?: string | null;
           description?: string | null;
+          price_cents?: number;
           is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      ebd_device_country_prices: {
+        Row: {
+          id: string;
+          device_id: string; // TEXT foreign key to ebd_devices.id
+          country_code: string;
+          default_price_cents: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          device_id: string; // TEXT foreign key to ebd_devices.id
+          country_code: string;
+          default_price_cents: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          device_id?: string; // TEXT foreign key to ebd_devices.id
+          country_code?: string;
+          default_price_cents?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -405,3 +440,4 @@ export type DbEBDDevice = Database['public']['Tables']['ebd_devices']['Row'];
 export type DbDoctorDevice = Database['public']['Tables']['doctor_devices']['Row'];
 export type DbCountryDevice = Database['public']['Tables']['country_devices']['Row'];
 export type DbDoctorProcedure = Database['public']['Tables']['doctor_procedures']['Row'];
+export type DbEBDDeviceCountryPrice = Database['public']['Tables']['ebd_device_country_prices']['Row'];

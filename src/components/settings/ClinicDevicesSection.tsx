@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { EBDDevice } from '@/types';
+import { EBDDevice, DoctorDeviceWithPrice } from '@/types';
 import { DeviceToggleCard } from './DeviceToggleCard';
 import { LoadingSpinner } from '@/components/ui';
 import { COUNTRY_OPTIONS } from '@/lib/constants';
@@ -13,6 +13,12 @@ export interface ClinicDevicesSectionProps {
   isLoading: boolean;
   doctorCountry?: string | null;
   togglingDeviceId?: string | null;
+  // Pricing props
+  devicePrices: Record<string, DoctorDeviceWithPrice>;
+  onPriceChange: (deviceId: string, newPriceCents: number | null) => void;
+  savingPriceDeviceId?: string | null;
+  // Country-specific default prices (deviceId -> defaultPriceCents)
+  countryDefaultPrices?: Map<string, number>;
 }
 
 export function ClinicDevicesSection({
@@ -22,6 +28,10 @@ export function ClinicDevicesSection({
   isLoading,
   doctorCountry,
   togglingDeviceId,
+  devicePrices,
+  onPriceChange,
+  savingPriceDeviceId,
+  countryDefaultPrices,
 }: ClinicDevicesSectionProps) {
   const countryLabel = doctorCountry
     ? COUNTRY_OPTIONS.find(c => c.value === doctorCountry)?.label || doctorCountry
@@ -104,16 +114,26 @@ export function ClinicDevicesSection({
       {/* Device Grid */}
       {availableDevices.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {availableDevices.map((device) => (
-            <DeviceToggleCard
-              key={device.id}
-              device={device}
-              isSelected={selectedDeviceIds.includes(device.id)}
-              onToggle={() => onDeviceToggle(device.id)}
-              isToggling={togglingDeviceId === device.id}
-              disabled={togglingDeviceId !== null && togglingDeviceId !== device.id}
-            />
-          ))}
+          {availableDevices.map((device) => {
+            const priceData = devicePrices[device.id];
+            // Use country-specific default price if available, otherwise fall back to device's global default
+            const effectiveDefaultPrice = countryDefaultPrices?.get(device.id) ?? device.defaultPriceCents ?? null;
+            return (
+              <DeviceToggleCard
+                key={device.id}
+                device={device}
+                isSelected={selectedDeviceIds.includes(device.id)}
+                onToggle={() => onDeviceToggle(device.id)}
+                isToggling={togglingDeviceId === device.id}
+                disabled={togglingDeviceId !== null && togglingDeviceId !== device.id}
+                priceCents={priceData?.priceCents ?? null}
+                defaultPriceCents={effectiveDefaultPrice}
+                onPriceChange={(newPriceCents) => onPriceChange(device.id, newPriceCents)}
+                countryCode={doctorCountry ?? undefined}
+                isSavingPrice={savingPriceDeviceId === device.id}
+              />
+            );
+          })}
         </div>
       )}
 

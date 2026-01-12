@@ -697,6 +697,7 @@ export default function ClinicalDocumentationPage() {
         selectedConcerns={skinConcernsData.selectedConcerns}
         doctorId={authState.doctor?.id}
         accessToken={authState.accessToken || undefined}
+        countryCode={authState.doctor?.country}
       />
 
       {/* Action Buttons */}
@@ -742,6 +743,7 @@ export default function ClinicalDocumentationPage() {
         isSubmitting={isSubmitting}
         doctorId={authState.doctor?.id}
         accessToken={authState.accessToken || undefined}
+        countryCode={authState.doctor?.country}
       />
     );
   };
