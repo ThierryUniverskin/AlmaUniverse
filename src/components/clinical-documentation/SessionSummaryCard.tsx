@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { SelectedTreatment, TreatmentCategory, EBDDevice, DoctorProcedure } from '@/types';
 import { getConcernById } from '@/lib/skinConcerns';
 import { getCategoryLabel } from '@/lib/treatmentCategories';
@@ -29,6 +30,13 @@ interface ResolvedTreatment {
   notes?: string;
 }
 
+// Photo type labels
+const PHOTO_LABELS = {
+  frontal: 'Frontal',
+  left: 'Left Profile',
+  right: 'Right Profile',
+};
+
 export function SessionSummaryCard({
   patientName,
   sessionDateTime,
@@ -42,6 +50,13 @@ export function SessionSummaryCard({
 }: SessionSummaryCardProps) {
   const [resolvedTreatments, setResolvedTreatments] = useState<ResolvedTreatment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [fullscreenPhoto, setFullscreenPhoto] = useState<{ url: string; label: string } | null>(null);
+
+  // For portal mounting
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Check if we have any photos
   const hasPhotos = frontalPhoto || leftProfilePhoto || rightProfilePhoto;
@@ -134,48 +149,60 @@ export function SessionSummaryCard({
           Clinical Documentation (Physician-Entered)
         </h4>
 
-        {/* Patient Photos */}
+        {/* Patient Photos - Thumbnails */}
         {hasPhotos && (
           <div className="mb-6">
             <label className="block text-sm font-medium text-stone-700 mb-3">
               Patient Photos
             </label>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               {frontalPhoto && (
-                <div className="flex-1">
-                  <div className="aspect-[3/4] rounded-xl overflow-hidden bg-stone-100 border border-stone-200">
+                <button
+                  type="button"
+                  onClick={() => setFullscreenPhoto({ url: frontalPhoto, label: PHOTO_LABELS.frontal })}
+                  className="group flex flex-col items-center"
+                >
+                  <div className="w-16 h-20 rounded-lg overflow-hidden bg-stone-100 border border-stone-200 group-hover:border-purple-400 group-hover:ring-2 group-hover:ring-purple-100 transition-all">
                     <img
                       src={frontalPhoto}
                       alt="Frontal view"
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <p className="text-xs text-stone-500 text-center mt-1.5">Frontal</p>
-                </div>
+                  <p className="text-[10px] text-stone-500 mt-1">Frontal</p>
+                </button>
               )}
               {leftProfilePhoto && (
-                <div className="flex-1">
-                  <div className="aspect-[3/4] rounded-xl overflow-hidden bg-stone-100 border border-stone-200">
+                <button
+                  type="button"
+                  onClick={() => setFullscreenPhoto({ url: leftProfilePhoto, label: PHOTO_LABELS.left })}
+                  className="group flex flex-col items-center"
+                >
+                  <div className="w-16 h-20 rounded-lg overflow-hidden bg-stone-100 border border-stone-200 group-hover:border-purple-400 group-hover:ring-2 group-hover:ring-purple-100 transition-all">
                     <img
                       src={leftProfilePhoto}
                       alt="Left profile"
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <p className="text-xs text-stone-500 text-center mt-1.5">Left Profile</p>
-                </div>
+                  <p className="text-[10px] text-stone-500 mt-1">Left</p>
+                </button>
               )}
               {rightProfilePhoto && (
-                <div className="flex-1">
-                  <div className="aspect-[3/4] rounded-xl overflow-hidden bg-stone-100 border border-stone-200">
+                <button
+                  type="button"
+                  onClick={() => setFullscreenPhoto({ url: rightProfilePhoto, label: PHOTO_LABELS.right })}
+                  className="group flex flex-col items-center"
+                >
+                  <div className="w-16 h-20 rounded-lg overflow-hidden bg-stone-100 border border-stone-200 group-hover:border-purple-400 group-hover:ring-2 group-hover:ring-purple-100 transition-all">
                     <img
                       src={rightProfilePhoto}
                       alt="Right profile"
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <p className="text-xs text-stone-500 text-center mt-1.5">Right Profile</p>
-                </div>
+                  <p className="text-[10px] text-stone-500 mt-1">Right</p>
+                </button>
               )}
             </div>
           </div>
@@ -283,6 +310,45 @@ export function SessionSummaryCard({
           Entries above are recorded for documentation purposes only.
         </p>
       </div>
+
+      {/* Fullscreen Photo Modal - rendered via portal */}
+      {mounted && fullscreenPhoto && createPortal(
+        <div
+          className="fixed top-0 left-0 right-0 bottom-0 z-[9999] bg-black/80 flex items-center justify-center p-6"
+          onClick={() => setFullscreenPhoto(null)}
+        >
+          <div
+            className="relative bg-white rounded-2xl overflow-hidden shadow-2xl max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200">
+              <span className="text-sm font-medium text-stone-900">
+                {fullscreenPhoto.label}
+              </span>
+              <button
+                type="button"
+                onClick={() => setFullscreenPhoto(null)}
+                className="h-8 w-8 rounded-full hover:bg-stone-100 flex items-center justify-center transition-colors"
+              >
+                <svg className="h-5 w-5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Image - height constrained, width follows aspect ratio */}
+            <div className="bg-stone-100 flex items-center justify-center">
+              <img
+                src={fullscreenPhoto.url}
+                alt={`${fullscreenPhoto.label} photo`}
+                className="max-h-[75vh] w-auto object-contain"
+              />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
