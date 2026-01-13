@@ -45,7 +45,49 @@ const config: Config = {
           900: '#472788',
           950: '#2D1A5C',
         },
-        // Orange accent - for "Powered by SkinXs"
+        // SkinXS orange palette - for Skin Wellness Mode (#FF8447 primary)
+        skinxs: {
+          50: '#FFF7F3',
+          100: '#FFEDE5',
+          200: '#FFD9CC',
+          300: '#FFC0A6',
+          400: '#FFA07A',
+          500: '#FF8447',  // Primary brand color
+          600: '#E66A2C',
+          700: '#CC5218',
+          800: '#A64012',
+          900: '#80300D',
+          950: '#4D1D08',
+        },
+        // Teal palette - for Skin Wellness Mode UI elements
+        teal: {
+          50: '#F0FDFA',
+          100: '#CCFBF1',
+          200: '#99F6E4',
+          300: '#5EEAD4',
+          400: '#2DD4BF',
+          500: '#14B8A6',  // Primary
+          600: '#0D9488',
+          700: '#0F766E',
+          800: '#115E59',
+          900: '#134E4A',
+          950: '#042F2E',
+        },
+        // Sky blue palette - for Skin Wellness Mode UI elements
+        sky: {
+          50: '#F0F9FF',
+          100: '#E0F2FE',
+          200: '#BAE6FD',
+          300: '#7DD3FC',
+          400: '#38BDF8',
+          500: '#0EA5E9',  // Primary
+          600: '#0284C7',
+          700: '#0369A1',
+          800: '#075985',
+          900: '#0C4A6E',
+          950: '#082F49',
+        },
+        // Legacy orange accent (kept for backwards compatibility)
         orange: {
           50: '#FFF8F3',
           100: '#FFEDD9',
@@ -131,6 +173,10 @@ const config: Config = {
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
+        },
+        modalEnter: {
+          '0%': { opacity: '0', transform: 'scale(0.95)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
         },
         slideUp: {
           '0%': { opacity: '0', transform: 'translateY(8px)' },

@@ -47,6 +47,8 @@ The clinical documentation wizard guides physicians through a 6-step process:
    - **Injectables** - Custom doctor procedures (e.g., Juvederm, Restylane)
    - **Other Aesthetic Procedures** - Custom procedures with subcategories
 6. **Summary** - Review all documented information with treatment cards and totals
+   - Option to enter **Skin Wellness Mode** (non-medical cosmetic analysis)
+   - Regulatory boundary modal with SkinXS branding (sky blue theme)
 
 Key files:
 - `src/app/(dashboard)/clinical-documentation/new/page.tsx` - Main wizard page
@@ -57,6 +59,21 @@ Key files:
 - `src/lib/treatmentCategories.ts` - Treatment category constants
 - `src/lib/backgroundRemoval.ts` - remove.bg API integration
 - `src/lib/pricing.ts` - Multi-currency pricing utilities
+- `src/components/clinical-documentation/EnterSkinWellnessModal.tsx` - Regulatory boundary modal
+
+### Skin Wellness Mode (SkinXS)
+
+Non-medical cosmetic skin analysis feature, separate from clinical documentation:
+
+- **Regulatory boundary**: Clear modal with disclosure text separating clinical from cosmetic
+- **SkinXS branding**: Sky blue color palette, SkinXS logo
+- **Data isolation**: Only uses photos and cosmetic preferences, NOT medical history
+- **SaMD compliance**: Explicit disclaimers that it does not diagnose, treat, prevent, or manage medical conditions
+
+Key components:
+- `EnterSkinWellnessModal.tsx` - Entry point modal with regulatory disclosures
+- Sky blue theme (`tailwind.config.ts` - `sky` palette)
+- SkinXS logo at `/public/images/skinxs-logo.svg`
 
 ### Treatment Pricing System
 

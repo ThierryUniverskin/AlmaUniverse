@@ -62,5 +62,8 @@ export { SkinWellnessContextBreak } from './SkinWellnessContextBreak';
 export { SkinWellnessConsentModal } from './SkinWellnessConsentModal';
 export type { SkinWellnessConsentModalProps } from './SkinWellnessConsentModal';
 
+export { EnterSkinWellnessModal } from './EnterSkinWellnessModal';
+export type { EnterSkinWellnessModalProps } from './EnterSkinWellnessModal';
+
 export { SessionSummaryStep } from './SessionSummaryStep';
 export type { SessionSummaryStepProps } from './SessionSummaryStep';

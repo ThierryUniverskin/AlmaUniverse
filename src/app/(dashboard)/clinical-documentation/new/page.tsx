@@ -6,8 +6,7 @@ import { usePatients } from '@/context/PatientContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast, Button, ConfirmModal } from '@/components/ui';
 import { PatientSelectDropdown, InlinePatientForm } from '@/components/patients';
-import { StepProgress, MedicalHistoryForm, getEmptyMedicalHistoryForm, PhotoCaptureForm, getEmptyPhotoForm, SkinConcernsForm, getEmptySkinConcernsForm, TreatmentSelectionForm, getEmptyTreatmentSelectionForm, SessionSummaryStep, SkinWellnessConsentModal } from '@/components/clinical-documentation';
-import { buildSkinWellnessUrl } from '@/lib/skinWellness';
+import { StepProgress, MedicalHistoryForm, getEmptyMedicalHistoryForm, PhotoCaptureForm, getEmptyPhotoForm, SkinConcernsForm, getEmptySkinConcernsForm, TreatmentSelectionForm, getEmptyTreatmentSelectionForm, SessionSummaryStep, EnterSkinWellnessModal } from '@/components/clinical-documentation';
 import { Patient, PatientFormDataExtended, PatientMedicalHistory, PatientMedicalHistoryFormData, PhotoSessionFormData, SkinConcernsFormData, TreatmentSelectionFormData } from '@/types';
 import { logger } from '@/lib/logger';
 import { validatePatientFormWithConsent } from '@/lib/validation';
@@ -28,7 +27,7 @@ export default function ClinicalDocumentationPage() {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
 
   // Step 6 state - Session Summary
-  const [showWellnessConsentModal, setShowWellnessConsentModal] = useState(false);
+  const [showEnterWellnessModal, setShowEnterWellnessModal] = useState(false);
 
   // Step 1 state - Patient Selection
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -412,28 +411,14 @@ export default function ClinicalDocumentationPage() {
     }
   };
 
-  // Handle Continue to Skin Wellness Mode (Step 6)
+  // Handle Continue to Skin Wellness Mode (Step 6) - opens modal
   const handleContinueToWellness = () => {
-    // Check if photo consent was given
-    if (!photoFormData.photoConsentGiven) {
-      // Show consent modal
-      setShowWellnessConsentModal(true);
-      return;
-    }
-
-    // Navigate to Skin Wellness Mode
-    navigateToWellness();
+    setShowEnterWellnessModal(true);
   };
 
-  // Handle consent confirmation from modal
-  const handleWellnessConsentConfirm = () => {
-    setShowWellnessConsentModal(false);
-    navigateToWellness();
-  };
-
-  // Navigate to Skin Wellness Mode (saves session first, then navigates)
-  const navigateToWellness = async () => {
-    if (!documentingPatient || !authState.doctor || !savedPhotoSessionId) return;
+  // Handle Enter Skin Wellness Mode from modal - save session and redirect (temporary: to patient page)
+  const handleEnterWellnessMode = async () => {
+    if (!documentingPatient || !authState.doctor) return;
 
     setIsSubmitting(true);
 
@@ -452,10 +437,10 @@ export default function ClinicalDocumentationPage() {
 
       if (session) {
         setHasUnsavedChanges(false);
-        showToast('Clinical documentation saved', 'success');
-        // Navigate to Skin Wellness Mode with ONLY photoSessionId and patientId (data isolation)
-        const wellnessUrl = buildSkinWellnessUrl(savedPhotoSessionId, documentingPatient.id);
-        router.push(wellnessUrl);
+        setShowEnterWellnessModal(false);
+        showToast('Clinical documentation saved. Skin Wellness Mode coming soon!', 'success');
+        // Temporary: redirect to patient page. Future: redirect to Skin Wellness page
+        router.push(`/patients/${documentingPatient.id}`);
       } else {
         showToast('Failed to save clinical evaluation', 'error');
       }
@@ -796,11 +781,13 @@ export default function ClinicalDocumentationPage() {
         {currentStep === 6 && renderStep6()}
       </div>
 
-      {/* Skin Wellness Consent Modal */}
-      <SkinWellnessConsentModal
-        isOpen={showWellnessConsentModal}
-        onConfirm={handleWellnessConsentConfirm}
-        onCancel={() => setShowWellnessConsentModal(false)}
+      {/* Enter Skin Wellness Mode Modal */}
+      <EnterSkinWellnessModal
+        isOpen={showEnterWellnessModal}
+        onEnterWellness={handleEnterWellnessMode}
+        onClose={() => setShowEnterWellnessModal(false)}
+        photoConsentGiven={photoFormData.photoConsentGiven}
+        isSubmitting={isSubmitting}
       />
 
       {/* Unsaved Changes Modal */}
