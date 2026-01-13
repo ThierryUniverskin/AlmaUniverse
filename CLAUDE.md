@@ -73,9 +73,55 @@ Non-medical cosmetic skin analysis feature, separate from clinical documentation
 - **Data isolation**: Only uses photos and cosmetic preferences, NOT medical history
 - **SaMD compliance**: Explicit disclaimers that it does not diagnose, treat, prevent, or manage medical conditions
 
-Key components:
-- `EnterSkinWellnessModal.tsx` - Entry point modal with regulatory disclosures
-- Sky blue theme (`tailwind.config.ts` - `sky` palette)
+#### Skin Wellness Flow (3 steps)
+
+1. **Analysis** - Premium 10-second animated loading screen with:
+   - Scanning beam that sweeps left-to-right, then right-to-left (category-colored)
+   - Floating particles rising from bottom
+   - Pulsing glow around photo
+   - Progress ring around SkinXS logo
+   - Background gradient shifts with current category color
+   - Enhanced corner frames with colored accents
+   - Category names cycle with "Observing {category}..." text
+
+2. **Results** - Cosmetic Skin Appearance Overview with:
+   - Flower/radial visualization (10 petals, one per skin category)
+   - Interactive: tap segments to adjust visibility levels (0-4)
+   - Patient info card with photo thumbnails
+   - Patient attributes (editable): gender, eye color, Fitzpatrick type, skin thickness, skin type
+   - Overview text (editable, regeneratable)
+   - Image quality score modal
+
+3. **Complete** - Navigation to skincare recommendations (future)
+
+#### Skin Wellness Categories (10)
+
+| Category | Color |
+|----------|-------|
+| Skin Radiance | Yellow (#FBBF24) |
+| Surface Smoothness | Pink (#F472B6) |
+| Visible Redness | Red (#EF4444) |
+| Hydration Appearance | Blue (#3B82F6) |
+| Shine Appearance | Orange (#F97316) |
+| Skin Texture | Grey (#6B7280) |
+| Visible Blemishes | Green (#22C55E) |
+| Uneven Tone & Dark Spots | Brown (#92400E) |
+| Eye Contour | Taupe (#78716C) |
+| Skin Aging | Light Beige (#D6D3D1) |
+
+Key files:
+- `src/app/(dashboard)/skin-wellness/[photoSessionId]/page.tsx` - Main page
+- `src/components/skin-wellness/SkinAnalysisLoading.tsx` - Analysis animation screen
+- `src/components/skin-wellness/SkinWellnessResults.tsx` - Results overview
+- `src/components/skin-wellness/FlowerVisualization.tsx` - Radial chart component
+- `src/components/skin-wellness/SkinWellnessStepProgress.tsx` - 3-step progress indicator
+- `src/components/skin-wellness/CategoryDetailModal.tsx` - Category detail popup
+- `src/lib/skinWellnessCategories.ts` - Category definitions and colors
+- `src/lib/mockSkinAnalysis.ts` - Mock data generator (v1)
+- `src/components/clinical-documentation/EnterSkinWellnessModal.tsx` - Entry modal
+
+Theme:
+- Sky blue palette (`tailwind.config.ts` - `sky`)
 - SkinXS logo at `/public/images/skinxs-logo.svg`
 
 ### Treatment Pricing System

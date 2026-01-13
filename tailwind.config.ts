@@ -168,6 +168,14 @@ const config: Config = {
         'slide-up': 'slideUp 0.4s ease-out',
         'slide-in-right': 'slideInRight 0.35s ease-out',
         'pulse-subtle': 'pulseSubtle 2s ease-in-out infinite',
+        // Skin Wellness animations
+        'scan-line': 'scanLine 3s ease-in-out infinite',
+        'glow-pulse': 'glowPulse 2s ease-in-out infinite',
+        'slow-zoom': 'slowZoom 10s ease-out forwards',
+        'frame-line': 'frameLineFade 2s ease-in-out infinite',
+        'particle-float': 'particleFloat 4s ease-out forwards',
+        'text-cycle': 'textCycle 1s ease-in-out',
+        'scan-line-full': 'scanLineFullWidth 2.5s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -189,6 +197,44 @@ const config: Config = {
         pulseSubtle: {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.7' },
+        },
+        // Skin Wellness keyframes
+        scanLine: {
+          '0%': { transform: 'translateX(-100%)', opacity: '0' },
+          '10%': { opacity: '1' },
+          '90%': { opacity: '1' },
+          '100%': { transform: 'translateX(100%)', opacity: '0' },
+        },
+        glowPulse: {
+          '0%, 100%': { opacity: '0.1', transform: 'scale(1)' },
+          '50%': { opacity: '0.25', transform: 'scale(1.05)' },
+        },
+        slowZoom: {
+          '0%': { transform: 'scale(1)' },
+          '100%': { transform: 'scale(1.05)' },
+        },
+        frameLineFade: {
+          '0%, 100%': { opacity: '0.3' },
+          '50%': { opacity: '0.7' },
+        },
+        particleFloat: {
+          '0%': { transform: 'translateY(0) translateX(0)', opacity: '0' },
+          '20%': { opacity: '0.6' },
+          '80%': { opacity: '0.6' },
+          '100%': { transform: 'translateY(-100px) translateX(20px)', opacity: '0' },
+        },
+        textCycle: {
+          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '15%': { opacity: '1', transform: 'translateY(0)' },
+          '85%': { opacity: '1', transform: 'translateY(0)' },
+          '100%': { opacity: '0', transform: 'translateY(-4px)' },
+        },
+        scanLineFullWidth: {
+          '0%': { transform: 'translateX(0%)', opacity: '0' },
+          '5%': { opacity: '1' },
+          '50%': { opacity: '1' },
+          '95%': { opacity: '1' },
+          '100%': { transform: 'translateX(100%)', opacity: '0' },
         },
       },
     },

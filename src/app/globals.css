@@ -166,6 +166,15 @@
 }
 
 @layer utilities {
+  /* SVG petal transition for flower visualization */
+  .petal-transition {
+    transition: d 0.35s cubic-bezier(0.4, 0, 0.2, 1), filter 0.2s ease;
+  }
+
+  .petal-hover:hover {
+    filter: brightness(1.1);
+  }
+
   /* Hide scrollbar but keep functionality */
   .scrollbar-hide {
     -ms-overflow-style: none;

@@ -13,6 +13,7 @@ import { validatePatientFormWithConsent } from '@/lib/validation';
 import { getMedicalHistory, saveMedicalHistory, updateMedicalHistory, historyToFormData } from '@/lib/medicalHistory';
 import { savePhotoSession } from '@/lib/photoSession';
 import { createClinicalEvaluation } from '@/lib/clinicalEvaluation';
+import { buildSkinWellnessUrl } from '@/lib/skinWellness';
 
 export default function ClinicalDocumentationPage() {
   const router = useRouter();
@@ -25,6 +26,63 @@ export default function ClinicalDocumentationPage() {
 
   // Step management
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
+
+  // Restore state from sessionStorage when returning from Skin Wellness
+  useEffect(() => {
+    const savedStep = sessionStorage.getItem('clinicalDocStep');
+    const savedPatientId = sessionStorage.getItem('clinicalDocPatientId');
+
+    if (savedStep && savedPatientId && patients.length > 0) {
+      const step = parseInt(savedStep, 10) as 1 | 2 | 3 | 4 | 5 | 6;
+      const patient = patients.find(p => p.id === savedPatientId);
+
+      if (step >= 1 && step <= 6 && patient) {
+        setCurrentStep(step);
+        setSelectedPatient(patient);
+        setDocumentingPatient(patient);
+
+        // Restore form data
+        const savedPhotoSession = sessionStorage.getItem('clinicalDocPhotoSessionId');
+        const savedSkinConcerns = sessionStorage.getItem('clinicalDocSkinConcerns');
+        const savedTreatments = sessionStorage.getItem('clinicalDocTreatments');
+        const savedPhotoForm = sessionStorage.getItem('clinicalDocPhotoForm');
+        const savedMedicalHistory = sessionStorage.getItem('clinicalDocMedicalHistory');
+
+        if (savedPhotoSession) {
+          setSavedPhotoSessionId(savedPhotoSession);
+        }
+        if (savedSkinConcerns) {
+          try {
+            setSkinConcernsData(JSON.parse(savedSkinConcerns));
+          } catch (e) { /* ignore parse errors */ }
+        }
+        if (savedTreatments) {
+          try {
+            setTreatmentData(JSON.parse(savedTreatments));
+          } catch (e) { /* ignore parse errors */ }
+        }
+        if (savedPhotoForm) {
+          try {
+            setPhotoFormData(JSON.parse(savedPhotoForm));
+          } catch (e) { /* ignore parse errors */ }
+        }
+        if (savedMedicalHistory) {
+          try {
+            setMedicalHistoryData(JSON.parse(savedMedicalHistory));
+          } catch (e) { /* ignore parse errors */ }
+        }
+      }
+
+      // Clear sessionStorage
+      sessionStorage.removeItem('clinicalDocStep');
+      sessionStorage.removeItem('clinicalDocPatientId');
+      sessionStorage.removeItem('clinicalDocPhotoSessionId');
+      sessionStorage.removeItem('clinicalDocSkinConcerns');
+      sessionStorage.removeItem('clinicalDocTreatments');
+      sessionStorage.removeItem('clinicalDocPhotoForm');
+      sessionStorage.removeItem('clinicalDocMedicalHistory');
+    }
+  }, [patients]);
 
   // Step 6 state - Session Summary
   const [showEnterWellnessModal, setShowEnterWellnessModal] = useState(false);
@@ -438,9 +496,21 @@ export default function ClinicalDocumentationPage() {
       if (session) {
         setHasUnsavedChanges(false);
         setShowEnterWellnessModal(false);
-        showToast('Clinical documentation saved. Skin Wellness Mode coming soon!', 'success');
-        // Temporary: redirect to patient page. Future: redirect to Skin Wellness page
-        router.push(`/patients/${documentingPatient.id}`);
+        showToast('Clinical documentation saved. Entering Skin Wellness Mode...', 'success');
+
+        // Save all state so we can return to step 6 with all data intact
+        sessionStorage.setItem('clinicalDocStep', '6');
+        sessionStorage.setItem('clinicalDocPatientId', documentingPatient.id);
+        if (savedPhotoSessionId) {
+          sessionStorage.setItem('clinicalDocPhotoSessionId', savedPhotoSessionId);
+        }
+        sessionStorage.setItem('clinicalDocSkinConcerns', JSON.stringify(skinConcernsData));
+        sessionStorage.setItem('clinicalDocTreatments', JSON.stringify(treatmentData));
+        sessionStorage.setItem('clinicalDocPhotoForm', JSON.stringify(photoFormData));
+        sessionStorage.setItem('clinicalDocMedicalHistory', JSON.stringify(medicalHistoryData));
+
+        // Navigate to Skin Wellness page
+        router.push(buildSkinWellnessUrl(savedPhotoSessionId!, documentingPatient.id));
       } else {
         showToast('Failed to save clinical evaluation', 'error');
       }
@@ -766,8 +836,10 @@ export default function ClinicalDocumentationPage() {
           )}
         </div>
 
-        {/* Step Progress */}
-        <StepProgress currentStep={currentStep} />
+        {/* Step Progress with frosted glass */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-sm border border-purple-100">
+          <StepProgress currentStep={currentStep} />
+        </div>
       </div>
 
       {/* Content */}
