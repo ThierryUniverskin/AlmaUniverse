@@ -135,60 +135,54 @@ export interface Database {
         Row: {
           id: string;
           patient_id: string;
-          is_pregnant_or_breastfeeding: boolean;
-          uses_hormonal_contraception: boolean;
-          receives_hrt: boolean;
-          menopausal_status: 'pre-menopausal' | 'peri-menopausal' | 'post-menopausal' | 'n/a' | null;
+          // CLINICAL MEDICAL HISTORY (never used by AI)
           has_cancer_history: boolean;
           cancer_types: string[];
           cancer_details: string | null;
-          has_inflammatory_skin_condition: boolean;
-          has_active_cold_sores: boolean;
-          known_allergies: string[];
-          other_allergies: string | null;
           current_medications: string | null;
           relevant_medical_conditions: string | null;
-          recovery_time_preference: 'same-day' | '1-2-days' | '3-5-days' | 'more-than-5-days' | null;
+          // COSMETIC SAFETY PROFILE (for ingredient exclusion)
+          is_pregnant_or_breastfeeding: boolean;
+          menopausal_status: 'pre-menopausal' | 'peri-menopausal' | 'post-menopausal' | 'n/a' | null;
+          has_exfoliant_sensitivity: boolean;
+          cosmetic_sensitivities: string[];
+          other_sensitivities: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
           patient_id: string;
-          is_pregnant_or_breastfeeding?: boolean;
-          uses_hormonal_contraception?: boolean;
-          receives_hrt?: boolean;
-          menopausal_status?: 'pre-menopausal' | 'peri-menopausal' | 'post-menopausal' | 'n/a' | null;
+          // CLINICAL MEDICAL HISTORY
           has_cancer_history?: boolean;
           cancer_types?: string[];
           cancer_details?: string | null;
-          has_inflammatory_skin_condition?: boolean;
-          has_active_cold_sores?: boolean;
-          known_allergies?: string[];
-          other_allergies?: string | null;
           current_medications?: string | null;
           relevant_medical_conditions?: string | null;
-          recovery_time_preference?: 'same-day' | '1-2-days' | '3-5-days' | 'more-than-5-days' | null;
+          // COSMETIC SAFETY PROFILE
+          is_pregnant_or_breastfeeding?: boolean;
+          menopausal_status?: 'pre-menopausal' | 'peri-menopausal' | 'post-menopausal' | 'n/a' | null;
+          has_exfoliant_sensitivity?: boolean;
+          cosmetic_sensitivities?: string[];
+          other_sensitivities?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
           patient_id?: string;
-          is_pregnant_or_breastfeeding?: boolean;
-          uses_hormonal_contraception?: boolean;
-          receives_hrt?: boolean;
-          menopausal_status?: 'pre-menopausal' | 'peri-menopausal' | 'post-menopausal' | 'n/a' | null;
+          // CLINICAL MEDICAL HISTORY
           has_cancer_history?: boolean;
           cancer_types?: string[];
           cancer_details?: string | null;
-          has_inflammatory_skin_condition?: boolean;
-          has_active_cold_sores?: boolean;
-          known_allergies?: string[];
-          other_allergies?: string | null;
           current_medications?: string | null;
           relevant_medical_conditions?: string | null;
-          recovery_time_preference?: 'same-day' | '1-2-days' | '3-5-days' | 'more-than-5-days' | null;
+          // COSMETIC SAFETY PROFILE
+          is_pregnant_or_breastfeeding?: boolean;
+          menopausal_status?: 'pre-menopausal' | 'peri-menopausal' | 'post-menopausal' | 'n/a' | null;
+          has_exfoliant_sensitivity?: boolean;
+          cosmetic_sensitivities?: string[];
+          other_sensitivities?: string | null;
           created_at?: string;
           updated_at?: string;
         };

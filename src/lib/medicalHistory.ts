@@ -1,4 +1,4 @@
-import { PatientMedicalHistory, PatientMedicalHistoryFormData, KnownAllergyType, CancerType, RecoveryTimePreference } from '@/types';
+import { PatientMedicalHistory, PatientMedicalHistoryFormData, CosmeticSensitivityType, CancerType } from '@/types';
 import { DbPatientMedicalHistory } from '@/types/database';
 import { logger } from '@/lib/logger';
 
@@ -7,20 +7,18 @@ function dbToMedicalHistory(row: DbPatientMedicalHistory): PatientMedicalHistory
   return {
     id: row.id,
     patientId: row.patient_id,
-    isPregnantOrBreastfeeding: row.is_pregnant_or_breastfeeding,
-    usesHormonalContraception: row.uses_hormonal_contraception,
-    receivesHrt: row.receives_hrt,
-    menopausalStatus: row.menopausal_status ?? undefined,
+    // CLINICAL MEDICAL HISTORY
     hasCancerHistory: row.has_cancer_history,
     cancerTypes: (row.cancer_types || []) as CancerType[],
     cancerDetails: row.cancer_details ?? undefined,
-    hasInflammatorySkinCondition: row.has_inflammatory_skin_condition,
-    hasActiveColdSores: row.has_active_cold_sores,
-    knownAllergies: (row.known_allergies || []) as KnownAllergyType[],
-    otherAllergies: row.other_allergies ?? undefined,
     currentMedications: row.current_medications ?? undefined,
     relevantMedicalConditions: row.relevant_medical_conditions ?? undefined,
-    recoveryTimePreference: row.recovery_time_preference as RecoveryTimePreference | undefined,
+    // COSMETIC SAFETY PROFILE
+    isPregnantOrBreastfeeding: row.is_pregnant_or_breastfeeding,
+    menopausalStatus: row.menopausal_status ?? undefined,
+    hasExfoliantSensitivity: row.has_exfoliant_sensitivity,
+    cosmeticSensitivities: (row.cosmetic_sensitivities || []) as CosmeticSensitivityType[],
+    otherSensitivities: row.other_sensitivities ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -29,20 +27,18 @@ function dbToMedicalHistory(row: DbPatientMedicalHistory): PatientMedicalHistory
 // Convert form data to database format
 function formToDbData(data: PatientMedicalHistoryFormData) {
   return {
-    is_pregnant_or_breastfeeding: data.isPregnantOrBreastfeeding,
-    uses_hormonal_contraception: data.usesHormonalContraception,
-    receives_hrt: data.receivesHrt,
-    menopausal_status: data.menopausalStatus || null,
+    // CLINICAL MEDICAL HISTORY
     has_cancer_history: data.hasCancerHistory,
     cancer_types: data.cancerTypes,
     cancer_details: data.cancerDetails || null,
-    has_inflammatory_skin_condition: data.hasInflammatorySkinCondition,
-    has_active_cold_sores: data.hasActiveColdSores,
-    known_allergies: data.knownAllergies,
-    other_allergies: data.otherAllergies || null,
     current_medications: data.currentMedications || null,
     relevant_medical_conditions: data.relevantMedicalConditions || null,
-    recovery_time_preference: data.recoveryTimePreference || null,
+    // COSMETIC SAFETY PROFILE
+    is_pregnant_or_breastfeeding: data.isPregnantOrBreastfeeding,
+    menopausal_status: data.menopausalStatus || null,
+    has_exfoliant_sensitivity: data.hasExfoliantSensitivity,
+    cosmetic_sensitivities: data.cosmeticSensitivities,
+    other_sensitivities: data.otherSensitivities || null,
   };
 }
 
@@ -179,19 +175,17 @@ export async function updateMedicalHistory(
 // Convert PatientMedicalHistory to form data (for pre-filling)
 export function historyToFormData(history: PatientMedicalHistory): PatientMedicalHistoryFormData {
   return {
-    isPregnantOrBreastfeeding: history.isPregnantOrBreastfeeding,
-    usesHormonalContraception: history.usesHormonalContraception,
-    receivesHrt: history.receivesHrt,
-    menopausalStatus: history.menopausalStatus,
+    // CLINICAL MEDICAL HISTORY
     hasCancerHistory: history.hasCancerHistory,
     cancerTypes: history.cancerTypes,
     cancerDetails: history.cancerDetails,
-    hasInflammatorySkinCondition: history.hasInflammatorySkinCondition,
-    hasActiveColdSores: history.hasActiveColdSores,
-    knownAllergies: history.knownAllergies,
-    otherAllergies: history.otherAllergies,
     currentMedications: history.currentMedications,
     relevantMedicalConditions: history.relevantMedicalConditions,
-    recoveryTimePreference: history.recoveryTimePreference,
+    // COSMETIC SAFETY PROFILE
+    isPregnantOrBreastfeeding: history.isPregnantOrBreastfeeding,
+    menopausalStatus: history.menopausalStatus,
+    hasExfoliantSensitivity: history.hasExfoliantSensitivity,
+    cosmeticSensitivities: history.cosmeticSensitivities,
+    otherSensitivities: history.otherSensitivities,
   };
 }

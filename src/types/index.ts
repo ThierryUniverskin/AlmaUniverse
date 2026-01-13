@@ -134,17 +134,19 @@ export interface PatientStats {
 // Medical History types for clinical documentation
 export type MenopausalStatus = 'pre-menopausal' | 'peri-menopausal' | 'post-menopausal' | 'n/a';
 
-export type KnownAllergyType =
-  | 'latex'
-  | 'fragrances'
-  | 'parabens'
+// Cosmetic ingredient sensitivities (used for Skin Wellness Mode ingredient exclusion)
+// Note: Medical allergies (penicillin, NSAIDs, sulfa, lidocaine) removed - these are not cosmetic ingredients
+export type CosmeticSensitivityType =
   | 'retinoids'
   | 'ahas'
   | 'salicylic-acid'
-  | 'penicillin'
-  | 'nsaids'
-  | 'sulfa-drugs'
-  | 'lidocaine';
+  | 'fragrances'
+  | 'parabens'
+  | 'soy'       // NEW: For soy/isoflavone sensitivities in skincare
+  | 'latex';
+
+// Legacy alias for backward compatibility
+export type KnownAllergyType = CosmeticSensitivityType;
 
 export type CancerType =
   | 'breast'
@@ -155,34 +157,19 @@ export type CancerType =
   | 'hematologic'
   | 'other';
 
-export type RecoveryTimePreference =
-  | 'same-day'
-  | '1-2-days'
-  | '3-5-days'
-  | 'more-than-5-days';
-
 export interface PatientMedicalHistory {
   id: string;
   patientId: string;
 
-  // Reproductive / Hormonal
-  isPregnantOrBreastfeeding: boolean;
-  usesHormonalContraception: boolean;
-  receivesHrt: boolean;
-  menopausalStatus?: MenopausalStatus;
+  // ============================================
+  // SECTION 1: CLINICAL MEDICAL HISTORY
+  // For physician documentation only - NEVER used by AI
+  // ============================================
 
   // Cancer History
   hasCancerHistory: boolean;
   cancerTypes: CancerType[];
   cancerDetails?: string;
-
-  // Skin-Related Medical Context
-  hasInflammatorySkinCondition: boolean;
-  hasActiveColdSores: boolean;
-
-  // Allergies
-  knownAllergies: KnownAllergyType[];
-  otherAllergies?: string;
 
   // Medications
   currentMedications?: string;
@@ -190,8 +177,21 @@ export interface PatientMedicalHistory {
   // Additional Medical Information
   relevantMedicalConditions?: string;
 
-  // Recovery Time Preference
-  recoveryTimePreference?: RecoveryTimePreference;
+  // ============================================
+  // SECTION 2: COSMETIC SAFETY PROFILE
+  // Used for cosmetic ingredient exclusion in Skin Wellness Mode
+  // ============================================
+
+  // Reproductive / Hormonal (affects ingredient recommendations)
+  isPregnantOrBreastfeeding: boolean;
+  menopausalStatus?: MenopausalStatus;
+
+  // Exfoliant sensitivity
+  hasExfoliantSensitivity: boolean;
+
+  // Cosmetic ingredient sensitivities
+  cosmeticSensitivities: CosmeticSensitivityType[];
+  otherSensitivities?: string;
 
   // Metadata
   createdAt: string;
@@ -199,24 +199,15 @@ export interface PatientMedicalHistory {
 }
 
 export interface PatientMedicalHistoryFormData {
-  // Reproductive / Hormonal
-  isPregnantOrBreastfeeding: boolean;
-  usesHormonalContraception: boolean;
-  receivesHrt: boolean;
-  menopausalStatus?: MenopausalStatus;
+  // ============================================
+  // SECTION 1: CLINICAL MEDICAL HISTORY
+  // For physician documentation only - NEVER used by AI
+  // ============================================
 
   // Cancer History
   hasCancerHistory: boolean;
   cancerTypes: CancerType[];
   cancerDetails?: string;
-
-  // Skin-Related Medical Context
-  hasInflammatorySkinCondition: boolean;
-  hasActiveColdSores: boolean;
-
-  // Allergies
-  knownAllergies: KnownAllergyType[];
-  otherAllergies?: string;
 
   // Medications
   currentMedications?: string;
@@ -224,8 +215,21 @@ export interface PatientMedicalHistoryFormData {
   // Additional Medical Information
   relevantMedicalConditions?: string;
 
-  // Recovery Time Preference
-  recoveryTimePreference?: RecoveryTimePreference;
+  // ============================================
+  // SECTION 2: COSMETIC SAFETY PROFILE
+  // Used for cosmetic ingredient exclusion in Skin Wellness Mode
+  // ============================================
+
+  // Reproductive / Hormonal (affects ingredient recommendations)
+  isPregnantOrBreastfeeding: boolean;
+  menopausalStatus?: MenopausalStatus;
+
+  // Exfoliant sensitivity
+  hasExfoliantSensitivity: boolean;
+
+  // Cosmetic ingredient sensitivities
+  cosmeticSensitivities: CosmeticSensitivityType[];
+  otherSensitivities?: string;
 }
 
 // Photo Collection types for clinical documentation

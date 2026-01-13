@@ -105,21 +105,23 @@ export const MENOPAUSAL_STATUS_OPTIONS = [
   { value: 'n/a', label: 'N/A' },
 ] as const;
 
-// Medical History - Known allergies for multi-select
-export const KNOWN_ALLERGY_OPTIONS = [
-  { value: 'latex', label: 'Latex' },
+// Cosmetic Safety Profile - Cosmetic ingredient sensitivities for multi-select
+// These are cosmetic ingredients that may need to be excluded in Skin Wellness Mode
+// Note: Medical allergies (penicillin, NSAIDs, etc.) have been removed - those are not cosmetic ingredients
+export const COSMETIC_SENSITIVITY_OPTIONS = [
+  { value: 'retinoids', label: 'Retinoids (Vitamin A derivatives)' },
+  { value: 'ahas', label: 'AHAs (Glycolic, Lactic acid)' },
+  { value: 'salicylic-acid', label: 'Salicylic acid (BHA)' },
   { value: 'fragrances', label: 'Fragrances' },
   { value: 'parabens', label: 'Parabens' },
-  { value: 'retinoids', label: 'Retinoids' },
-  { value: 'ahas', label: 'AHAs' },
-  { value: 'salicylic-acid', label: 'Salicylic acid' },
-  { value: 'penicillin', label: 'Penicillin' },
-  { value: 'nsaids', label: 'NSAIDs' },
-  { value: 'sulfa-drugs', label: 'Sulfa drugs' },
-  { value: 'lidocaine', label: 'Lidocaine' },
+  { value: 'soy', label: 'Soy / Isoflavones' },
+  { value: 'latex', label: 'Latex' },
 ] as const;
 
-// Medical History - Cancer types for multi-select
+// Legacy alias for backward compatibility
+export const KNOWN_ALLERGY_OPTIONS = COSMETIC_SENSITIVITY_OPTIONS;
+
+// Medical History - Cancer types for multi-select (Clinical Medical History section)
 export const CANCER_TYPE_OPTIONS = [
   { value: 'breast', label: 'Breast cancer' },
   { value: 'skin', label: 'Skin cancer (including melanoma / non-melanoma)' },
@@ -128,14 +130,6 @@ export const CANCER_TYPE_OPTIONS = [
   { value: 'gastrointestinal', label: 'Gastrointestinal cancer' },
   { value: 'hematologic', label: 'Hematologic cancer (e.g., leukemia, lymphoma)' },
   { value: 'other', label: 'Other cancer type' },
-] as const;
-
-// Medical History - Recovery time preference options
-export const RECOVERY_TIME_OPTIONS = [
-  { value: 'same-day', label: 'Same day / no visible recovery' },
-  { value: '1-2-days', label: '1–2 days' },
-  { value: '3-5-days', label: '3–5 days' },
-  { value: 'more-than-5-days', label: 'More than 5 days' },
 ] as const;
 
 // Currency configuration per country

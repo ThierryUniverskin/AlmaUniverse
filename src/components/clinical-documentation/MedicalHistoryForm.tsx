@@ -1,10 +1,50 @@
 'use client';
 
-import React from 'react';
-import { PatientMedicalHistoryFormData, MenopausalStatus, KnownAllergyType, CancerType, RecoveryTimePreference } from '@/types';
+import React, { useState } from 'react';
+import { PatientMedicalHistoryFormData, MenopausalStatus, CosmeticSensitivityType, CancerType } from '@/types';
 import { YesNoToggle, CheckboxGroup, StyledSelect } from '@/components/ui';
-import { MENOPAUSAL_STATUS_OPTIONS, KNOWN_ALLERGY_OPTIONS, CANCER_TYPE_OPTIONS, RECOVERY_TIME_OPTIONS } from '@/lib/constants';
+import { MENOPAUSAL_STATUS_OPTIONS, COSMETIC_SENSITIVITY_OPTIONS, CANCER_TYPE_OPTIONS } from '@/lib/constants';
 import { DocumentationTooltip } from './DocumentationTooltip';
+
+// Inline info tooltip component for section headers
+function InfoTooltip({ message, variant = 'default' }: { message: string; variant?: 'default' | 'sky' }) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  const iconColor = variant === 'sky' ? 'text-sky-500' : 'text-stone-400';
+  const bgColor = variant === 'sky' ? 'bg-sky-700' : 'bg-stone-800';
+  const arrowColor = variant === 'sky' ? 'border-t-sky-700' : 'border-t-stone-800';
+
+  return (
+    <div className="relative inline-flex ml-2 group">
+      <button
+        type="button"
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+        onFocus={() => setIsVisible(true)}
+        onBlur={() => setIsVisible(false)}
+        className={`${iconColor} hover:opacity-80 transition-opacity focus:outline-none`}
+        aria-label="More information"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0-4h.01" />
+        </svg>
+      </button>
+
+      {/* Tooltip popup - positioned to the right to avoid clipping */}
+      {isVisible && (
+        <div
+          className={`absolute z-[100] left-6 top-1/2 -translate-y-1/2 w-72 px-3 py-2 ${bgColor} text-white text-xs leading-relaxed rounded-lg shadow-xl`}
+          style={{ pointerEvents: 'none' }}
+        >
+          {message}
+          {/* Arrow pointing left */}
+          <div className={`absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px] ${variant === 'sky' ? 'border-r-sky-700' : 'border-r-stone-800'}`} />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export interface MedicalHistoryFormProps {
   formData: PatientMedicalHistoryFormData;
@@ -14,6 +54,21 @@ export interface MedicalHistoryFormProps {
   patientSex?: 'female' | 'male' | 'other' | 'prefer-not-to-say';
 }
 
+/**
+ * MedicalHistoryForm - Step 2 of the clinical documentation wizard
+ *
+ * RENAMED TO: "Health Background"
+ *
+ * This component is split into two clearly separated sections:
+ *
+ * SECTION 1: Clinical Medical History
+ * - For physician documentation only
+ * - NEVER used by AI or Skin Wellness Mode
+ *
+ * SECTION 2: Cosmetic Safety Profile
+ * - Used to exclude cosmetic ingredients in Skin Wellness Mode
+ * - Does NOT diagnose, treat, prevent, or manage medical conditions
+ */
 export function MedicalHistoryForm({
   formData,
   onChange,
@@ -28,8 +83,8 @@ export function MedicalHistoryForm({
     onChange({ ...formData, [field]: value });
   };
 
-  // Hide reproductive/hormonal section for male patients
-  const showReproductiveSection = patientSex !== 'male';
+  // Hide pregnancy/menopause fields for male patients, but show rest of Cosmetic Safety Profile
+  const showReproductiveFields = patientSex !== 'male';
 
   return (
     <div className="space-y-6">
@@ -61,251 +116,195 @@ export function MedicalHistoryForm({
           </div>
         </div>
         <h1 className="text-2xl font-semibold text-stone-900 mb-1">
-          Medical Background
+          Health Background
         </h1>
         <p className="text-stone-500 text-sm">
-          for {patientName}
+          Review and update health information for {patientName}
         </p>
       </div>
 
-      {/* Section: Reproductive / Hormonal - Only show for non-male patients */}
-      {showReproductiveSection && (
-        <div className="bg-white rounded-xl border border-stone-200 p-6">
-          <h2 className="text-base font-semibold text-stone-900 mb-1">
-            Reproductive / Hormonal
-          </h2>
-          <p className="text-sm text-stone-500 mb-5">
-            Information about hormonal status and treatments.
+      {/* ============================================ */}
+      {/* SECTION 1: CLINICAL MEDICAL HISTORY */}
+      {/* ============================================ */}
+      <div className="bg-white rounded-2xl border border-stone-200">
+        {/* Section Header */}
+        <div className="px-6 py-4 border-b border-stone-100">
+          <div className="flex items-center">
+            <h2 className="text-base font-semibold text-stone-900">
+              Clinical Medical History
+            </h2>
+            <InfoTooltip
+              message="This information is recorded for clinical documentation and is not used in Skin Wellness Mode or cosmetic analysis."
+              variant="default"
+            />
+          </div>
+          <p className="text-xs text-stone-500 mt-0.5">
+            For physician documentation only
           </p>
+        </div>
+
+        {/* Section Content */}
+        <div className="p-6 space-y-5">
+          {/* Cancer History */}
           <div className="space-y-4">
             <YesNoToggle
-              label="Currently pregnant or breastfeeding?"
-              value={formData.isPregnantOrBreastfeeding}
-              onChange={(v) => handleChange('isPregnantOrBreastfeeding', v)}
+              label="History of cancer treatment?"
+              value={formData.hasCancerHistory}
+              onChange={(v) => {
+                if (!v) {
+                  // Clear cancer types when toggling off
+                  onChange({
+                    ...formData,
+                    hasCancerHistory: false,
+                    cancerTypes: [],
+                    cancerDetails: undefined,
+                  });
+                } else {
+                  handleChange('hasCancerHistory', true);
+                }
+              }}
               disabled={disabled}
             />
-            <YesNoToggle
-              label="Currently using hormonal contraception?"
-              value={formData.usesHormonalContraception}
-              onChange={(v) => handleChange('usesHormonalContraception', v)}
+            {formData.hasCancerHistory && (
+              <div className="ml-0 space-y-4">
+                <CheckboxGroup
+                  label="Cancer type (select all that apply)"
+                  options={CANCER_TYPE_OPTIONS}
+                  selectedValues={formData.cancerTypes}
+                  onChange={(values) => handleChange('cancerTypes', values as CancerType[])}
+                  disabled={disabled}
+                  columns={2}
+                />
+                {formData.cancerTypes.includes('other') && (
+                  <div>
+                    <label className="block text-sm font-medium text-stone-700 mb-2">
+                      Please specify (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.cancerDetails || ''}
+                      onChange={(e) => handleChange('cancerDetails', e.target.value || undefined)}
+                      disabled={disabled}
+                      placeholder="Specify other cancer type..."
+                      className="w-full px-4 py-2.5 h-11 text-sm border border-stone-200 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 placeholder-stone-400"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Current Medications */}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              Current medications (optional)
+            </label>
+            <textarea
+              value={formData.currentMedications || ''}
+              onChange={(e) => handleChange('currentMedications', e.target.value || undefined)}
               disabled={disabled}
+              placeholder="List current medications, dosages..."
+              rows={2}
+              className="w-full px-4 py-2.5 text-sm border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 placeholder-stone-400 resize-none"
             />
-            <YesNoToggle
-              label="Currently receiving hormone replacement therapy (HRT)?"
-              value={formData.receivesHrt}
-              onChange={(v) => handleChange('receivesHrt', v)}
+          </div>
+
+          {/* Relevant Medical Conditions */}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              Relevant medical conditions (optional)
+            </label>
+            <textarea
+              value={formData.relevantMedicalConditions || ''}
+              onChange={(e) => handleChange('relevantMedicalConditions', e.target.value || undefined)}
               disabled={disabled}
+              placeholder="Chronic conditions, previous surgeries, other relevant medical history..."
+              rows={2}
+              className="w-full px-4 py-2.5 text-sm border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 placeholder-stone-400 resize-none"
             />
-            <div className="flex items-center justify-between gap-4">
-              <label className="text-sm font-medium text-stone-700">
-                Menopausal status
-              </label>
-              <StyledSelect
-                options={MENOPAUSAL_STATUS_OPTIONS}
-                value={formData.menopausalStatus || ''}
-                onChange={(value) => handleChange('menopausalStatus', (value || undefined) as MenopausalStatus | undefined)}
-                placeholder="Select..."
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================ */}
+      {/* SECTION 2: COSMETIC SAFETY PROFILE */}
+      {/* ============================================ */}
+      <div className="bg-white rounded-2xl border border-stone-200">
+        {/* Section Header */}
+        <div className="px-6 py-4 border-b border-stone-100">
+          <div className="flex items-center">
+            <h2 className="text-base font-semibold text-stone-900">
+              Cosmetic Safety Profile
+            </h2>
+            <InfoTooltip
+              message="The information below may be used in Skin Wellness Mode to exclude certain cosmetic ingredients for safety and tolerability. It is not used to diagnose, treat, prevent, or manage medical conditions."
+              variant="default"
+            />
+          </div>
+          <p className="text-xs text-stone-500 mt-0.5">
+            Used to exclude cosmetic ingredients for safety and tolerability
+          </p>
+        </div>
+
+        {/* Section Content */}
+        <div className="p-6 space-y-5">
+          {/* Reproductive / Hormonal fields - only for non-male patients */}
+          {showReproductiveFields && (
+            <div className="space-y-4">
+              <YesNoToggle
+                label="Currently pregnant or breastfeeding?"
+                value={formData.isPregnantOrBreastfeeding}
+                onChange={(v) => handleChange('isPregnantOrBreastfeeding', v)}
                 disabled={disabled}
-                className="w-48"
+              />
+              <div className="flex items-center justify-between gap-4">
+                <label className="text-sm font-medium text-stone-700">
+                  Menopausal status
+                </label>
+                <StyledSelect
+                  options={MENOPAUSAL_STATUS_OPTIONS}
+                  value={formData.menopausalStatus || ''}
+                  onChange={(value) => handleChange('menopausalStatus', (value || undefined) as MenopausalStatus | undefined)}
+                  placeholder="Select..."
+                  disabled={disabled}
+                  className="w-48"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Exfoliant Sensitivity */}
+          <YesNoToggle
+            label="Sensitivity to exfoliants (AHAs, BHAs, retinoids)?"
+            value={formData.hasExfoliantSensitivity}
+            onChange={(v) => handleChange('hasExfoliantSensitivity', v)}
+            disabled={disabled}
+          />
+
+          {/* Cosmetic Sensitivities */}
+          <div className="space-y-4">
+            <CheckboxGroup
+              label="Known cosmetic sensitivities (select all that apply)"
+              options={COSMETIC_SENSITIVITY_OPTIONS}
+              selectedValues={formData.cosmeticSensitivities}
+              onChange={(values) => handleChange('cosmeticSensitivities', values as CosmeticSensitivityType[])}
+              disabled={disabled}
+              columns={2}
+            />
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-2">
+                Other sensitivities (optional)
+              </label>
+              <input
+                type="text"
+                value={formData.otherSensitivities || ''}
+                onChange={(e) => handleChange('otherSensitivities', e.target.value || undefined)}
+                disabled={disabled}
+                placeholder="Other known cosmetic sensitivities..."
+                className="w-full px-4 py-2.5 h-11 text-sm border border-stone-200 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 placeholder-stone-400"
               />
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Section: Cancer History */}
-      <div className="bg-white rounded-xl border border-stone-200 p-6">
-        <h2 className="text-base font-semibold text-stone-900 mb-1">
-          Cancer History
-        </h2>
-        <p className="text-sm text-stone-500 mb-5">
-          Previous or current cancer treatments.
-        </p>
-        <div className="space-y-5">
-          <YesNoToggle
-            label="History of cancer treatment?"
-            value={formData.hasCancerHistory}
-            onChange={(v) => {
-              if (!v) {
-                // Clear cancer types when toggling off
-                onChange({
-                  ...formData,
-                  hasCancerHistory: false,
-                  cancerTypes: [],
-                  cancerDetails: undefined,
-                });
-              } else {
-                handleChange('hasCancerHistory', true);
-              }
-            }}
-            disabled={disabled}
-          />
-          {formData.hasCancerHistory && (
-            <>
-              <CheckboxGroup
-                label="Cancer type (select all that apply)"
-                options={CANCER_TYPE_OPTIONS}
-                selectedValues={formData.cancerTypes}
-                onChange={(values) => handleChange('cancerTypes', values as CancerType[])}
-                disabled={disabled}
-                columns={2}
-              />
-              {formData.cancerTypes.includes('other') && (
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
-                    Please specify (optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.cancerDetails || ''}
-                    onChange={(e) => handleChange('cancerDetails', e.target.value || undefined)}
-                    disabled={disabled}
-                    placeholder="Specify other cancer type..."
-                    className="w-full px-4 py-2.5 h-11 text-sm border border-stone-200 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 placeholder-stone-400"
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Section: Skin-Related Medical Context */}
-      <div className="bg-white rounded-xl border border-stone-200 p-6">
-        <h2 className="text-base font-semibold text-stone-900 mb-1">
-          Skin-Related Medical Context
-        </h2>
-        <p className="text-sm text-stone-500 mb-5">
-          Current skin conditions and active lesions.
-        </p>
-        <div className="space-y-4">
-          <YesNoToggle
-            label="Currently under medical treatment for inflammatory or infectious skin conditions?"
-            value={formData.hasInflammatorySkinCondition}
-            onChange={(v) => handleChange('hasInflammatorySkinCondition', v)}
-            disabled={disabled}
-          />
-          <YesNoToggle
-            label="Currently experiencing active cold sores or herpes lesions?"
-            value={formData.hasActiveColdSores}
-            onChange={(v) => handleChange('hasActiveColdSores', v)}
-            disabled={disabled}
-          />
-        </div>
-      </div>
-
-      {/* Section: Allergies */}
-      <div className="bg-white rounded-xl border border-stone-200 p-6">
-        <h2 className="text-base font-semibold text-stone-900 mb-1">
-          Allergies
-        </h2>
-        <p className="text-sm text-stone-500 mb-5">
-          Known allergies to medications and cosmetic ingredients.
-        </p>
-        <div className="space-y-5">
-          <CheckboxGroup
-            label="Known allergies (select all that apply)"
-            options={KNOWN_ALLERGY_OPTIONS}
-            selectedValues={formData.knownAllergies}
-            onChange={(values) => handleChange('knownAllergies', values as KnownAllergyType[])}
-            disabled={disabled}
-            columns={2}
-          />
-          <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">
-              Other allergies (optional)
-            </label>
-            <input
-              type="text"
-              value={formData.otherAllergies || ''}
-              onChange={(e) => handleChange('otherAllergies', e.target.value || undefined)}
-              disabled={disabled}
-              placeholder="Other known allergies..."
-              className="w-full px-4 py-2.5 h-11 text-sm border border-stone-200 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 placeholder-stone-400"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Section: Medications */}
-      <div className="bg-white rounded-xl border border-stone-200 p-6">
-        <h2 className="text-base font-semibold text-stone-900 mb-1">
-          Medications
-        </h2>
-        <p className="text-sm text-stone-500 mb-5">
-          Current medications being taken.
-        </p>
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-2">
-            Current medications (optional)
-          </label>
-          <textarea
-            value={formData.currentMedications || ''}
-            onChange={(e) => handleChange('currentMedications', e.target.value || undefined)}
-            disabled={disabled}
-            placeholder="List current medications, dosages..."
-            rows={3}
-            className="w-full px-4 py-2.5 text-sm border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 placeholder-stone-400 resize-none"
-          />
-        </div>
-      </div>
-
-      {/* Section: Additional Medical Information */}
-      <div className="bg-white rounded-xl border border-stone-200 p-6">
-        <h2 className="text-base font-semibold text-stone-900 mb-1">
-          Additional Medical Information
-        </h2>
-        <p className="text-sm text-stone-500 mb-5">
-          Any other relevant medical conditions or notes.
-        </p>
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-2">
-            Relevant medical conditions (optional)
-          </label>
-          <textarea
-            value={formData.relevantMedicalConditions || ''}
-            onChange={(e) => handleChange('relevantMedicalConditions', e.target.value || undefined)}
-            disabled={disabled}
-            placeholder="Chronic conditions, previous surgeries, other relevant medical history..."
-            rows={3}
-            className="w-full px-4 py-2.5 text-sm border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 placeholder-stone-400 resize-none"
-          />
-        </div>
-      </div>
-
-      {/* Section: Recovery Time Preference */}
-      <div className="bg-white rounded-xl border border-stone-200 p-6">
-        <h2 className="text-base font-semibold text-stone-900 mb-1">
-          Acceptable Recovery Time After a Procedure
-        </h2>
-        <p className="text-sm text-stone-500 mb-5">
-          Please indicate the maximum recovery time the patient is comfortable with.
-        </p>
-        <div className="space-y-3">
-          {RECOVERY_TIME_OPTIONS.map(opt => (
-            <label
-              key={opt.value}
-              className={`
-                flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors
-                ${formData.recoveryTimePreference === opt.value
-                  ? 'border-purple-500 bg-purple-50'
-                  : 'border-stone-200 hover:border-stone-300'
-                }
-                ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-              `}
-            >
-              <input
-                type="radio"
-                name="recoveryTime"
-                value={opt.value}
-                checked={formData.recoveryTimePreference === opt.value}
-                onChange={() => !disabled && handleChange('recoveryTimePreference', opt.value as RecoveryTimePreference)}
-                disabled={disabled}
-                className="h-4 w-4 accent-purple-600"
-              />
-              <span className="text-sm text-stone-700">{opt.label}</span>
-            </label>
-          ))}
         </div>
       </div>
 
@@ -322,19 +321,17 @@ export function MedicalHistoryForm({
 // Helper function to create empty form data
 export function getEmptyMedicalHistoryForm(): PatientMedicalHistoryFormData {
   return {
-    isPregnantOrBreastfeeding: false,
-    usesHormonalContraception: false,
-    receivesHrt: false,
-    menopausalStatus: undefined,
+    // CLINICAL MEDICAL HISTORY
     hasCancerHistory: false,
     cancerTypes: [],
     cancerDetails: undefined,
-    hasInflammatorySkinCondition: false,
-    hasActiveColdSores: false,
-    knownAllergies: [],
-    otherAllergies: undefined,
     currentMedications: undefined,
     relevantMedicalConditions: undefined,
-    recoveryTimePreference: undefined,
+    // COSMETIC SAFETY PROFILE
+    isPregnantOrBreastfeeding: false,
+    menopausalStatus: undefined,
+    hasExfoliantSensitivity: false,
+    cosmeticSensitivities: [],
+    otherSensitivities: undefined,
   };
 }
