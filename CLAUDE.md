@@ -38,7 +38,9 @@ The app is fully functional with real authentication and database persistence vi
 The clinical documentation wizard guides physicians through a 6-step process:
 
 1. **Patient Selection** - Select existing or create new patient record
-2. **Medical History** - Capture reproductive, cancer, skin conditions, allergies, medications
+2. **Health Background** - Two sections:
+   - Clinical Medical History (cancer, medications, conditions) - never used by AI
+   - Cosmetic Safety Profile (pregnancy, menopause, sensitivities) - for ingredient exclusion
 3. **Photo Collection** - Capture frontal + profile photos with remove.bg background removal
 4. **Skin Concerns** - Select from 17 medical skin conditions across 4 categories (drag & drop priority)
 5. **Treatment Selection** - Select treatments from 4 categories with pricing:
@@ -59,6 +61,7 @@ Key files:
 - `src/lib/treatmentCategories.ts` - Treatment category constants
 - `src/lib/backgroundRemoval.ts` - remove.bg API integration
 - `src/lib/pricing.ts` - Multi-currency pricing utilities
+- `src/lib/medicalHistory.ts` - Health Background data functions
 - `src/components/clinical-documentation/EnterSkinWellnessModal.tsx` - Regulatory boundary modal
 
 ### Skin Wellness Mode (SkinXS)
