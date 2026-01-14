@@ -8,6 +8,9 @@ import { generateFullAnalysis } from '@/lib/mockSkinAnalysis';
 import { SkinAnalysisResult, ImageQualityAssessment, PatientAttributes } from '@/lib/skinWellnessCategories';
 import { SkinAnalysisLoading } from '@/components/skin-wellness/SkinAnalysisLoading';
 import { SkinWellnessResults } from '@/components/skin-wellness/SkinWellnessResults';
+import { getAnalysisResult, type AnalysisStatus } from '@/lib/skinAnalysis';
+import { mapCategoryScores, getAllCategoryDetails, type ParsedAnalysisResult } from '@/lib/skinAnalysisMapping';
+import { SkinWellnessDetail } from '@/lib/skinWellnessDetails';
 
 /**
  * Skin Wellness Mode Page
@@ -51,7 +54,10 @@ export default function SkinWellnessPage() {
   const [skinHealthOverview, setSkinHealthOverview] = useState<string | null>(null);
   const [imageQuality, setImageQuality] = useState<ImageQualityAssessment | null>(null);
   const [patientAttributes, setPatientAttributes] = useState<PatientAttributes | null>(null);
+  const [categoryDetails, setCategoryDetails] = useState<Record<string, SkinWellnessDetail[]> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [analysisStatus, setAnalysisStatus] = useState<'checking' | 'pending' | 'completed' | 'failed' | 'mock'>('checking');
+  const [isUsingRealData, setIsUsingRealData] = useState(false);
 
   // Load photo on mount
   useEffect(() => {
@@ -152,19 +158,114 @@ export default function SkinWellnessPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entryData?.photoSessionId]);
 
-  // Handle analysis completion
-  const handleAnalysisComplete = useCallback(() => {
+  // Check for real API analysis result
+  const checkAnalysisResult = useCallback(async (): Promise<AnalysisStatus | null> => {
+    if (!entryData) return null;
+    try {
+      const response = await fetch(`/api/skin-analysis?photoSessionId=${entryData.photoSessionId}`);
+      if (!response.ok) {
+        if (response.status === 404) return null;
+        throw new Error('Failed to fetch analysis');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error checking analysis:', error);
+      return null;
+    }
+  }, [entryData]);
+
+  // Apply real analysis result to state
+  const applyRealAnalysis = useCallback((result: ParsedAnalysisResult) => {
+    // Map category scores to SkinAnalysisResult format
+    const categoryScores = mapCategoryScores({
+      yellow: result.scoreRadiance,
+      pink: result.scoreSmoothness,
+      red: result.scoreRedness,
+      blue: result.scoreHydration,
+      orange: result.scoreShine,
+      grey: result.scoreTexture,
+      green: result.scoreBlemishes,
+      brown: result.scoreTone,
+      eye: result.scoreEyeContour,
+      neck: result.scoreNeckDecollete,
+    });
+
+    const categories: SkinAnalysisResult[] = Object.entries(categoryScores).map(([categoryId, score]) => ({
+      categoryId,
+      visibilityLevel: score as 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
+    }));
+
+    setAnalysisResults(categories);
+    setSkinHealthOverview(result.skinHealthOverview);
+    setImageQuality(result.imageQuality);
+    setPatientAttributes(result.patientAttributes);
+    setCategoryDetails(result.categoryDetails);
+    setIsUsingRealData(true);
+    setAnalysisStatus('completed');
+    setViewState('results');
+  }, []);
+
+  // Handle analysis completion (called when animation ends)
+  const handleAnalysisComplete = useCallback(async () => {
     if (!entryData) return;
 
-    // Generate full mock analysis based on photoSessionId for consistency
-    const analysis = generateFullAnalysis(entryData.photoSessionId);
-    setAnalysisResults(analysis.categories);
-    setSkinHealthOverview(analysis.skinHealthOverview);
-    setImageQuality(analysis.imageQuality);
-    setPatientAttributes(analysis.patientAttributes);
-    setViewState('results');
+    // Check if we already have a completed analysis
+    if (analysisStatus === 'completed') {
+      setViewState('results');
+      return;
+    }
+
+    // Try to get real analysis result
+    const status = await checkAnalysisResult();
+
+    if (status?.status === 'completed' && status.result) {
+      // Use real API data
+      applyRealAnalysis(status.result);
+      return;
+    }
+
+    if (status?.status === 'pending') {
+      // Analysis still in progress - poll for results
+      setAnalysisStatus('pending');
+      const pollInterval = setInterval(async () => {
+        const pollStatus = await checkAnalysisResult();
+        if (pollStatus?.status === 'completed' && pollStatus.result) {
+          clearInterval(pollInterval);
+          applyRealAnalysis(pollStatus.result);
+        } else if (pollStatus?.status === 'failed') {
+          clearInterval(pollInterval);
+          // Fall back to mock data
+          console.warn('Analysis failed, using mock data:', pollStatus.errorMessage);
+          applyMockData();
+        }
+      }, 3000); // Poll every 3 seconds
+
+      // Stop polling after 2 minutes
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        if (viewState !== 'results') {
+          console.warn('Analysis timeout, using mock data');
+          applyMockData();
+        }
+      }, 120000);
+      return;
+    }
+
+    // No real analysis available - use mock data
+    applyMockData();
+
+    function applyMockData() {
+      const analysis = generateFullAnalysis(entryData!.photoSessionId);
+      setAnalysisResults(analysis.categories);
+      setSkinHealthOverview(analysis.skinHealthOverview);
+      setImageQuality(analysis.imageQuality);
+      setPatientAttributes(analysis.patientAttributes);
+      setIsUsingRealData(false);
+      setAnalysisStatus('mock');
+      setViewState('results');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entryData?.photoSessionId]);
+  }, [entryData?.photoSessionId, analysisStatus, checkAnalysisResult, applyRealAnalysis, viewState]);
 
   // Invalid entry - missing required parameters
   if (!entryData) {
@@ -231,6 +332,8 @@ export default function SkinWellnessPage() {
         skinHealthOverview={skinHealthOverview}
         imageQuality={imageQuality}
         patientAttributes={patientAttributes}
+        initialCategoryDetails={categoryDetails}
+        isUsingRealData={isUsingRealData}
       />
     );
   }

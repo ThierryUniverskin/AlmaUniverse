@@ -32,6 +32,8 @@ interface SkinWellnessResultsProps {
   skinHealthOverview?: string | null;
   imageQuality?: ImageQualityAssessment | null;
   patientAttributes?: PatientAttributes | null;
+  initialCategoryDetails?: Record<string, SkinWellnessDetail[]> | null;
+  isUsingRealData?: boolean;
 }
 
 /**
@@ -48,7 +50,7 @@ function getScoreColor(score: number): { bg: string; text: string; border: strin
   return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' };
 }
 
-export function SkinWellnessResults({ results: initialResults, patientId, onBack, photoUrls, patientName, sessionDate, skinHealthOverview, imageQuality, patientAttributes: initialAttributes }: SkinWellnessResultsProps) {
+export function SkinWellnessResults({ results: initialResults, patientId, onBack, photoUrls, patientName, sessionDate, skinHealthOverview, imageQuality, patientAttributes: initialAttributes, initialCategoryDetails, isUsingRealData }: SkinWellnessResultsProps) {
   const router = useRouter();
   const { state: authState } = useAuth();
   const sidebarOffset = useSidebarOffset();
@@ -64,7 +66,21 @@ export function SkinWellnessResults({ results: initialResults, patientId, onBack
   const [isRegenerating, setIsRegenerating] = useState(false);
 
   // Store parameter details for each category (persists changes across modal open/close)
+  // Use real API data if available, otherwise fall back to mock data
   const [categoryDetails, setCategoryDetails] = useState<Record<string, SkinWellnessDetail[]>>(() => {
+    // If we have real API data, use it
+    if (initialCategoryDetails) {
+      const withAiScores: Record<string, SkinWellnessDetail[]> = {};
+      for (const [categoryId, details] of Object.entries(initialCategoryDetails)) {
+        withAiScores[categoryId] = details.map((detail) => ({
+          ...detail,
+          aiScoreValue: detail.aiScoreValue ?? detail.scoreValue, // Preserve or set AI score
+        }));
+      }
+      return withAiScores;
+    }
+
+    // Fall back to mock data
     const initial: Record<string, SkinWellnessDetail[]> = {};
     SKIN_WELLNESS_CATEGORIES.forEach((cat) => {
       initial[cat.id] = getCategoryDetails(cat.id).map((detail) => ({

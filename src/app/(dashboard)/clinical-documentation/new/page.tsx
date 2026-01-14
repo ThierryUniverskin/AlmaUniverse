@@ -14,6 +14,7 @@ import { getMedicalHistory, saveMedicalHistory, updateMedicalHistory, historyToF
 import { savePhotoSession } from '@/lib/photoSession';
 import { createClinicalEvaluation } from '@/lib/clinicalEvaluation';
 import { buildSkinWellnessUrl } from '@/lib/skinWellness';
+import { triggerAnalysis } from '@/lib/skinAnalysis';
 
 export default function ClinicalDocumentationPage() {
   const router = useRouter();
@@ -395,6 +396,16 @@ export default function ClinicalDocumentationPage() {
         // Save the photo session ID for linking to clinical evaluation
         setSavedPhotoSessionId(result.id);
         showToast('Photos saved successfully', 'success');
+
+        // Trigger background skin analysis (fire and forget)
+        // This runs in the background so results are ready when entering Skin Wellness Mode
+        if (doctorId) {
+          triggerAnalysis(result.id, doctorId).catch((error) => {
+            logger.error('Background skin analysis failed:', error);
+            // Don't block the flow - analysis can be retried when entering Skin Wellness
+          });
+        }
+
         setCurrentStep(4);
       } else {
         showToast('Failed to save photos', 'error');
