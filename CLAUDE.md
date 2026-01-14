@@ -198,6 +198,62 @@ Key files:
 - `src/lib/skinWellnessDetails.ts` - Parameter definitions and mock data
 - `src/components/skin-wellness/CategoryDetailModal.tsx` - Parameter editing UI
 
+#### SkinXS Diagnostic API Integration
+
+Real AI-powered skin analysis via the SkinXS API:
+
+**API Details:**
+- **Endpoint:** `POST https://website-skinxs-api-lzetymrodq-uc.a.run.app/analyze_images/`
+- **Timeout:** Up to 45 seconds (Vercel function `maxDuration: 120`)
+- **Rate Limit:** 1000 requests per doctor per month
+
+**Inputs:**
+- `frontal_image` (required) - Patient frontal photo
+- `left_side_image` (optional) - Left profile photo
+- `right_side_image` (optional) - Right profile photo
+- `language` - Default: `en`
+- `main_skin_concern` - Left empty (not using doctor's selected concerns)
+
+**Background Processing Flow:**
+1. Doctor clicks "Continue" after Photo Collection step
+2. Photos saved to Supabase Storage
+3. Background API call triggered (fire-and-forget)
+4. Analysis runs in background while doctor continues workflow
+5. Results ready when entering Skin Wellness Mode
+
+**Database Tables:**
+- `skin_analysis_results` - Stores raw API response + parsed fields (scores, patient attributes, image quality)
+- `api_usage_logs` - Tracks monthly API usage per doctor for rate limiting
+
+**Category Color Mapping (API → Our System):**
+| API Key | Category ID | Display Name |
+|---------|-------------|--------------|
+| yellow | radiance | Skin Radiance |
+| pink | smoothness | Surface Smoothness |
+| red | redness | Visible Redness |
+| blue | hydration | Hydration Appearance |
+| orange | shine | Shine Appearance |
+| grey | texture | Skin Texture |
+| green | blemishes | Visible Blemishes |
+| brown | tone | Uneven Tone & Dark Spots |
+| eye | eye-contour | Eye Contour |
+| neck | neck-decollete | Neck & Décolleté |
+
+**Environment Variables (Server-side only):**
+```bash
+SKINXS_API_KEY=<api-key>
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>  # Required for server-side DB access
+```
+
+**Key Files:**
+- `src/app/api/skin-analysis/route.ts` - API route (POST triggers analysis, GET fetches results)
+- `src/lib/skinAnalysis.ts` - Service functions (rate limiting, photo session, DB operations)
+- `src/lib/skinAnalysisMapping.ts` - API response → our data structure mapping
+- `supabase/migrations/011_add_skin_analysis.sql` - Database tables for results and usage logs
+
+**Fallback Behavior:**
+If real analysis unavailable (pending/failed), the app falls back to mock data generation.
+
 ### Treatment Pricing System
 
 Multi-currency pricing with country-specific defaults:
