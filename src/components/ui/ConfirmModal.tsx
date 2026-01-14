@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { Button } from './Button';
+import { useSidebarOffset } from '@/context/LayoutContext';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -24,6 +25,8 @@ function ConfirmModal({
   onCancel,
   variant = 'default',
 }: ConfirmModalProps) {
+  const sidebarOffset = useSidebarOffset();
+
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -61,7 +64,10 @@ function ConfirmModal({
       />
 
       {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div
+        className="flex min-h-full items-center justify-center p-4 transition-[padding] duration-300"
+        style={{ paddingLeft: sidebarOffset }}
+      >
         <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 transform transition-all">
           {/* Icon */}
           <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${iconBgColor} mb-4`}>

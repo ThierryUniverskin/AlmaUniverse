@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useSidebarOffset } from '@/context/LayoutContext';
 import { DoctorProcedure, DoctorProcedureFormData, OtherProcedureSubcategory } from '@/types';
 import { OTHER_SUBCATEGORIES, getCategorySingularLabel } from '@/lib/treatmentCategories';
 import { getCurrencySymbol, parsePriceToCents, centsToInputValue, DEFAULT_PROCEDURE_PRICE_CENTS } from '@/lib/pricing';
@@ -26,6 +27,7 @@ export function ProcedureFormModal({
   countryCode,
 }: ProcedureFormModalProps) {
   const [mounted, setMounted] = useState(false);
+  const sidebarOffset = useSidebarOffset();
   const [formData, setFormData] = useState<DoctorProcedureFormData>({
     category,
     name: '',
@@ -133,7 +135,8 @@ export function ProcedureFormModal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 transition-[padding] duration-300"
+      style={{ paddingLeft: sidebarOffset }}
       role="dialog"
       aria-modal="true"
     >

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { useSidebarOffset } from '@/context/LayoutContext';
 
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
@@ -17,6 +18,8 @@ const sizeStyles = {
 };
 
 function LoadingSpinner({ size = 'md', className, message, fullScreen = false }: LoadingSpinnerProps) {
+  const sidebarOffset = useSidebarOffset();
+
   const spinner = (
     <div className={cn('flex flex-col items-center justify-center gap-4', className)}>
       {/* Premium minimal spinner */}
@@ -43,7 +46,10 @@ function LoadingSpinner({ size = 'md', className, message, fullScreen = false }:
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-ivory-100/90 backdrop-blur-sm z-50">
+      <div
+        className="fixed inset-0 flex items-center justify-center bg-ivory-100/90 backdrop-blur-sm z-50 transition-[padding] duration-300"
+        style={{ paddingLeft: sidebarOffset }}
+      >
         {spinner}
       </div>
     );

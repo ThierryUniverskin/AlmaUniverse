@@ -120,7 +120,7 @@ export function SkinAnalysisLoading({ photoUrl, onComplete }: SkinAnalysisLoadin
         <div className="flex items-center justify-center mb-6">
           <div className="relative">
             {/* Progress Ring */}
-            <svg className="absolute -inset-3 w-[calc(100%+24px)] h-[calc(100%+24px)]" viewBox="0 0 100 100">
+            <svg className="absolute -inset-5 w-[calc(100%+40px)] h-[calc(100%+40px)]" viewBox="0 0 100 100">
               {/* Background ring */}
               <circle
                 cx="50"

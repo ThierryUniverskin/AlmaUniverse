@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSidebarOffset } from '@/context/LayoutContext';
 import { getCategoryById } from '@/lib/skinWellnessCategories';
 import { SkinWellnessDetail, getCategoryDetails } from '@/lib/skinWellnessDetails';
 
@@ -17,6 +18,7 @@ export function CategoryDetailModal({
   onClose,
   onSave,
 }: CategoryDetailModalProps) {
+  const sidebarOffset = useSidebarOffset();
   const category = getCategoryById(categoryId);
   const initialDetails = getCategoryDetails(categoryId);
   const [details, setDetails] = useState<SkinWellnessDetail[]>(initialDetails);
@@ -50,7 +52,8 @@ export function CategoryDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-[padding] duration-300"
+      style={{ paddingLeft: sidebarOffset }}
       onClick={handleCancel}
     >
       <div

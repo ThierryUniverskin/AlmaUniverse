@@ -1,20 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Sidebar } from './Sidebar';
+import { LayoutProvider, useLayout } from '@/context/LayoutContext';
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
-function MainLayout({ children }: MainLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+function MainLayoutContent({ children }: MainLayoutProps) {
+  const { sidebarCollapsed, toggleSidebar } = useLayout();
 
   return (
     <div className="h-screen bg-stone-50 flex">
       <Sidebar
         collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onToggle={toggleSidebar}
       />
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <main className="flex-1 overflow-auto">
@@ -24,6 +25,14 @@ function MainLayout({ children }: MainLayoutProps) {
         </main>
       </div>
     </div>
+  );
+}
+
+function MainLayout({ children }: MainLayoutProps) {
+  return (
+    <LayoutProvider>
+      <MainLayoutContent>{children}</MainLayoutContent>
+    </LayoutProvider>
   );
 }
 

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useSidebarOffset } from '@/context/LayoutContext';
 
 /**
  * EnterSkinWellnessModal - Regulatory boundary screen for entering Skin Wellness Mode
@@ -31,6 +32,7 @@ export function EnterSkinWellnessModal({
 }: EnterSkinWellnessModalProps) {
   const [mounted, setMounted] = React.useState(false);
   const [isEntering, setIsEntering] = useState(false);
+  const sidebarOffset = useSidebarOffset();
 
   React.useEffect(() => {
     setMounted(true);
@@ -52,7 +54,8 @@ export function EnterSkinWellnessModal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 transition-[padding] duration-300"
+      style={{ paddingLeft: sidebarOffset }}
       // No onClick handler - modal cannot be dismissed by clicking outside
     >
       {/* Backdrop */}
@@ -149,6 +152,12 @@ export function EnterSkinWellnessModal({
                   </svg>
                   Patient-reported cosmetic preferences
                 </li>
+                <li className="flex items-center gap-2 text-sm text-stone-700">
+                  <svg className="w-4 h-4 text-sky-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Cosmetic safety profile
+                </li>
               </ul>
             </div>
 
@@ -165,7 +174,7 @@ export function EnterSkinWellnessModal({
                   <svg className="w-4 h-4 text-stone-300 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                  Medical history
+                  Clinical medical history
                 </li>
                 <li className="flex items-center gap-2 text-sm text-stone-400">
                   <svg className="w-4 h-4 text-stone-300 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

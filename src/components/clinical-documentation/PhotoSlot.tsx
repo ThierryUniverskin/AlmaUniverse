@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useSidebarOffset } from '@/context/LayoutContext';
 import { PhotoType } from '@/types';
 import { removeBackground, validateImageFile, FileValidationError } from '@/lib/backgroundRemoval';
 
@@ -37,6 +38,7 @@ export function PhotoSlot({
   guideImageSrc,
 }: PhotoSlotProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sidebarOffset = useSidebarOffset();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -352,7 +354,8 @@ export function PhotoSlot({
       {/* Image Preview Modal - rendered via portal */}
       {mounted && showFullscreen && previewUrl && createPortal(
         <div
-          className="fixed top-0 left-0 right-0 bottom-0 z-[9999] bg-black/80 flex items-center justify-center p-6"
+          className="fixed top-0 left-0 right-0 bottom-0 z-[9999] bg-black/80 flex items-center justify-center p-6 transition-[padding] duration-300"
+          style={{ paddingLeft: sidebarOffset }}
           onClick={() => setShowFullscreen(false)}
         >
           <div

@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useSidebarOffset } from '@/context/LayoutContext';
 import { FlowerVisualization } from './FlowerVisualization';
 import { CategoryDetailModal } from './CategoryDetailModal';
 import { SkinWellnessStepProgress } from './SkinWellnessStepProgress';
@@ -49,6 +50,7 @@ function getScoreColor(score: number): { bg: string; text: string; border: strin
 export function SkinWellnessResults({ results: initialResults, patientId, onBack, photoUrls, patientName, sessionDate, skinHealthOverview, imageQuality, patientAttributes: initialAttributes }: SkinWellnessResultsProps) {
   const router = useRouter();
   const { state: authState } = useAuth();
+  const sidebarOffset = useSidebarOffset();
   const [results, setResults] = useState<SkinAnalysisResult[]>(initialResults);
   const [activeSlice, setActiveSlice] = useState<string | null>(null);
   const [detailModalCategory, setDetailModalCategory] = useState<string | null>(null);
@@ -466,7 +468,8 @@ export function SkinWellnessResults({ results: initialResults, patientId, onBack
       {/* Photo Lightbox Modal */}
       {enlargedPhoto && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm transition-[padding] duration-300"
+          style={{ paddingLeft: sidebarOffset }}
           onClick={() => setEnlargedPhoto(null)}
         >
           <div className="relative max-w-4xl max-h-[90vh] mx-4">
@@ -490,7 +493,8 @@ export function SkinWellnessResults({ results: initialResults, patientId, onBack
       {/* Image Quality Modal */}
       {showImageQualityModal && imageQuality && scoreColors && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-[padding] duration-300"
+          style={{ paddingLeft: sidebarOffset }}
           onClick={() => setShowImageQualityModal(false)}
         >
           <div

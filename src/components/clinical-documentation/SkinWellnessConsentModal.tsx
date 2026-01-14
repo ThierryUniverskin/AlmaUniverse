@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useSidebarOffset } from '@/context/LayoutContext';
 
 export interface SkinWellnessConsentModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export function SkinWellnessConsentModal({
 }: SkinWellnessConsentModalProps) {
   const [consentChecked, setConsentChecked] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const sidebarOffset = useSidebarOffset();
 
   // For portal mounting
   useEffect(() => {
@@ -58,7 +60,8 @@ export function SkinWellnessConsentModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4 transition-[padding] duration-300"
+      style={{ paddingLeft: sidebarOffset }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}

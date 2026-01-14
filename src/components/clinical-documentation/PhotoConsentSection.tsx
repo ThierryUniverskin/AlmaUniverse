@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useSidebarOffset } from '@/context/LayoutContext';
 
 export interface PhotoConsentSectionProps {
   consentGiven: boolean;
@@ -17,6 +18,7 @@ export function PhotoConsentSection({
   const [showInfoPopover, setShowInfoPopover] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const sidebarOffset = useSidebarOffset();
 
   // For portal mounting
   React.useEffect(() => {
@@ -116,7 +118,8 @@ export function PhotoConsentSection({
       {/* Privacy Notice Modal */}
       {mounted && showPrivacyModal && createPortal(
         <div
-          className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4 transition-[padding] duration-300"
+          style={{ paddingLeft: sidebarOffset }}
           onClick={() => setShowPrivacyModal(false)}
         >
           <div

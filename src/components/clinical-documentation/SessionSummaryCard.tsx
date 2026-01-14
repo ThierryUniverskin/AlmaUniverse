@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useSidebarOffset } from '@/context/LayoutContext';
 import { SelectedTreatment, TreatmentCategory, EBDDevice, DoctorProcedure } from '@/types';
 import { getConcernById } from '@/lib/skinConcerns';
 import { getCategoryLabel } from '@/lib/treatmentCategories';
@@ -52,6 +53,7 @@ export function SessionSummaryCard({
   accessToken,
   countryCode,
 }: SessionSummaryCardProps) {
+  const sidebarOffset = useSidebarOffset();
   const [resolvedTreatments, setResolvedTreatments] = useState<ResolvedTreatment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -365,7 +367,8 @@ export function SessionSummaryCard({
       {/* Fullscreen Photo Modal - rendered via portal */}
       {mounted && fullscreenPhoto && createPortal(
         <div
-          className="fixed top-0 left-0 right-0 bottom-0 z-[9999] bg-black/80 flex items-center justify-center p-6"
+          className="fixed top-0 left-0 right-0 bottom-0 z-[9999] bg-black/80 flex items-center justify-center p-6 transition-[padding] duration-300"
+          style={{ paddingLeft: sidebarOffset }}
           onClick={() => setFullscreenPhoto(null)}
         >
           <div

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useSidebarOffset } from '@/context/LayoutContext';
 import { SelectedTreatment, TreatmentCategory, EBDDevice, DoctorProcedure, DoctorProcedureFormData, DoctorDeviceWithPrice } from '@/types';
 import { EBD_DEVICES, getFitzpatrickColor, getDowntimeColor, fetchEBDDevices, fetchAllDeviceCountryPrices } from '@/lib/ebdDevices';
 import { fetchDoctorActiveDevices, fetchDoctorDevicesWithPrices } from '@/lib/doctorDevices';
@@ -44,6 +45,7 @@ export function TreatmentSelectionModal({
 }: TreatmentSelectionModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [mounted, setMounted] = useState(false);
+  const sidebarOffset = useSidebarOffset();
   const [devices, setDevices] = useState<EBDDevice[]>([]);
   const [procedures, setProcedures] = useState<DoctorProcedure[]>([]);
   const [devicePrices, setDevicePrices] = useState<Record<string, DoctorDeviceWithPrice>>({});
@@ -223,7 +225,8 @@ export function TreatmentSelectionModal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 transition-[padding] duration-300"
+      style={{ paddingLeft: sidebarOffset }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
