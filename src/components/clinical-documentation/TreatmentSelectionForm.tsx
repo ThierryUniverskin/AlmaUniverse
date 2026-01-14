@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { TreatmentSelectionFormData, SelectedTreatment, TreatmentCategory, DoctorProcedure } from '@/types';
+import { TreatmentSelectionFormData, SelectedTreatment, TreatmentCategory, DoctorProcedure, FitzpatrickType, RecoveryTimePreference } from '@/types';
 import { TREATMENT_CATEGORIES } from '@/lib/treatmentCategories';
 import { TreatmentCategorySection } from './TreatmentCategorySection';
 import { TreatmentSelectionModal } from './TreatmentSelectionModal';
@@ -14,6 +14,8 @@ export interface TreatmentSelectionFormProps {
   disabled?: boolean;
   patientName: string;
   selectedConcerns?: string[];
+  fitzpatrickSkinType?: FitzpatrickType;
+  recoveryTimePreferences?: RecoveryTimePreference[];
   doctorId?: string;
   accessToken?: string;
   countryCode?: string | null;
@@ -25,6 +27,8 @@ export function TreatmentSelectionForm({
   disabled = false,
   patientName,
   selectedConcerns = [],
+  fitzpatrickSkinType,
+  recoveryTimePreferences,
   doctorId,
   accessToken,
   countryCode,
@@ -226,7 +230,7 @@ export function TreatmentSelectionForm({
       {/* Footer Note with Tooltip */}
       <div className="text-center">
         <DocumentationTooltip
-          message="Select treatments for this clinical session across all categories. All selections are entered by the physician for documentation purposes. The system does not provide treatment recommendations."
+          message="Devices are organized based on manufacturer-specified compatibility parameters. All treatment selections are made by the physician."
         />
       </div>
 
@@ -239,6 +243,8 @@ export function TreatmentSelectionForm({
         onProcedureCreated={handleProcedureCreated}
         selectedIds={getSelectedIds()}
         selectedConcerns={selectedConcerns}
+        fitzpatrickSkinType={fitzpatrickSkinType}
+        recoveryTimePreferences={recoveryTimePreferences}
         doctorId={doctorId}
         accessToken={accessToken}
         countryCode={countryCode}

@@ -44,7 +44,7 @@ The clinical documentation wizard guides physicians through a 6-step process:
 3. **Photo Collection** - Capture frontal + profile photos with remove.bg background removal
 4. **Skin Concerns** - Select from 17 medical skin conditions across 4 categories (drag & drop priority)
 5. **Treatment Selection** - Select treatments from 4 categories with pricing:
-   - **EBD Devices** - Alma device catalog with per-session pricing
+   - **EBD Devices** - Alma device catalog with compatibility-based organization
    - **Toxins** - Custom doctor procedures (e.g., Botox, Dysport)
    - **Injectables** - Custom doctor procedures (e.g., Juvederm, Restylane)
    - **Other Aesthetic Procedures** - Custom procedures with subcategories
@@ -57,6 +57,7 @@ Key files:
 - `src/components/clinical-documentation/` - Step components
 - `src/lib/skinConcerns.ts` - Skin concern categories and items
 - `src/lib/ebdDevices.ts` - EBD device catalog and database fetch
+- `src/lib/deviceRecommendations.ts` - Device compatibility scoring based on patient profile
 - `src/lib/doctorProcedures.ts` - Custom procedures CRUD
 - `src/lib/treatmentCategories.ts` - Treatment category constants
 - `src/lib/backgroundRemoval.ts` - remove.bg API integration

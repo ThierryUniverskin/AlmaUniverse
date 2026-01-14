@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSidebarOffset } from '@/context/LayoutContext';
-import { SelectedTreatment, TreatmentCategory, EBDDevice, DoctorProcedure, DoctorProcedureFormData, DoctorDeviceWithPrice } from '@/types';
+import { SelectedTreatment, TreatmentCategory, EBDDevice, DoctorProcedure, DoctorProcedureFormData, DoctorDeviceWithPrice, FitzpatrickType, RecoveryTimePreference } from '@/types';
 import { EBD_DEVICES, getFitzpatrickColor, getDowntimeColor, fetchEBDDevices, fetchAllDeviceCountryPrices } from '@/lib/ebdDevices';
 import { fetchDoctorActiveDevices, fetchDoctorDevicesWithPrices } from '@/lib/doctorDevices';
 import { fetchDoctorProceduresByCategory, createDoctorProcedure } from '@/lib/doctorProcedures';
@@ -11,6 +11,8 @@ import { getCategoryLabel, getCategorySingularLabel, getSubcategoryLabel, isCust
 import { getConcernById } from '@/lib/skinConcerns';
 import { CreateProcedureForm } from './CreateProcedureForm';
 import { formatPrice } from '@/lib/pricing';
+import { getRecommendedDevices, DeviceRecommendationScore } from '@/lib/deviceRecommendations';
+import { RECOVERY_TIME_OPTIONS } from '@/lib/constants';
 
 // Helper to get effective device price (custom price or default)
 function getEffectiveDevicePrice(customPriceCents: number | null | undefined, defaultPriceCents: number | undefined): number | undefined {
@@ -26,6 +28,8 @@ export interface TreatmentSelectionModalProps {
   onProcedureCreated?: (procedure: DoctorProcedure) => void;
   selectedIds: string[];
   selectedConcerns?: string[];
+  fitzpatrickSkinType?: FitzpatrickType;
+  recoveryTimePreferences?: RecoveryTimePreference[];
   doctorId?: string;
   accessToken?: string;
   countryCode?: string | null;
@@ -39,6 +43,8 @@ export function TreatmentSelectionModal({
   onProcedureCreated,
   selectedIds,
   selectedConcerns = [],
+  fitzpatrickSkinType,
+  recoveryTimePreferences,
   doctorId,
   accessToken,
   countryCode,
@@ -131,6 +137,23 @@ export function TreatmentSelectionModal({
       device.tags.some(tag => tag.toLowerCase().includes(query))
     );
   }, [searchQuery, devices]);
+
+  // Score and split devices into recommended and other
+  const { recommendedDevices, otherDevices, scoreMap } = useMemo(() => {
+    if (category !== 'ebd' || filteredDevices.length === 0) {
+      return {
+        recommendedDevices: [] as EBDDevice[],
+        otherDevices: filteredDevices,
+        scoreMap: new Map<string, DeviceRecommendationScore>(),
+      };
+    }
+
+    return getRecommendedDevices(filteredDevices, {
+      selectedConcerns,
+      fitzpatrickSkinType,
+      recoveryTimePreferences,
+    });
+  }, [filteredDevices, category, selectedConcerns, fitzpatrickSkinType, recoveryTimePreferences]);
 
   const filteredProcedures = useMemo(() => {
     if (!searchQuery.trim()) return procedures;
@@ -267,26 +290,69 @@ export function TreatmentSelectionModal({
           />
         ) : (
           <>
-            {/* Selected Skin Concerns (EBD only) */}
-            {category === 'ebd' && selectedConcerns.length > 0 && (
-              <div className="px-6 py-3 bg-stone-50 border-b border-stone-100">
-                <p className="text-[10px] font-medium text-stone-400 uppercase tracking-wide mb-2">
-                  Patient&apos;s Skin Concerns
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedConcerns.map((concernId) => {
-                    const concern = getConcernById(concernId);
-                    if (!concern) return null;
-                    return (
-                      <span
-                        key={concernId}
-                        className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-medium"
-                      >
-                        {concern.label}
-                      </span>
-                    );
-                  })}
-                </div>
+            {/* Patient Criteria for Recommendations (EBD only) */}
+            {category === 'ebd' && (fitzpatrickSkinType || (recoveryTimePreferences && recoveryTimePreferences.length > 0) || selectedConcerns.length > 0) && (
+              <div className="px-6 py-3 bg-stone-50 border-b border-stone-100 space-y-3">
+                <p className="text-xs font-semibold text-stone-600">Patient Profile</p>
+                {/* Skin Type and Recovery Time row */}
+                {(fitzpatrickSkinType || (recoveryTimePreferences && recoveryTimePreferences.length > 0)) && (
+                  <div className="flex flex-wrap gap-4">
+                    {/* Fitzpatrick Skin Type */}
+                    {fitzpatrickSkinType && (
+                      <div>
+                        <p className="text-[10px] font-medium text-stone-400 uppercase tracking-wide mb-1">
+                          Skin Type
+                        </p>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-medium">
+                          Fitzpatrick {fitzpatrickSkinType}
+                        </span>
+                      </div>
+                    )}
+                    {/* Recovery Time Preferences */}
+                    {recoveryTimePreferences && recoveryTimePreferences.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-medium text-stone-400 uppercase tracking-wide mb-1">
+                          Acceptable Recovery
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {recoveryTimePreferences.map((pref) => {
+                            const option = RECOVERY_TIME_OPTIONS.find(o => o.value === pref);
+                            return (
+                              <span
+                                key={pref}
+                                className="inline-flex items-center px-2 py-1 rounded-full bg-sky-100 text-sky-700 text-xs font-medium"
+                              >
+                                {option?.label || pref}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {/* Skin Concerns */}
+                {selectedConcerns.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-medium text-stone-400 uppercase tracking-wide mb-1">
+                      Skin Concerns
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedConcerns.map((concernId) => {
+                        const concern = getConcernById(concernId);
+                        if (!concern) return null;
+                        return (
+                          <span
+                            key={concernId}
+                            className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-medium"
+                          >
+                            {concern.label}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -331,90 +397,249 @@ export function TreatmentSelectionModal({
                         {searchQuery ? `No devices found matching "${searchQuery}"` : 'No devices available'}
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        {filteredDevices.map((device) => {
-                          const isAlreadySelected = selectedIds.includes(device.id);
-                          const fitzColors = getFitzpatrickColor(device.fitzpatrick);
-                          const downtimeColors = getDowntimeColor(device.downtime);
-                          const priceInfo = devicePrices[device.id];
-                          const countryDefault = countryDefaultPrices.get(device.id);
-                          const effectiveDefault = countryDefault ?? device.defaultPriceCents;
-                          const devicePrice = getEffectiveDevicePrice(priceInfo?.priceCents, effectiveDefault);
+                      <div className="space-y-4">
+                        {/* Recommended Devices Section */}
+                        {recommendedDevices.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="h-5 w-5 rounded-full bg-emerald-100 flex items-center justify-center">
+                                <svg className="h-3 w-3 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                              <h3 className="text-sm font-semibold text-stone-800">
+                                Recommended for This Patient
+                              </h3>
+                              <span className="text-xs text-stone-400">
+                                ({recommendedDevices.length})
+                              </span>
+                            </div>
+                            <div className="space-y-3">
+                              {recommendedDevices.map((device) => {
+                                const isAlreadySelected = selectedIds.includes(device.id);
+                                const fitzColors = getFitzpatrickColor(device.fitzpatrick);
+                                const downtimeColors = getDowntimeColor(device.downtime);
+                                const priceInfo = devicePrices[device.id];
+                                const countryDefault = countryDefaultPrices.get(device.id);
+                                const effectiveDefault = countryDefault ?? device.defaultPriceCents;
+                                const devicePrice = getEffectiveDevicePrice(priceInfo?.priceCents, effectiveDefault);
+                                const scoreInfo = scoreMap.get(device.id);
 
-                          return (
-                            <div
-                              key={device.id}
-                              className={`
-                                border rounded-xl p-4 transition-colors
-                                ${isAlreadySelected
-                                  ? 'border-stone-200 bg-stone-100 opacity-60'
-                                  : 'border-stone-200 bg-stone-50 hover:border-purple-300 hover:bg-purple-50'
-                                }
-                              `}
-                            >
-                              <div className="flex gap-4">
-                                <div className="flex-shrink-0">
-                                  <div className="w-14 h-[93px] rounded-lg overflow-hidden bg-white border border-stone-200">
-                                    <img
-                                      src={device.imageUrl || '/images/ebd-placeholder.webp'}
-                                      alt={device.name}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  </div>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-start justify-between gap-3 mb-1">
-                                    <div>
-                                      <h3 className="text-sm font-semibold text-stone-900 leading-tight">
-                                        {device.name}
-                                      </h3>
-                                      {devicePrice != null && devicePrice > 0 && (
-                                        <p className="text-xs font-medium text-purple-600">
-                                          {formatPrice(devicePrice, countryCode)}/session
-                                        </p>
+                                return (
+                                  <div
+                                    key={device.id}
+                                    className={`
+                                      border rounded-xl p-4 transition-colors
+                                      ${isAlreadySelected
+                                        ? 'border-stone-200 bg-stone-100 opacity-60'
+                                        : 'border-emerald-200 bg-gradient-to-r from-emerald-50/50 to-white hover:border-emerald-300'
+                                      }
+                                    `}
+                                  >
+                                    {/* Recommendation badge */}
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
+                                        <svg className="h-3 w-3 mr-1" viewBox="0 0 24 24" fill="currentColor">
+                                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                        </svg>
+                                        Recommended
+                                      </span>
+                                      {scoreInfo && scoreInfo.matchedConcerns.length > 0 && (
+                                        <span className="text-[10px] text-stone-400">
+                                          Matches {scoreInfo.matchedConcerns.length} concern{scoreInfo.matchedConcerns.length > 1 ? 's' : ''}
+                                        </span>
                                       )}
                                     </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleSelectDevice(device)}
-                                      disabled={isAlreadySelected}
-                                      className={`
-                                        flex-shrink-0 px-3 py-1 text-xs font-medium rounded-full transition-colors
-                                        ${isAlreadySelected
-                                          ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
-                                          : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                                        }
-                                      `}
-                                    >
-                                      {isAlreadySelected ? 'Added' : 'Select'}
-                                    </button>
+                                    <div className="flex gap-4">
+                                      <div className="flex-shrink-0">
+                                        <div className="w-14 h-[93px] rounded-lg overflow-hidden bg-white border border-stone-200">
+                                          <img
+                                            src={device.imageUrl || '/images/ebd-placeholder.webp'}
+                                            alt={device.name}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-start justify-between gap-3 mb-1">
+                                          <div>
+                                            <h3 className="text-sm font-semibold text-stone-900 leading-tight">
+                                              {device.name}
+                                            </h3>
+                                            {devicePrice != null && devicePrice > 0 && (
+                                              <p className="text-xs font-medium text-purple-600">
+                                                {formatPrice(devicePrice, countryCode)}/session
+                                              </p>
+                                            )}
+                                          </div>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSelectDevice(device)}
+                                            disabled={isAlreadySelected}
+                                            className={`
+                                              flex-shrink-0 px-3 py-1 text-xs font-medium rounded-full transition-colors
+                                              ${isAlreadySelected
+                                                ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                                                : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                                              }
+                                            `}
+                                          >
+                                            {isAlreadySelected ? 'Added' : 'Select'}
+                                          </button>
+                                        </div>
+                                        <p className="text-[11px] text-stone-500 mb-2">
+                                          {device.description}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 mb-2">
+                                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${fitzColors.bg} ${fitzColors.text}`}>
+                                            Fitz {device.fitzpatrick}
+                                          </span>
+                                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${downtimeColors.bg} ${downtimeColors.text}`}>
+                                            {device.downtime === 'None' ? 'No' : device.downtime} Downtime
+                                          </span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1">
+                                          {device.treats.map((treat, idx) => (
+                                            <span
+                                              key={idx}
+                                              className="px-1.5 py-0.5 text-[10px] bg-purple-50 text-purple-600 rounded"
+                                            >
+                                              {treat}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
-                                  <p className="text-[11px] text-stone-500 mb-2">
-                                    {device.description}
-                                  </p>
-                                  <div className="flex items-center gap-1.5 mb-2">
-                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${fitzColors.bg} ${fitzColors.text}`}>
-                                      Fitz {device.fitzpatrick}
-                                    </span>
-                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${downtimeColors.bg} ${downtimeColors.text}`}>
-                                      {device.downtime === 'None' ? 'No' : device.downtime} Downtime
-                                    </span>
-                                  </div>
-                                  <div className="flex flex-wrap gap-1">
-                                    {device.treats.map((treat, idx) => (
-                                      <span
-                                        key={idx}
-                                        className="px-1.5 py-0.5 text-[10px] bg-purple-50 text-purple-600 rounded"
-                                      >
-                                        {treat}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
+                                );
+                              })}
                             </div>
-                          );
-                        })}
+                          </div>
+                        )}
+
+                        {/* Divider between sections */}
+                        {recommendedDevices.length > 0 && otherDevices.length > 0 && (
+                          <div className="border-t border-stone-200 my-2" />
+                        )}
+
+                        {/* Other Devices Section */}
+                        {otherDevices.length > 0 && (
+                          <div>
+                            {recommendedDevices.length > 0 && (
+                              <h3 className="text-sm font-medium text-stone-500 mb-3">
+                                Other Available Devices
+                              </h3>
+                            )}
+                            <div className="space-y-3">
+                              {otherDevices.map((device) => {
+                                const isAlreadySelected = selectedIds.includes(device.id);
+                                const fitzColors = getFitzpatrickColor(device.fitzpatrick);
+                                const downtimeColors = getDowntimeColor(device.downtime);
+                                const priceInfo = devicePrices[device.id];
+                                const countryDefault = countryDefaultPrices.get(device.id);
+                                const effectiveDefault = countryDefault ?? device.defaultPriceCents;
+                                const devicePrice = getEffectiveDevicePrice(priceInfo?.priceCents, effectiveDefault);
+                                const scoreInfo = scoreMap.get(device.id);
+
+                                return (
+                                  <div
+                                    key={device.id}
+                                    className={`
+                                      border rounded-xl p-4 transition-colors
+                                      ${isAlreadySelected
+                                        ? 'border-stone-200 bg-stone-100 opacity-60'
+                                        : 'border-stone-200 bg-stone-50 hover:border-purple-300 hover:bg-purple-50'
+                                      }
+                                    `}
+                                  >
+                                    {/* Warning badges for incompatible devices */}
+                                    {scoreInfo && (scoreInfo.fitzpatrickMatch === 'incompatible' || scoreInfo.downtimeMatch === 'unacceptable') && (
+                                      <div className="flex items-center gap-2 mb-2">
+                                        {scoreInfo.fitzpatrickMatch === 'incompatible' && (
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700">
+                                            <svg className="h-3 w-3 mr-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            Check skin type
+                                          </span>
+                                        )}
+                                        {scoreInfo.downtimeMatch === 'unacceptable' && (
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700">
+                                            <svg className="h-3 w-3 mr-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                              <circle cx="12" cy="12" r="10" />
+                                              <path strokeLinecap="round" d="M12 6v6l4 2" />
+                                            </svg>
+                                            Longer recovery
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                    <div className="flex gap-4">
+                                      <div className="flex-shrink-0">
+                                        <div className="w-14 h-[93px] rounded-lg overflow-hidden bg-white border border-stone-200">
+                                          <img
+                                            src={device.imageUrl || '/images/ebd-placeholder.webp'}
+                                            alt={device.name}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-start justify-between gap-3 mb-1">
+                                          <div>
+                                            <h3 className="text-sm font-semibold text-stone-900 leading-tight">
+                                              {device.name}
+                                            </h3>
+                                            {devicePrice != null && devicePrice > 0 && (
+                                              <p className="text-xs font-medium text-purple-600">
+                                                {formatPrice(devicePrice, countryCode)}/session
+                                              </p>
+                                            )}
+                                          </div>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSelectDevice(device)}
+                                            disabled={isAlreadySelected}
+                                            className={`
+                                              flex-shrink-0 px-3 py-1 text-xs font-medium rounded-full transition-colors
+                                              ${isAlreadySelected
+                                                ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                                                : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                                              }
+                                            `}
+                                          >
+                                            {isAlreadySelected ? 'Added' : 'Select'}
+                                          </button>
+                                        </div>
+                                        <p className="text-[11px] text-stone-500 mb-2">
+                                          {device.description}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 mb-2">
+                                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${fitzColors.bg} ${fitzColors.text}`}>
+                                            Fitz {device.fitzpatrick}
+                                          </span>
+                                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${downtimeColors.bg} ${downtimeColors.text}`}>
+                                            {device.downtime === 'None' ? 'No' : device.downtime} Downtime
+                                          </span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1">
+                                          {device.treats.map((treat, idx) => (
+                                            <span
+                                              key={idx}
+                                              className="px-1.5 py-0.5 text-[10px] bg-purple-50 text-purple-600 rounded"
+                                            >
+                                              {treat}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )
                   )}

@@ -750,6 +750,8 @@ export default function ClinicalDocumentationPage() {
         disabled={isSubmitting}
         patientName={documentingPatient ? `${documentingPatient.firstName} ${documentingPatient.lastName}` : ''}
         selectedConcerns={skinConcernsData.selectedConcerns}
+        fitzpatrickSkinType={medicalHistoryData.fitzpatrickSkinType}
+        recoveryTimePreferences={medicalHistoryData.recoveryTimePreferences}
         doctorId={authState.doctor?.id}
         accessToken={authState.accessToken || undefined}
         countryCode={authState.doctor?.country}
