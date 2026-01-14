@@ -47,27 +47,40 @@ function createSeededRandom(seed: string): () => number {
  * Generate mock analysis results for all categories
  *
  * @param photoSessionId - Used as seed for consistent results
- * @returns Array of results for all 10 categories
+ * @returns Array of results for all 10 categories with dysfunction scores 0-10
  */
 export function generateMockAnalysis(photoSessionId: string): SkinAnalysisResult[] {
   const random = createSeededRandom(photoSessionId);
 
   return SKIN_WELLNESS_CATEGORIES.map((category) => {
-    // Generate a random visibility level (0-4)
+    // Generate a random dysfunction score (0-10)
     // Weighted towards middle values to look more realistic
+    // Distribution: 0 (Optimal) rare, 1-6 (mid-range) most common, 7-10 (Focus Area) less common
     const rawRandom = random();
     let visibilityLevel: VisibilityLevel;
 
-    if (rawRandom < 0.1) {
-      visibilityLevel = 0; // 10% chance - Not visible
-    } else if (rawRandom < 0.25) {
-      visibilityLevel = 1; // 15% chance - Very subtle
-    } else if (rawRandom < 0.55) {
-      visibilityLevel = 2; // 30% chance - Mildly visible
-    } else if (rawRandom < 0.85) {
-      visibilityLevel = 3; // 30% chance - Clearly visible
+    if (rawRandom < 0.05) {
+      visibilityLevel = 0;  // 5% - Optimal
+    } else if (rawRandom < 0.12) {
+      visibilityLevel = 1;  // 7% - Needs Improvement (low)
+    } else if (rawRandom < 0.22) {
+      visibilityLevel = 2;  // 10%
+    } else if (rawRandom < 0.35) {
+      visibilityLevel = 3;  // 13%
+    } else if (rawRandom < 0.50) {
+      visibilityLevel = 4;  // 15% - Attention Needed (low)
+    } else if (rawRandom < 0.65) {
+      visibilityLevel = 5;  // 15%
+    } else if (rawRandom < 0.78) {
+      visibilityLevel = 6;  // 13%
+    } else if (rawRandom < 0.88) {
+      visibilityLevel = 7;  // 10% - Focus Area (low)
+    } else if (rawRandom < 0.95) {
+      visibilityLevel = 8;  // 7%
+    } else if (rawRandom < 0.98) {
+      visibilityLevel = 9;  // 3%
     } else {
-      visibilityLevel = 4; // 15% chance - Prominent
+      visibilityLevel = 10; // 2% - Maximum concern
     }
 
     return {
@@ -95,18 +108,19 @@ export function getMockAnalysisForCategory(
 /**
  * Pre-defined mock results for demo/testing
  * Use this when you want consistent, visually balanced results
+ * Scale: 0 (Optimal), 1-3 (Needs Improvement), 4-6 (Attention Needed), 7-10 (Focus Area)
  */
 export const DEMO_ANALYSIS_RESULTS: SkinAnalysisResult[] = [
-  { categoryId: 'radiance', visibilityLevel: 2 },
-  { categoryId: 'smoothness', visibilityLevel: 3 },
-  { categoryId: 'redness', visibilityLevel: 1 },
-  { categoryId: 'hydration', visibilityLevel: 2 },
-  { categoryId: 'shine', visibilityLevel: 3 },
-  { categoryId: 'texture', visibilityLevel: 2 },
-  { categoryId: 'blemishes', visibilityLevel: 1 },
-  { categoryId: 'tone', visibilityLevel: 2 },
-  { categoryId: 'eye-contour', visibilityLevel: 3 },
-  { categoryId: 'neck-decollete', visibilityLevel: 1 },
+  { categoryId: 'radiance', visibilityLevel: 3 },        // Needs Improvement
+  { categoryId: 'smoothness', visibilityLevel: 5 },      // Attention Needed
+  { categoryId: 'redness', visibilityLevel: 2 },         // Needs Improvement
+  { categoryId: 'hydration', visibilityLevel: 4 },       // Attention Needed
+  { categoryId: 'shine', visibilityLevel: 6 },           // Attention Needed
+  { categoryId: 'texture', visibilityLevel: 4 },         // Attention Needed
+  { categoryId: 'blemishes', visibilityLevel: 1 },       // Needs Improvement
+  { categoryId: 'tone', visibilityLevel: 5 },            // Attention Needed
+  { categoryId: 'eye-contour', visibilityLevel: 7 },     // Focus Area
+  { categoryId: 'neck-decollete', visibilityLevel: 2 },  // Needs Improvement
 ];
 
 /**

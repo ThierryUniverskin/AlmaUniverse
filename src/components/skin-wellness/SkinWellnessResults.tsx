@@ -8,7 +8,8 @@ import { FlowerVisualization } from './FlowerVisualization';
 import { CategoryDetailModal } from './CategoryDetailModal';
 import { SkinWellnessStepProgress } from './SkinWellnessStepProgress';
 import { Button } from '@/components/ui/Button';
-import { SkinAnalysisResult, ImageQualityAssessment, PatientAttributes } from '@/lib/skinWellnessCategories';
+import { SkinAnalysisResult, ImageQualityAssessment, PatientAttributes, SKIN_WELLNESS_CATEGORIES } from '@/lib/skinWellnessCategories';
+import { SkinWellnessDetail, getCategoryDetails } from '@/lib/skinWellnessDetails';
 
 /**
  * SkinWellnessResults - Results overview screen
@@ -61,6 +62,106 @@ export function SkinWellnessResults({ results: initialResults, patientId, onBack
   const [overviewText, setOverviewText] = useState(skinHealthOverview || '');
   const [isEditingOverview, setIsEditingOverview] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+
+  // Store parameter details for each category (persists changes across modal open/close)
+  const [categoryDetails, setCategoryDetails] = useState<Record<string, SkinWellnessDetail[]>>(() => {
+    const initial: Record<string, SkinWellnessDetail[]> = {};
+    SKIN_WELLNESS_CATEGORIES.forEach((cat) => {
+      initial[cat.id] = getCategoryDetails(cat.id).map((detail) => ({
+        ...detail,
+        aiScoreValue: detail.scoreValue, // Store original AI score
+      }));
+    });
+    return initial;
+  });
+
+  // Face concerns (excludes eye-contour and neck-decollete)
+  const FACE_CONCERN_IDS = ['radiance', 'smoothness', 'redness', 'hydration', 'shine', 'texture', 'blemishes', 'tone'];
+  const ADDITIONAL_CONCERN_IDS = ['eye-contour', 'neck-decollete'];
+
+  // Priority order for tie-breaking when scores are equal (lower index = higher priority)
+  const CONCERN_PRIORITY: Record<string, number> = {
+    'redness': 1,
+    'blemishes': 2,
+    'tone': 3,
+    'texture': 4,
+    'smoothness': 5,
+    'hydration': 6,
+    'radiance': 7,
+    'shine': 8,
+  };
+
+  // Calculate recommended concerns based on visibility scores (sorted by score descending, then by priority)
+  const getRecommendedConcerns = () => {
+    const faceConcerns = results
+      .filter((r) => FACE_CONCERN_IDS.includes(r.categoryId))
+      .sort((a, b) => {
+        // First sort by visibility level (descending)
+        const scoreDiff = b.visibilityLevel - a.visibilityLevel;
+        if (scoreDiff !== 0) return scoreDiff;
+        // If scores are equal, sort by priority (ascending - lower number = higher priority)
+        return (CONCERN_PRIORITY[a.categoryId] || 99) - (CONCERN_PRIORITY[b.categoryId] || 99);
+      })
+      .slice(0, 3)
+      .filter((r) => r.visibilityLevel > 0) // Only include if score > 0
+      .map((r) => r.categoryId);
+
+    const additionalConcerns = results
+      .filter((r) => ADDITIONAL_CONCERN_IDS.includes(r.categoryId))
+      .filter((r) => r.visibilityLevel >= 3) // Include additional if score >= 3
+      .map((r) => r.categoryId);
+
+    return { faceConcerns, additionalConcerns };
+  };
+
+  // State for selected concerns (initialized from AI recommendation)
+  const [selectedFaceConcerns, setSelectedFaceConcerns] = useState<string[]>(() => getRecommendedConcerns().faceConcerns);
+  const [selectedAdditionalConcerns, setSelectedAdditionalConcerns] = useState<string[]>(() => getRecommendedConcerns().additionalConcerns);
+  const [isEditingConcerns, setIsEditingConcerns] = useState(false);
+  const [concernsManuallyEdited, setConcernsManuallyEdited] = useState(false);
+
+  // Auto-update concerns when results change (only if not manually edited)
+  useEffect(() => {
+    if (!concernsManuallyEdited) {
+      const recommended = getRecommendedConcerns();
+      setSelectedFaceConcerns(recommended.faceConcerns);
+      setSelectedAdditionalConcerns(recommended.additionalConcerns);
+    }
+  }, [results, concernsManuallyEdited]);
+
+  // Toggle face concern selection (max 3)
+  const toggleFaceConcern = (categoryId: string) => {
+    setConcernsManuallyEdited(true);
+    setSelectedFaceConcerns((prev) => {
+      if (prev.includes(categoryId)) {
+        return prev.filter((id) => id !== categoryId);
+      }
+      if (prev.length >= 3) {
+        return prev; // Max 3 reached
+      }
+      return [...prev, categoryId];
+    });
+  };
+
+  // Toggle additional concern selection
+  const toggleAdditionalConcern = (categoryId: string) => {
+    setConcernsManuallyEdited(true);
+    setSelectedAdditionalConcerns((prev) => {
+      if (prev.includes(categoryId)) {
+        return prev.filter((id) => id !== categoryId);
+      }
+      return [...prev, categoryId];
+    });
+  };
+
+  // Reset to AI recommendations
+  const resetToAiRecommendations = () => {
+    const recommended = getRecommendedConcerns();
+    setSelectedFaceConcerns(recommended.faceConcerns);
+    setSelectedAdditionalConcerns(recommended.additionalConcerns);
+    setConcernsManuallyEdited(false);
+    setIsEditingConcerns(false);
+  };
 
   const scoreColors = imageQuality ? getScoreColor(imageQuality.qualityScore) : null;
 
@@ -408,7 +509,7 @@ export function SkinWellnessResults({ results: initialResults, patientId, onBack
         )}
 
         {/* Flower Visualization Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-sky-100 shadow-sm p-6 mb-6 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-sky-100 shadow-sm p-6 mb-6 animate-fade-in" onClick={() => setActiveSlice(null)}>
           <h3 className="text-sm font-semibold text-stone-700 mb-4">Skin Appearance Analysis</h3>
           <div className="flex flex-col items-center px-4 py-2">
             <FlowerVisualization
@@ -428,6 +529,234 @@ export function SkinWellnessResults({ results: initialResults, patientId, onBack
               Tap any segment to adjust
             </p>
           </div>
+        </div>
+
+        {/* Priority Skin Concerns Section */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-sky-100 shadow-sm p-6 mb-6 animate-fade-in">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-stone-700">Priority Skin Concerns</h3>
+              {concernsManuallyEdited && (
+                <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">
+                  Edited
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {concernsManuallyEdited && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); resetToAiRecommendations(); }}
+                  className="text-xs text-sky-600 hover:text-sky-700 font-medium flex items-center gap-1"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                  </svg>
+                  Reset to AI
+                </button>
+              )}
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsEditingConcerns(!isEditingConcerns); }}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  isEditingConcerns
+                    ? 'bg-sky-100 text-sky-600'
+                    : 'hover:bg-stone-100 text-stone-400 hover:text-stone-600'
+                }`}
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Selected Concerns Display */}
+          {!isEditingConcerns ? (
+            <div className="space-y-3">
+              {/* Face Concerns */}
+              {selectedFaceConcerns.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {selectedFaceConcerns.map((categoryId, index) => {
+                    const category = SKIN_WELLNESS_CATEGORIES.find((c) => c.id === categoryId);
+                    const result = results.find((r) => r.categoryId === categoryId);
+                    if (!category) return null;
+                    return (
+                      <div
+                        key={categoryId}
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl border"
+                        style={{
+                          backgroundColor: category.color + '10',
+                          borderColor: category.color + '30',
+                        }}
+                      >
+                        <span
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                          style={{ backgroundColor: category.color }}
+                        >
+                          {index + 1}
+                        </span>
+                        <span className="text-sm font-medium text-stone-700">{category.name}</span>
+                        {result && (
+                          <span
+                            className="text-xs font-medium px-1.5 py-0.5 rounded-full"
+                            style={{ backgroundColor: category.color + '20', color: category.color }}
+                          >
+                            {result.visibilityLevel}/10
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-stone-400 italic">No face concerns selected</p>
+              )}
+
+              {/* Additional Concerns */}
+              {selectedAdditionalConcerns.length > 0 && (
+                <div className="pt-2 border-t border-stone-100">
+                  <p className="text-[10px] uppercase tracking-wide text-stone-400 mb-2">Additional Areas</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedAdditionalConcerns.map((categoryId) => {
+                      const category = SKIN_WELLNESS_CATEGORIES.find((c) => c.id === categoryId);
+                      const result = results.find((r) => r.categoryId === categoryId);
+                      if (!category) return null;
+                      return (
+                        <div
+                          key={categoryId}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl border"
+                          style={{
+                            backgroundColor: category.color + '10',
+                            borderColor: category.color + '30',
+                          }}
+                        >
+                          <div
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          <span className="text-sm font-medium text-stone-700">{category.name}</span>
+                          {result && (
+                            <span
+                              className="text-xs font-medium px-1.5 py-0.5 rounded-full"
+                              style={{ backgroundColor: category.color + '20', color: category.color }}
+                            >
+                              {result.visibilityLevel}/10
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Editing Mode */
+            <div className="space-y-4">
+              {/* Face Concerns Selection */}
+              <div>
+                <p className="text-xs text-stone-500 mb-2">
+                  Select up to 3 face concerns ({selectedFaceConcerns.length}/3)
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {FACE_CONCERN_IDS.map((categoryId) => {
+                    const category = SKIN_WELLNESS_CATEGORIES.find((c) => c.id === categoryId);
+                    const result = results.find((r) => r.categoryId === categoryId);
+                    const isSelected = selectedFaceConcerns.includes(categoryId);
+                    const isDisabled = !isSelected && selectedFaceConcerns.length >= 3;
+                    if (!category) return null;
+                    return (
+                      <button
+                        key={categoryId}
+                        onClick={(e) => { e.stopPropagation(); toggleFaceConcern(categoryId); }}
+                        disabled={isDisabled}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all ${
+                          isSelected
+                            ? 'border-sky-400 bg-sky-50 shadow-sm'
+                            : isDisabled
+                            ? 'border-stone-100 bg-stone-50 opacity-50 cursor-not-allowed'
+                            : 'border-stone-200 hover:border-sky-300 hover:bg-sky-50/50'
+                        }`}
+                      >
+                        <div
+                          className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                            isSelected ? 'bg-sky-500 border-sky-500' : 'border-stone-300'
+                          }`}
+                        >
+                          {isSelected && (
+                            <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <div
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: category.color }}
+                        />
+                        <span className="text-sm text-stone-700 flex-1">{category.name}</span>
+                        {result && (
+                          <span className="text-xs text-stone-400">{result.visibilityLevel}/10</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Additional Areas Selection */}
+              <div className="pt-3 border-t border-stone-100">
+                <p className="text-xs text-stone-500 mb-2">Additional areas (optional)</p>
+                <div className="flex gap-2">
+                  {ADDITIONAL_CONCERN_IDS.map((categoryId) => {
+                    const category = SKIN_WELLNESS_CATEGORIES.find((c) => c.id === categoryId);
+                    const result = results.find((r) => r.categoryId === categoryId);
+                    const isSelected = selectedAdditionalConcerns.includes(categoryId);
+                    if (!category) return null;
+                    return (
+                      <button
+                        key={categoryId}
+                        onClick={(e) => { e.stopPropagation(); toggleAdditionalConcern(categoryId); }}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all ${
+                          isSelected
+                            ? 'border-sky-400 bg-sky-50 shadow-sm'
+                            : 'border-stone-200 hover:border-sky-300 hover:bg-sky-50/50'
+                        }`}
+                      >
+                        <div
+                          className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                            isSelected ? 'bg-sky-500 border-sky-500' : 'border-stone-300'
+                          }`}
+                        >
+                          {isSelected && (
+                            <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <div
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: category.color }}
+                        />
+                        <span className="text-sm text-stone-700">{category.name}</span>
+                        {result && (
+                          <span className="text-xs text-stone-400">{result.visibilityLevel}/10</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Done Button */}
+              <div className="flex justify-end pt-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIsEditingConcerns(false); }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -463,6 +792,25 @@ export function SkinWellnessResults({ results: initialResults, patientId, onBack
         categoryId={detailModalCategory || ''}
         isOpen={detailModalCategory !== null}
         onClose={() => setDetailModalCategory(null)}
+        visibilityLevel={
+          detailModalCategory
+            ? (results.find((r) => r.categoryId === detailModalCategory)?.visibilityLevel ?? 5)
+            : 5
+        }
+        onVisibilityChange={(categoryId, level) => {
+          setResults((prev) =>
+            prev.map((r) =>
+              r.categoryId === categoryId ? { ...r, visibilityLevel: level } : r
+            )
+          );
+        }}
+        initialDetails={detailModalCategory ? categoryDetails[detailModalCategory] : undefined}
+        onSave={(categoryId, updatedDetails) => {
+          setCategoryDetails((prev) => ({
+            ...prev,
+            [categoryId]: updatedDetails,
+          }));
+        }}
       />
 
       {/* Photo Lightbox Modal */}

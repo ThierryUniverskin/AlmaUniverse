@@ -35,24 +35,36 @@ export const SKIN_WELLNESS_CATEGORIES: SkinWellnessCategory[] = [
 ];
 
 /**
- * Visibility Level Labels
+ * Visibility Level Assessment Labels
  *
- * These are the ONLY labels shown to users.
- * Internal numeric values (0-4) must NEVER be displayed.
+ * Based on dysfunction score (0-10):
+ * - 0: "Optimal"
+ * - 1-3: "Needs Improvement"
+ * - 4-6: "Attention Needed"
+ * - 7-10: "Focus Area"
  */
-export const VISIBILITY_LABELS = [
-  'Not visible',
-  'Very subtle',
-  'Mildly visible',
-  'Clearly visible',
-  'Prominent',
-] as const;
+export const ASSESSMENT_LABELS = {
+  optimal: 'Optimal',
+  needsImprovement: 'Needs Improvement',
+  attentionNeeded: 'Attention Needed',
+  focusArea: 'Focus Area',
+} as const;
 
 /**
- * Internal visibility level type (0-4)
- * Used for calculations only, never shown to users
+ * Internal visibility level type (0-10)
+ * Represents dysfunction score, used for calculations only
  */
-export type VisibilityLevel = 0 | 1 | 2 | 3 | 4;
+export type VisibilityLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+
+/**
+ * Get assessment label from dysfunction score
+ */
+export function getAssessmentLabel(level: VisibilityLevel): string {
+  if (level === 0) return ASSESSMENT_LABELS.optimal;
+  if (level < 4) return ASSESSMENT_LABELS.needsImprovement;
+  if (level < 7) return ASSESSMENT_LABELS.attentionNeeded;
+  return ASSESSMENT_LABELS.focusArea;
+}
 
 /**
  * Skin analysis result for a single category
@@ -101,9 +113,10 @@ export interface SkinWellnessAnalysis {
 /**
  * Get visibility label from internal level
  * Use this to convert internal values to user-facing text
+ * @deprecated Use getAssessmentLabel instead
  */
 export function getVisibilityLabel(level: VisibilityLevel): string {
-  return VISIBILITY_LABELS[level];
+  return getAssessmentLabel(level);
 }
 
 /**
@@ -123,16 +136,12 @@ export function getCategoryByOrder(order: number): SkinWellnessCategory | undefi
 /**
  * Petal size calculation
  *
- * Converts visibility level to petal length percentage.
- * Even "not visible" shows a minimal dot (20%) to indicate the category exists.
+ * Converts dysfunction score (0-10) to petal length percentage.
+ * Level 0 (Optimal) shows a minimal petal (15%), level 10 shows full (100%).
  */
 export function getPetalSizePercent(level: VisibilityLevel): number {
-  const sizeMap: Record<VisibilityLevel, number> = {
-    0: 20, // Not visible - minimal dot
-    1: 40, // Very subtle
-    2: 60, // Mildly visible
-    3: 80, // Clearly visible
-    4: 100, // Prominent - full petal
-  };
-  return sizeMap[level];
+  // Linear interpolation from 15% at level 0 to 100% at level 10
+  const minPercent = 15;
+  const maxPercent = 100;
+  return minPercent + (level / 10) * (maxPercent - minPercent);
 }

@@ -30,14 +30,13 @@ interface FlowerVisualizationProps {
 const SEGMENT_COUNT = 10;
 const SEGMENT_ANGLE = 360 / SEGMENT_COUNT;
 
-// 5 discrete length levels (as percentage of outer radius)
-const VISIBILITY_LENGTHS: Record<VisibilityLevel, number> = {
-  0: 0.15,  // Not visible - tiny wedge
-  1: 0.35,  // Very subtle
-  2: 0.55,  // Mildly visible
-  3: 0.75,  // Clearly visible
-  4: 0.92,  // Prominent - nearly reaches outer
-};
+// 11 discrete length levels (0-10) as percentage of outer radius
+// Linear interpolation from 0.15 at level 0 to 0.92 at level 10
+function getVisibilityLength(level: VisibilityLevel): number {
+  const minLength = 0.15;
+  const maxLength = 0.92;
+  return minLength + (level / 10) * (maxLength - minLength);
+}
 
 export function FlowerVisualization({
   results,
@@ -87,7 +86,7 @@ export function FlowerVisualization({
 
     const newResults = results.map((r) => {
       if (r.categoryId === categoryId) {
-        const newLevel = Math.max(0, Math.min(4, r.visibilityLevel + delta)) as VisibilityLevel;
+        const newLevel = Math.max(0, Math.min(10, r.visibilityLevel + delta)) as VisibilityLevel;
         return { ...r, visibilityLevel: newLevel };
       }
       return r;
@@ -160,10 +159,10 @@ export function FlowerVisualization({
     const segmentConfig: Record<number, { anchor: 'start' | 'middle' | 'end'; offset: number; radiusOffset?: number }> = {
       0: { anchor: 'start', offset: -8 },   // Skin Radiance (18°) - push more towards top, away from Skin Aging
       1: { anchor: 'start', offset: 2 },    // Skin Aging (54°) - push towards Visible Redness, away from Skin Radiance
-      2: { anchor: 'start', offset: 0, radiusOffset: -30 },    // Visible Redness (90°) - bring inside
+      2: { anchor: 'start', offset: 0, radiusOffset: -60 },    // Visible Redness (90°) - bring more inside, away from + button
       3: { anchor: 'start', offset: 4, radiusOffset: 15 },    // Hydration Appearance (126°) - push out more
       4: { anchor: 'middle', offset: 0, radiusOffset: 25 },   // Shine Appearance (162°) - center and push out, away from Skin Texture
-      5: { anchor: 'end', offset: -4 },     // Skin Texture (198°) - push towards Visible Blemishes
+      5: { anchor: 'end', offset: -12 },     // Skin Texture (198°) - push towards Shine Appearance
       6: { anchor: 'end', offset: -10 },    // Visible Blemishes (234°) - left
       7: { anchor: 'end', offset: -2, radiusOffset: -80 },     // Uneven Tone (270°) - bring more inside
       8: { anchor: 'end', offset: 0 },      // Eye Contour (306°) - push towards top
@@ -178,16 +177,17 @@ export function FlowerVisualization({
     return { ...pos, anchor: config.anchor };
   };
 
-  // Get visibility label and color based on level
-  const getVisibilityStyle = (level: VisibilityLevel) => {
-    const styles: Record<VisibilityLevel, { label: string; color: string }> = {
-      0: { label: 'Not visible', color: '#10B981' },      // Green - best
-      1: { label: 'Very subtle', color: '#34D399' },      // Light green
-      2: { label: 'Mildly visible', color: '#FBBF24' },   // Yellow - neutral
-      3: { label: 'Clearly visible', color: '#F97316' },  // Orange
-      4: { label: 'Prominent', color: '#EF4444' },        // Red - most visible
-    };
-    return styles[level];
+  // Get visibility label and color based on dysfunction score (0-10)
+  const getVisibilityStyle = (level: VisibilityLevel): { label: string; color: string } => {
+    if (level === 0) {
+      return { label: 'Optimal', color: '#10B981' };           // Green - best
+    } else if (level < 4) {
+      return { label: 'Needs Improvement', color: '#34D399' }; // Light green
+    } else if (level < 7) {
+      return { label: 'Attention Needed', color: '#FBBF24' };  // Yellow/amber
+    } else {
+      return { label: 'Focus Area', color: '#EF4444' };        // Red - most concern
+    }
   };
 
   return (
@@ -236,8 +236,8 @@ export function FlowerVisualization({
       {SKIN_WELLNESS_CATEGORIES.map((category, index) => {
         const startAngle = index * SEGMENT_ANGLE;
         const endAngle = startAngle + SEGMENT_ANGLE;
-        const level = resultMap.get(category.id) ?? 2;
-        const lengthRatio = VISIBILITY_LENGTHS[level];
+        const level = resultMap.get(category.id) ?? 5;
+        const lengthRatio = getVisibilityLength(level);
         const petalOuterRadius = centerRadius + (petalMaxRadius - centerRadius) * lengthRatio;
         const isActive = activeSlice === category.id;
 
@@ -263,23 +263,33 @@ export function FlowerVisualization({
       {/* Labels - horizontal with scale value and background pill */}
       {SKIN_WELLNESS_CATEGORIES.map((category, index) => {
         const { x, y, anchor } = labelPos(index);
-        const level = resultMap.get(category.id) ?? 2;
+        const level = resultMap.get(category.id) ?? 5;
         const { label: scaleLabel, color: scaleColor } = getVisibilityStyle(level);
+        const scoreText = `${scaleLabel} ${level}/10`;
 
-        // Calculate pill width based on text length (longer of category name or scale label)
-        const longestText = category.name.length > scaleLabel.length ? category.name : scaleLabel;
-        const pillWidth = longestText.length * 7.5 + 6;
+        // Calculate pill width based on text length (longer of category name or score text)
+        // Tighter estimates: ~7px per char for 14px semibold, ~6.2px per char for 12px medium italic
+        const categoryNameWidth = category.name.length * 7;
+        const scoreTextWidth = scoreText.length * 6.2;
+        const contentWidth = Math.max(categoryNameWidth, scoreTextWidth);
+        const paddingX = 10; // Horizontal padding on each side
+        const pillWidth = contentWidth + paddingX * 2;
         const pillHeight = 44;
 
-        // Calculate pill position based on text anchor
-        let pillX = x;
+        // Position pill so text is centered within it
+        // Calculate where the pill center should be based on text anchor
+        let pillCenterX;
         if (anchor === 'start') {
-          pillX = x - 10;
+          // Text starts at x, center of content is at x + contentWidth/2
+          pillCenterX = x + contentWidth / 2;
         } else if (anchor === 'end') {
-          pillX = x - pillWidth + 10;
+          // Text ends at x, center of content is at x - contentWidth/2
+          pillCenterX = x - contentWidth / 2;
         } else {
-          pillX = x - pillWidth / 2;
+          // Text centered at x
+          pillCenterX = x;
         }
+        const pillX = pillCenterX - pillWidth / 2;
 
         return (
           <g
@@ -311,7 +321,7 @@ export function FlowerVisualization({
             >
               {category.name}
             </text>
-            {/* Scale value */}
+            {/* Scale value with score */}
             <text
               x={x}
               y={y + 10}
@@ -323,7 +333,7 @@ export function FlowerVisualization({
               fontFamily="'Inter', system-ui, sans-serif"
               fontStyle="italic"
             >
-              {scaleLabel}
+              {scoreText}
             </text>
           </g>
         );
@@ -431,7 +441,7 @@ export function FlowerVisualization({
         if (category.id !== activeSlice) return null;
 
         const midAngle = index * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;
-        const level = resultMap.get(category.id) ?? 2;
+        const level = resultMap.get(category.id) ?? 5;
 
         // + button position (outer edge of slice)
         const plusPos = toXY(midAngle, outerRadius - 28);
@@ -440,7 +450,7 @@ export function FlowerVisualization({
 
         const plusButtonRadius = 22;
         const minusButtonRadius = 17;
-        const canIncrease = level < 4;
+        const canIncrease = level < 10;
         const canDecrease = level > 0;
 
         return (
@@ -448,7 +458,7 @@ export function FlowerVisualization({
             {/* + Button (increase) - always render, disabled at max */}
             <g
               onClick={(e) => { e.stopPropagation(); if (canIncrease) handleAdjustLevel(category.id, 1); }}
-              style={{ cursor: canIncrease ? 'pointer' : 'not-allowed' }}
+              style={{ cursor: canIncrease ? 'pointer' : 'not-allowed', userSelect: 'none' }}
               opacity={canIncrease ? 1 : 0.3}
             >
               <circle
@@ -476,7 +486,7 @@ export function FlowerVisualization({
             {/* - Button (decrease) - always render, disabled at min */}
             <g
               onClick={(e) => { e.stopPropagation(); if (canDecrease) handleAdjustLevel(category.id, -1); }}
-              style={{ cursor: canDecrease ? 'pointer' : 'not-allowed' }}
+              style={{ cursor: canDecrease ? 'pointer' : 'not-allowed', userSelect: 'none' }}
               opacity={canDecrease ? 1 : 0.3}
             >
               <circle
