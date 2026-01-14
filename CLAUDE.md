@@ -65,6 +65,34 @@ Key files:
 - `src/lib/medicalHistory.ts` - Health Background data functions
 - `src/components/clinical-documentation/EnterSkinWellnessModal.tsx` - Regulatory boundary modal
 
+#### EBD Device Recommendation System
+
+EBD devices are organized based on patient profile compatibility using a scoring algorithm:
+
+**Scoring Criteria (100 points total):**
+- Skin concerns match (40 points) - Priority-weighted by concern order
+- Fitzpatrick compatibility (30 points) - Device must support patient's skin type
+- Recovery time match (30 points) - Device downtime within patient's preferences
+
+**Priority-Weighted Concern Scoring:**
+| Priority | Points | Notes |
+|----------|--------|-------|
+| #1 concern | 18 | Top priority concern |
+| #2 concern | 12 | Second priority |
+| #3+ concerns | 2 each | Max 10 points total for all remaining |
+
+**Recommendation threshold:** Score >= 50% AND Fitzpatrick compatible AND downtime acceptable
+
+**Recovery Time Mapping:**
+| Patient Preference | Acceptable Downtimes |
+|-------------------|---------------------|
+| same-day | None only |
+| 1-2-days | None, Minimal |
+| 3-5-days | None, Minimal, Some |
+| more-than-5-days | All |
+
+UI shows "Recommended for This Patient" section (emerald styling) followed by "Other Available Devices" with warning badges for incompatible skin types or longer recovery.
+
 ### Skin Wellness Mode (SkinXS)
 
 Non-medical cosmetic skin analysis feature, separate from clinical documentation:

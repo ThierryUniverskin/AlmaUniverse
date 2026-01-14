@@ -150,12 +150,30 @@ function getAcceptableDowntimes(
 }
 
 /**
+ * Priority weights for concern positions
+ *
+ * #1 concern (top priority): 18 points
+ * #2 concern: 12 points
+ * #3+ concerns: 2 points each (max 10 points total for all remaining)
+ *
+ * Total max score: 40 points
+ */
+const CONCERN_PRIORITY_WEIGHTS = {
+  first: 18,      // #1 concern
+  second: 12,     // #2 concern
+  remaining: 2,   // #3+ concerns (each)
+  remainingMax: 10, // Cap for all #3+ concerns combined
+};
+
+/**
  * Calculates concern matching score between device and patient concerns
  *
+ * Uses priority-weighted scoring: top concerns matter more than lower ones.
+ *
  * @param deviceTreats - Array of conditions the device treats
- * @param selectedConcerns - Array of patient's concern IDs
+ * @param selectedConcerns - Array of patient's concern IDs (ordered by priority)
  * @param matchedConcernsOut - Output array to collect matched concern IDs
- * @returns Score from 0-40 based on proportion of concerns matched
+ * @returns Score from 0-40 based on priority-weighted matches
  */
 function calculateConcernScore(
   deviceTreats: string[],
@@ -164,10 +182,12 @@ function calculateConcernScore(
 ): number {
   if (selectedConcerns.length === 0) return 0;
 
-  let matchCount = 0;
+  let score = 0;
+  let remainingScore = 0;
   const deviceTreatsLower = deviceTreats.map(t => t.toLowerCase());
 
-  for (const concernId of selectedConcerns) {
+  for (let i = 0; i < selectedConcerns.length; i++) {
+    const concernId = selectedConcerns[i];
     const targetTreats = CONCERN_TO_TREATS_MAP[concernId] || [];
 
     // Check if device treats ANY of the target strings (case-insensitive partial match)
@@ -176,13 +196,26 @@ function calculateConcernScore(
     );
 
     if (hasMatch) {
-      matchCount++;
       matchedConcernsOut.push(concernId);
+
+      // Apply priority-weighted scoring
+      if (i === 0) {
+        // #1 concern (highest priority)
+        score += CONCERN_PRIORITY_WEIGHTS.first;
+      } else if (i === 1) {
+        // #2 concern
+        score += CONCERN_PRIORITY_WEIGHTS.second;
+      } else {
+        // #3+ concerns (low weight, capped)
+        remainingScore += CONCERN_PRIORITY_WEIGHTS.remaining;
+      }
     }
   }
 
-  // Score based on proportion of concerns matched (max 40 points)
-  return Math.round((matchCount / selectedConcerns.length) * 40);
+  // Cap the remaining concerns score
+  remainingScore = Math.min(remainingScore, CONCERN_PRIORITY_WEIGHTS.remainingMax);
+
+  return score + remainingScore;
 }
 
 // ============================================================================
