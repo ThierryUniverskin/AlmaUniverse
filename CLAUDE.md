@@ -153,6 +153,51 @@ Theme:
 - Sky blue palette (`tailwind.config.ts` - `sky`)
 - SkinXS logo at `/public/images/skinxs-logo.svg`
 
+#### Skin Parameter Scoring System
+
+Each category has detailed sub-parameters that can be scored by doctors:
+
+**Parameter Types:**
+- **Severity scores** (1-4 or 1-5): Measure intensity of a condition (e.g., wrinkles, oiliness)
+- **Conditional scores** (1-3): Answer "Is redness due to X?" questions (No redness / Not attributed / Confirmed cause)
+
+**UI Features:**
+- AI personalized text displayed at original AI-assigned score position (read-only)
+- Standardized text options shown via radio buttons when editing
+- Score badge with color coding (green → yellow → orange → red)
+- Modal prevents closing when unsaved changes exist (Save/Cancel only)
+
+**Auto-Scoring Logic (MAX-based):**
+Category visibility score (0-10) calculated from parameter scores:
+- Uses MAX of normalized parameter scores (worst parameter determines category)
+- Normalized formula: `((score - 1) / (maxScore - 1)) * 10`
+
+**Scoring Exceptions:**
+| Rule | Parameters |
+|------|------------|
+| Excluded (not counted) | freckles, moles |
+| Half weight (50%) | predictive_factors_hyperpigmentation, predictive_factors_dryness, predictive_factors_dehydration |
+| Boosted (130%) | redness_present, couperose_present |
+| Excluded | All conditional parameters (is_rosacea, is_sunburn, etc.) |
+
+**Priority Skin Concerns:**
+Results screen shows top 3 face concerns + Eye Contour + Neck & Décolleté based on scores.
+
+**Tie-Breaking Order** (when scores are equal):
+1. Redness (highest priority)
+2. Blemishes
+3. Tone
+4. Texture
+5. Smoothness
+6. Hydration
+7. Radiance
+8. Shine (lowest priority)
+
+Key files:
+- `src/lib/skinParameterOptions.ts` - Standardized text options for all parameters, auto-scoring functions
+- `src/lib/skinWellnessDetails.ts` - Parameter definitions and mock data
+- `src/components/skin-wellness/CategoryDetailModal.tsx` - Parameter editing UI
+
 ### Treatment Pricing System
 
 Multi-currency pricing with country-specific defaults:
