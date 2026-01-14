@@ -19,6 +19,11 @@ function getSupabaseKey(): string {
   return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 }
 
+// Service role key for server-side operations (bypasses RLS)
+function getSupabaseServiceKey(): string {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -48,15 +53,15 @@ export async function checkRateLimit(doctorId: string): Promise<{
   limit: number;
 }> {
   const supabaseUrl = getSupabaseUrl();
-  const supabaseKey = getSupabaseKey();
+  const serviceKey = getSupabaseServiceKey();
   const monthYear = new Date().toISOString().slice(0, 7); // YYYY-MM
 
   const response = await fetch(
     `${supabaseUrl}/rest/v1/api_usage_logs?doctor_id=eq.${doctorId}&api_name=eq.skinxs_analysis&month_year=eq.${monthYear}&select=request_count`,
     {
       headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
       },
     }
   );
@@ -81,15 +86,15 @@ export async function checkRateLimit(doctorId: string): Promise<{
  */
 export async function incrementUsage(doctorId: string): Promise<number> {
   const supabaseUrl = getSupabaseUrl();
-  const supabaseKey = getSupabaseKey();
+  const serviceKey = getSupabaseServiceKey();
   const monthYear = new Date().toISOString().slice(0, 7);
 
   // Try to upsert using RPC function
   const response = await fetch(`${supabaseUrl}/rest/v1/rpc/increment_api_usage`, {
     method: 'POST',
     headers: {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -123,14 +128,14 @@ export async function getPhotoSession(photoSessionId: string): Promise<{
   rightProfilePhotoUrl: string | null;
 } | null> {
   const supabaseUrl = getSupabaseUrl();
-  const supabaseKey = getSupabaseKey();
+  const serviceKey = getSupabaseServiceKey();
 
   const response = await fetch(
     `${supabaseUrl}/rest/v1/photo_sessions?id=eq.${photoSessionId}&select=id,patient_id,frontal_photo_url,left_profile_photo_url,right_profile_photo_url`,
     {
       headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
       },
     }
   );
@@ -170,6 +175,54 @@ export async function downloadPhoto(signedUrl: string): Promise<ArrayBuffer | nu
   }
 }
 
+/**
+ * Get signed URL for a photo (server-side version using service role key)
+ */
+export async function getSignedUrlServerSide(pathOrUrl: string): Promise<string | null> {
+  const supabaseUrl = getSupabaseUrl();
+  const serviceKey = getSupabaseServiceKey();
+
+  // Extract storage path if a full URL was passed
+  let path = pathOrUrl;
+  if (pathOrUrl.startsWith('http')) {
+    try {
+      const url = new URL(pathOrUrl);
+      const match = url.pathname.match(/\/storage\/v1\/object\/(?:sign|public)\/patient-photos\/(.+)/);
+      if (match) {
+        path = match[1];
+      }
+    } catch {
+      // Keep original path
+    }
+  }
+
+  try {
+    const response = await fetch(
+      `${supabaseUrl}/storage/v1/object/sign/patient-photos/${path}`,
+      {
+        method: 'POST',
+        headers: {
+          'apikey': serviceKey,
+          'Authorization': `Bearer ${serviceKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ expiresIn: 3600 }), // 1 hour expiry
+      }
+    );
+
+    if (!response.ok) {
+      console.error('Failed to get signed URL:', response.status, await response.text());
+      return null;
+    }
+
+    const data = await response.json();
+    return data.signedURL ? `${supabaseUrl}/storage/v1${data.signedURL}` : null;
+  } catch (error) {
+    console.error('Error getting signed URL:', error);
+    return null;
+  }
+}
+
 // ============================================================================
 // Analysis Result Storage
 // ============================================================================
@@ -184,7 +237,7 @@ export async function saveAnalysisResult(
   result: ParsedAnalysisResult
 ): Promise<boolean> {
   const supabaseUrl = getSupabaseUrl();
-  const supabaseKey = getSupabaseKey();
+  const serviceKey = getSupabaseServiceKey();
 
   const payload = {
     photo_session_id: photoSessionId,
@@ -230,8 +283,8 @@ export async function saveAnalysisResult(
     {
       method: 'DELETE',
       headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
       },
     }
   );
@@ -240,8 +293,8 @@ export async function saveAnalysisResult(
   const response = await fetch(`${supabaseUrl}/rest/v1/skin_analysis_results`, {
     method: 'POST',
     headers: {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
       'Content-Type': 'application/json',
       Prefer: 'return=minimal',
     },
@@ -265,7 +318,7 @@ export async function savePendingAnalysis(
   doctorId: string
 ): Promise<boolean> {
   const supabaseUrl = getSupabaseUrl();
-  const supabaseKey = getSupabaseKey();
+  const serviceKey = getSupabaseServiceKey();
 
   // Delete existing record for this photo session (if any)
   await fetch(
@@ -273,8 +326,8 @@ export async function savePendingAnalysis(
     {
       method: 'DELETE',
       headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
       },
     }
   );
@@ -290,8 +343,8 @@ export async function savePendingAnalysis(
   const response = await fetch(`${supabaseUrl}/rest/v1/skin_analysis_results`, {
     method: 'POST',
     headers: {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
       'Content-Type': 'application/json',
       Prefer: 'return=minimal',
     },
@@ -314,15 +367,15 @@ export async function saveFailedAnalysis(
   errorMessage: string
 ): Promise<boolean> {
   const supabaseUrl = getSupabaseUrl();
-  const supabaseKey = getSupabaseKey();
+  const serviceKey = getSupabaseServiceKey();
 
   const response = await fetch(
     `${supabaseUrl}/rest/v1/skin_analysis_results?photo_session_id=eq.${photoSessionId}`,
     {
       method: 'PATCH',
       headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
         'Content-Type': 'application/json',
         Prefer: 'return=minimal',
       },
@@ -347,14 +400,14 @@ export async function saveFailedAnalysis(
  */
 export async function getAnalysisResult(photoSessionId: string): Promise<AnalysisStatus | null> {
   const supabaseUrl = getSupabaseUrl();
-  const supabaseKey = getSupabaseKey();
+  const serviceKey = getSupabaseServiceKey();
 
   const response = await fetch(
     `${supabaseUrl}/rest/v1/skin_analysis_results?photo_session_id=eq.${photoSessionId}&select=*`,
     {
       headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
       },
     }
   );

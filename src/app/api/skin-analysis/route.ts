@@ -22,9 +22,9 @@ import {
   saveAnalysisResult,
   saveFailedAnalysis,
   callSkinXSApi,
+  getSignedUrlServerSide,
   type PhotoUrls,
 } from '@/lib/skinAnalysis';
-import { getSignedUrl } from '@/lib/photoSession';
 import { parseApiResponse } from '@/lib/skinAnalysisMapping';
 
 // Extend Vercel serverless function timeout to 120 seconds
@@ -34,12 +34,16 @@ export const maxDuration = 120;
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
+  console.log('[skin-analysis] POST request received');
+
   try {
     // Parse request body
     const body = await request.json();
     const { photoSessionId, doctorId } = body;
+    console.log('[skin-analysis] Request body:', { photoSessionId, doctorId });
 
     if (!photoSessionId || !doctorId) {
+      console.error('[skin-analysis] Missing required fields');
       return NextResponse.json(
         { error: 'Missing required fields: photoSessionId, doctorId' },
         { status: 400 }
@@ -48,8 +52,9 @@ export async function POST(request: NextRequest) {
 
     // Get API key from environment
     const apiKey = process.env.SKINXS_API_KEY;
+    console.log('[skin-analysis] API key configured:', !!apiKey);
     if (!apiKey) {
-      console.error('SKINXS_API_KEY not configured');
+      console.error('[skin-analysis] SKINXS_API_KEY not configured');
       return NextResponse.json(
         { error: 'API configuration error' },
         { status: 500 }
@@ -91,7 +96,7 @@ export async function POST(request: NextRequest) {
     await incrementUsage(doctorId);
 
     // Get signed URLs for photos
-    const frontalUrl = await getSignedUrl(photoSession.frontalPhotoUrl);
+    const frontalUrl = await getSignedUrlServerSide(photoSession.frontalPhotoUrl);
     if (!frontalUrl) {
       await saveFailedAnalysis(photoSessionId, 'Failed to get frontal photo URL');
       return NextResponse.json(
@@ -105,14 +110,14 @@ export async function POST(request: NextRequest) {
     };
 
     if (photoSession.leftProfilePhotoUrl) {
-      const leftUrl = await getSignedUrl(photoSession.leftProfilePhotoUrl);
+      const leftUrl = await getSignedUrlServerSide(photoSession.leftProfilePhotoUrl);
       if (leftUrl) {
         photos.leftProfile = leftUrl;
       }
     }
 
     if (photoSession.rightProfilePhotoUrl) {
-      const rightUrl = await getSignedUrl(photoSession.rightProfilePhotoUrl);
+      const rightUrl = await getSignedUrlServerSide(photoSession.rightProfilePhotoUrl);
       if (rightUrl) {
         photos.rightProfile = rightUrl;
       }

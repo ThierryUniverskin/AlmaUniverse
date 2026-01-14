@@ -399,11 +399,19 @@ export default function ClinicalDocumentationPage() {
 
         // Trigger background skin analysis (fire and forget)
         // This runs in the background so results are ready when entering Skin Wellness Mode
+        console.log('[SkinAnalysis] Attempting to trigger analysis:', { photoSessionId: result.id, doctorId });
         if (doctorId) {
-          triggerAnalysis(result.id, doctorId).catch((error) => {
-            logger.error('Background skin analysis failed:', error);
-            // Don't block the flow - analysis can be retried when entering Skin Wellness
-          });
+          triggerAnalysis(result.id, doctorId)
+            .then((response) => {
+              console.log('[SkinAnalysis] Trigger response:', response);
+            })
+            .catch((error) => {
+              console.error('[SkinAnalysis] Background skin analysis failed:', error);
+              logger.error('Background skin analysis failed:', error);
+              // Don't block the flow - analysis can be retried when entering Skin Wellness
+            });
+        } else {
+          console.warn('[SkinAnalysis] No doctorId - skipping analysis trigger');
         }
 
         setCurrentStep(4);
