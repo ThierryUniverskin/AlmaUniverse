@@ -105,6 +105,24 @@ export const MENOPAUSAL_STATUS_OPTIONS = [
   { value: 'n/a', label: 'N/A' },
 ] as const;
 
+// Fitzpatrick Skin Phototype options (I-VI)
+export const FITZPATRICK_TYPE_OPTIONS = [
+  { value: 'I', label: 'I' },
+  { value: 'II', label: 'II' },
+  { value: 'III', label: 'III' },
+  { value: 'IV', label: 'IV' },
+  { value: 'V', label: 'V' },
+  { value: 'VI', label: 'VI' },
+] as const;
+
+// Recovery time preference options (multi-select)
+export const RECOVERY_TIME_OPTIONS = [
+  { value: 'same-day', label: 'Same day / no visible recovery' },
+  { value: '1-2-days', label: '1–2 days' },
+  { value: '3-5-days', label: '3–5 days' },
+  { value: 'more-than-5-days', label: 'More than 5 days' },
+] as const;
+
 // Cosmetic Safety Profile - Cosmetic ingredient sensitivities for multi-select
 // These are cosmetic ingredients that may need to be excluded in Skin Wellness Mode
 // Note: Medical allergies (penicillin, NSAIDs, etc.) have been removed - those are not cosmetic ingredients

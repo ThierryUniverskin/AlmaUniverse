@@ -134,6 +134,16 @@ export interface PatientStats {
 // Medical History types for clinical documentation
 export type MenopausalStatus = 'pre-menopausal' | 'peri-menopausal' | 'post-menopausal' | 'n/a';
 
+// Fitzpatrick Skin Phototype (I-VI)
+export type FitzpatrickType = 'I' | 'II' | 'III' | 'IV' | 'V' | 'VI';
+
+// Recovery time preferences (multi-select)
+export type RecoveryTimePreference =
+  | 'same-day'
+  | '1-2-days'
+  | '3-5-days'
+  | 'more-than-5-days';
+
 // Cosmetic ingredient sensitivities (used for Skin Wellness Mode ingredient exclusion)
 // Note: Medical allergies (penicillin, NSAIDs, sulfa, lidocaine) removed - these are not cosmetic ingredients
 export type CosmeticSensitivityType =
@@ -166,15 +176,21 @@ export interface PatientMedicalHistory {
   // For physician documentation only - NEVER used by AI
   // ============================================
 
-  // Cancer History
+  // A. Skin Classification
+  fitzpatrickSkinType?: FitzpatrickType;
+
+  // B. Patient Procedure Preferences
+  recoveryTimePreferences: RecoveryTimePreference[];
+
+  // C. Cancer History
   hasCancerHistory: boolean;
   cancerTypes: CancerType[];
   cancerDetails?: string;
 
-  // Medications
+  // D. Medications
   currentMedications?: string;
 
-  // Additional Medical Information
+  // E. Additional Medical Information
   relevantMedicalConditions?: string;
 
   // ============================================
@@ -204,15 +220,21 @@ export interface PatientMedicalHistoryFormData {
   // For physician documentation only - NEVER used by AI
   // ============================================
 
-  // Cancer History
+  // A. Skin Classification
+  fitzpatrickSkinType?: FitzpatrickType;
+
+  // B. Patient Procedure Preferences
+  recoveryTimePreferences: RecoveryTimePreference[];
+
+  // C. Cancer History
   hasCancerHistory: boolean;
   cancerTypes: CancerType[];
   cancerDetails?: string;
 
-  // Medications
+  // D. Medications
   currentMedications?: string;
 
-  // Additional Medical Information
+  // E. Additional Medical Information
   relevantMedicalConditions?: string;
 
   // ============================================

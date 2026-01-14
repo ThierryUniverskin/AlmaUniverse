@@ -1,4 +1,4 @@
-import { PatientMedicalHistory, PatientMedicalHistoryFormData, CosmeticSensitivityType, CancerType } from '@/types';
+import { PatientMedicalHistory, PatientMedicalHistoryFormData, CosmeticSensitivityType, CancerType, FitzpatrickType, RecoveryTimePreference } from '@/types';
 import { DbPatientMedicalHistory } from '@/types/database';
 import { logger } from '@/lib/logger';
 
@@ -8,6 +8,8 @@ function dbToMedicalHistory(row: DbPatientMedicalHistory): PatientMedicalHistory
     id: row.id,
     patientId: row.patient_id,
     // CLINICAL MEDICAL HISTORY
+    fitzpatrickSkinType: row.fitzpatrick_skin_type ?? undefined,
+    recoveryTimePreferences: (row.recovery_time_preferences || []) as RecoveryTimePreference[],
     hasCancerHistory: row.has_cancer_history,
     cancerTypes: (row.cancer_types || []) as CancerType[],
     cancerDetails: row.cancer_details ?? undefined,
@@ -28,6 +30,8 @@ function dbToMedicalHistory(row: DbPatientMedicalHistory): PatientMedicalHistory
 function formToDbData(data: PatientMedicalHistoryFormData) {
   return {
     // CLINICAL MEDICAL HISTORY
+    fitzpatrick_skin_type: data.fitzpatrickSkinType || null,
+    recovery_time_preferences: data.recoveryTimePreferences,
     has_cancer_history: data.hasCancerHistory,
     cancer_types: data.cancerTypes,
     cancer_details: data.cancerDetails || null,
@@ -176,6 +180,8 @@ export async function updateMedicalHistory(
 export function historyToFormData(history: PatientMedicalHistory): PatientMedicalHistoryFormData {
   return {
     // CLINICAL MEDICAL HISTORY
+    fitzpatrickSkinType: history.fitzpatrickSkinType,
+    recoveryTimePreferences: history.recoveryTimePreferences,
     hasCancerHistory: history.hasCancerHistory,
     cancerTypes: history.cancerTypes,
     cancerDetails: history.cancerDetails,

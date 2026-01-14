@@ -39,7 +39,7 @@ The clinical documentation wizard guides physicians through a 6-step process:
 
 1. **Patient Selection** - Select existing or create new patient record
 2. **Health Background** - Two sections:
-   - Clinical Medical History (cancer, medications, conditions) - never used by AI
+   - Clinical Medical History (Fitzpatrick type, recovery preferences, cancer, medications, conditions) - never used by AI
    - Cosmetic Safety Profile (pregnancy, menopause, sensitivities) - for ingredient exclusion
 3. **Photo Collection** - Capture frontal + profile photos with remove.bg background removal
 4. **Skin Concerns** - Select from 17 medical skin conditions across 4 categories (drag & drop priority)
@@ -142,6 +142,7 @@ Database tables:
 Migrations:
 - `007_add_treatment_pricing.sql` - Adds price columns to existing tables
 - `008_add_device_country_prices.sql` - Creates country-specific pricing table with seed data
+- `010_add_fitzpatrick_and_recovery_time.sql` - Adds Fitzpatrick skin type and recovery time preferences to patient_medical_history
 
 ### Pending Features
 
@@ -205,6 +206,7 @@ src/
 ### Tables
 - `doctors` - User profiles (linked to auth.users)
 - `patients` - Patient records (linked to doctor via doctor_id)
+- `patient_medical_history` - Health background (Fitzpatrick type, recovery preferences, cancer history, cosmetic safety profile)
 - `photo_sessions` - Patient photo sessions (frontal, left, right profiles)
 - `clinical_evaluation_sessions` - Clinical documentation sessions
 - `ebd_devices` - Master catalog of 19 Energy-Based Devices (with default_price_cents)

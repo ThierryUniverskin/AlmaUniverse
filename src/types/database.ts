@@ -136,6 +136,8 @@ export interface Database {
           id: string;
           patient_id: string;
           // CLINICAL MEDICAL HISTORY (never used by AI)
+          fitzpatrick_skin_type: 'I' | 'II' | 'III' | 'IV' | 'V' | 'VI' | null;
+          recovery_time_preferences: string[];
           has_cancer_history: boolean;
           cancer_types: string[];
           cancer_details: string | null;
@@ -154,6 +156,8 @@ export interface Database {
           id?: string;
           patient_id: string;
           // CLINICAL MEDICAL HISTORY
+          fitzpatrick_skin_type?: 'I' | 'II' | 'III' | 'IV' | 'V' | 'VI' | null;
+          recovery_time_preferences?: string[];
           has_cancer_history?: boolean;
           cancer_types?: string[];
           cancer_details?: string | null;
@@ -172,6 +176,8 @@ export interface Database {
           id?: string;
           patient_id?: string;
           // CLINICAL MEDICAL HISTORY
+          fitzpatrick_skin_type?: 'I' | 'II' | 'III' | 'IV' | 'V' | 'VI' | null;
+          recovery_time_preferences?: string[];
           has_cancer_history?: boolean;
           cancer_types?: string[];
           cancer_details?: string | null;

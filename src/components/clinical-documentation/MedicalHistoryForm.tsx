@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { PatientMedicalHistoryFormData, MenopausalStatus, CosmeticSensitivityType, CancerType } from '@/types';
+import { PatientMedicalHistoryFormData, MenopausalStatus, CosmeticSensitivityType, CancerType, FitzpatrickType, RecoveryTimePreference } from '@/types';
 import { YesNoToggle, CheckboxGroup, StyledSelect } from '@/components/ui';
-import { MENOPAUSAL_STATUS_OPTIONS, COSMETIC_SENSITIVITY_OPTIONS, CANCER_TYPE_OPTIONS } from '@/lib/constants';
+import { MENOPAUSAL_STATUS_OPTIONS, COSMETIC_SENSITIVITY_OPTIONS, CANCER_TYPE_OPTIONS, FITZPATRICK_TYPE_OPTIONS, RECOVERY_TIME_OPTIONS } from '@/lib/constants';
 import { DocumentationTooltip } from './DocumentationTooltip';
 
 // Inline info tooltip component for section headers
@@ -119,7 +119,7 @@ export function MedicalHistoryForm({
           Health Background
         </h1>
         <p className="text-stone-500 text-sm">
-          Review and update health information for {patientName}
+          Review and update health and skin-related information.
         </p>
       </div>
 
@@ -144,8 +144,95 @@ export function MedicalHistoryForm({
         </div>
 
         {/* Section Content */}
-        <div className="p-6 space-y-5">
-          {/* Cancer History */}
+        <div className="p-6 space-y-6">
+          {/* Skin Classification */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-stone-700">
+              Skin Classification
+            </h3>
+            <div>
+              <label className="block text-sm text-stone-600 mb-2">
+                Fitzpatrick Skin Phototype
+              </label>
+              <div className="flex gap-2">
+                {FITZPATRICK_TYPE_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleChange('fitzpatrickSkinType', option.value as FitzpatrickType)}
+                    disabled={disabled}
+                    className={`
+                      w-12 h-10 rounded-lg text-sm font-medium transition-all
+                      ${formData.fitzpatrickSkinType === option.value
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                      }
+                      disabled:opacity-50 disabled:cursor-not-allowed
+                    `}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-stone-100" />
+
+          {/* Patient Procedure Preferences */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-stone-700">
+              Patient Procedure Preferences
+            </h3>
+            <div>
+              <label className="block text-sm text-stone-600 mb-1">
+                Acceptable Recovery Time After a Procedure
+              </label>
+              <p className="text-xs text-stone-400 mb-3">
+                Please indicate the maximum recovery time the patient is comfortable with.
+              </p>
+              <div className="space-y-2">
+                {RECOVERY_TIME_OPTIONS.map((option) => {
+                  const isSelected = formData.recoveryTimePreferences.includes(option.value as RecoveryTimePreference);
+                  return (
+                    <label
+                      key={option.value}
+                      className={`
+                        flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all
+                        ${isSelected
+                          ? 'border-purple-300 bg-purple-50'
+                          : 'border-stone-200 bg-white hover:border-stone-300'
+                        }
+                        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                      `}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          const newValues = e.target.checked
+                            ? [...formData.recoveryTimePreferences, option.value as RecoveryTimePreference]
+                            : formData.recoveryTimePreferences.filter(v => v !== option.value);
+                          handleChange('recoveryTimePreferences', newValues);
+                        }}
+                        disabled={disabled}
+                        className="h-4 w-4 rounded border-stone-300 accent-purple-600 focus:ring-purple-500"
+                      />
+                      <span className={`text-sm ${isSelected ? 'text-purple-900 font-medium' : 'text-stone-700'}`}>
+                        {option.label}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-stone-100" />
+
+          {/* C. Cancer History */}
           <div className="space-y-4">
             <YesNoToggle
               label="History of cancer treatment?"
@@ -322,6 +409,8 @@ export function MedicalHistoryForm({
 export function getEmptyMedicalHistoryForm(): PatientMedicalHistoryFormData {
   return {
     // CLINICAL MEDICAL HISTORY
+    fitzpatrickSkinType: undefined,
+    recoveryTimePreferences: [],
     hasCancerHistory: false,
     cancerTypes: [],
     cancerDetails: undefined,
