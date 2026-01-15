@@ -227,10 +227,23 @@ export default function ClinicalDocumentationPage() {
     return () => document.removeEventListener('click', handleLinkClick, true);
   }, [hasUnsavedChanges]);
 
-  // Handle confirmed navigation
-  const handleConfirmLeave = () => {
+  // Handle confirmed navigation (abandon session if exists)
+  const handleConfirmLeave = async () => {
     setShowLeaveModal(false);
     setHasUnsavedChanges(false);
+
+    // Mark clinical session as abandoned if exists and not completed
+    if (clinicalSession && clinicalSession.status !== 'completed') {
+      try {
+        await updateClinicalSession(clinicalSession.id, {
+          status: 'abandoned',
+        });
+        logger.debug('[ClinicalDoc] Session marked as abandoned:', clinicalSession.id);
+      } catch (err) {
+        logger.error('[ClinicalDoc] Failed to mark session as abandoned:', err);
+      }
+    }
+
     if (pendingNavigation) {
       router.push(pendingNavigation);
     }

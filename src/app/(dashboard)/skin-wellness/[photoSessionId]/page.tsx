@@ -11,7 +11,8 @@ import { SkinWellnessResults } from '@/components/skin-wellness/SkinWellnessResu
 import { getAnalysisResult, type AnalysisStatus } from '@/lib/skinAnalysis';
 import { mapCategoryScores, getAllCategoryDetails, type ParsedAnalysisResult } from '@/lib/skinAnalysisMapping';
 import { SkinWellnessDetail } from '@/lib/skinWellnessDetails';
-import { startAnalysisPhase, completeAnalysisPhase } from '@/lib/clinicalSession';
+import { startAnalysisPhase, completeAnalysisPhase, updateClinicalSession } from '@/lib/clinicalSession';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 
 /**
  * Skin Wellness Mode Page
@@ -59,6 +60,11 @@ export default function SkinWellnessPage() {
   const [error, setError] = useState<string | null>(null);
   const [analysisStatus, setAnalysisStatus] = useState<'checking' | 'pending' | 'completed' | 'failed' | 'mock'>('checking');
   const [isUsingRealData, setIsUsingRealData] = useState(false);
+  const [apiResult, setApiResult] = useState<ParsedAnalysisResult | null>(null); // Store API result when ready
+
+  // Navigation warning state
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
   // Load photo on mount
   useEffect(() => {
@@ -166,6 +172,72 @@ export default function SkinWellnessPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entryData?.photoSessionId]);
 
+  // Navigation warning: beforeunload
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Always warn when on analysis or results page
+      if (viewState === 'analysing' || viewState === 'results') {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [viewState]);
+
+  // Navigation warning: intercept link clicks
+  useEffect(() => {
+    const handleLinkClick = (e: MouseEvent) => {
+      // Always intercept when on analysis or results page
+      if (viewState !== 'analysing' && viewState !== 'results') return;
+
+      const target = e.target as HTMLElement;
+      const link = target.closest('a');
+
+      if (link && link.href) {
+        const url = new URL(link.href);
+        // Only intercept internal links (not current page)
+        if (url.origin === window.location.origin && !url.pathname.includes('/skin-wellness/')) {
+          e.preventDefault();
+          e.stopPropagation();
+          setPendingNavigation(url.pathname);
+          setShowLeaveModal(true);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleLinkClick, true);
+    return () => document.removeEventListener('click', handleLinkClick, true);
+  }, [viewState]);
+
+  // Handle confirmed navigation (abandon session)
+  const handleConfirmLeave = async () => {
+    setShowLeaveModal(false);
+
+    // Mark session as abandoned if we have a clinical session ID
+    if (entryData?.clinicalSessionId) {
+      try {
+        await updateClinicalSession(entryData.clinicalSessionId, {
+          status: 'abandoned',
+        });
+      } catch (err) {
+        console.error('Failed to mark session as abandoned:', err);
+      }
+    }
+
+    if (pendingNavigation) {
+      router.push(pendingNavigation);
+    }
+    setPendingNavigation(null);
+  };
+
+  const handleCancelLeave = () => {
+    setShowLeaveModal(false);
+    setPendingNavigation(null);
+  };
+
   // Check for real API analysis result
   const checkAnalysisResult = useCallback(async (): Promise<AnalysisStatus | null> => {
     if (!entryData) return null;
@@ -182,9 +254,56 @@ export default function SkinWellnessPage() {
     }
   }, [entryData]);
 
-  // Apply real analysis result to state
-  const applyRealAnalysis = useCallback((result: ParsedAnalysisResult) => {
-    // Map category scores to SkinAnalysisResult format
+  // Poll for API result immediately when animation starts (not after it ends)
+  useEffect(() => {
+    if (viewState !== 'analysing' || !entryData) return;
+
+    let isMounted = true;
+    let pollInterval: NodeJS.Timeout | null = null;
+
+    async function pollForResult() {
+      const status = await checkAnalysisResult();
+      if (!isMounted) return;
+
+      if (status?.status === 'completed' && status.result) {
+        setApiResult(status.result);
+        setAnalysisStatus('completed');
+        return true; // Done polling
+      }
+
+      if (status?.status === 'failed') {
+        setAnalysisStatus('failed');
+        return true; // Done polling
+      }
+
+      if (status?.status === 'pending') {
+        setAnalysisStatus('pending');
+      }
+
+      return false; // Keep polling
+    }
+
+    // Start polling immediately
+    pollForResult().then((done) => {
+      if (!done && isMounted) {
+        // Continue polling every 3 seconds
+        pollInterval = setInterval(async () => {
+          const done = await pollForResult();
+          if (done && pollInterval) {
+            clearInterval(pollInterval);
+          }
+        }, 3000);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [viewState, entryData, checkAnalysisResult]);
+
+  // Apply API result to state (used when showing results)
+  const applyApiResult = useCallback((result: ParsedAnalysisResult) => {
     const categoryScores = mapCategoryScores({
       yellow: result.scoreRadiance,
       pink: result.scoreSmoothness,
@@ -209,8 +328,6 @@ export default function SkinWellnessPage() {
     setPatientAttributes(result.patientAttributes);
     setCategoryDetails(result.categoryDetails);
     setIsUsingRealData(true);
-    setAnalysisStatus('completed');
-    setViewState('results');
 
     // Mark analysis phase as completed
     if (entryData?.clinicalSessionId) {
@@ -220,67 +337,28 @@ export default function SkinWellnessPage() {
     }
   }, [entryData]);
 
-  // Handle analysis completion (called when animation ends)
-  const handleAnalysisComplete = useCallback(async () => {
+  // Handle analysis animation completion
+  const handleAnalysisComplete = useCallback(() => {
     if (!entryData) return;
 
-    // Check if we already have a completed analysis
-    if (analysisStatus === 'completed') {
+    // Use real API result if available
+    if (apiResult) {
+      applyApiResult(apiResult);
       setViewState('results');
       return;
     }
 
-    // Try to get real analysis result
-    const status = await checkAnalysisResult();
-
-    if (status?.status === 'completed' && status.result) {
-      // Use real API data
-      applyRealAnalysis(status.result);
-      return;
-    }
-
-    if (status?.status === 'pending') {
-      // Analysis still in progress - poll for results
-      setAnalysisStatus('pending');
-      const pollInterval = setInterval(async () => {
-        const pollStatus = await checkAnalysisResult();
-        if (pollStatus?.status === 'completed' && pollStatus.result) {
-          clearInterval(pollInterval);
-          applyRealAnalysis(pollStatus.result);
-        } else if (pollStatus?.status === 'failed') {
-          clearInterval(pollInterval);
-          // Fall back to mock data
-          console.warn('Analysis failed, using mock data:', pollStatus.errorMessage);
-          applyMockData();
-        }
-      }, 3000); // Poll every 3 seconds
-
-      // Stop polling after 2 minutes
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        if (viewState !== 'results') {
-          console.warn('Analysis timeout, using mock data');
-          applyMockData();
-        }
-      }, 120000);
-      return;
-    }
-
-    // No real analysis available - use mock data
-    applyMockData();
-
-    function applyMockData() {
-      const analysis = generateFullAnalysis(entryData!.photoSessionId);
-      setAnalysisResults(analysis.categories);
-      setSkinHealthOverview(analysis.skinHealthOverview);
-      setImageQuality(analysis.imageQuality);
-      setPatientAttributes(analysis.patientAttributes);
-      setIsUsingRealData(false);
-      setAnalysisStatus('mock');
-      setViewState('results');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entryData?.photoSessionId, analysisStatus, checkAnalysisResult, applyRealAnalysis, viewState]);
+    // Fall back to mock data if API failed or no result
+    console.warn('No API result available, using mock data');
+    const analysis = generateFullAnalysis(entryData.photoSessionId);
+    setAnalysisResults(analysis.categories);
+    setSkinHealthOverview(analysis.skinHealthOverview);
+    setImageQuality(analysis.imageQuality);
+    setPatientAttributes(analysis.patientAttributes);
+    setIsUsingRealData(false);
+    setAnalysisStatus('mock');
+    setViewState('results');
+  }, [entryData, apiResult, applyApiResult]);
 
   // Invalid entry - missing required parameters
   if (!entryData) {
@@ -330,26 +408,54 @@ export default function SkinWellnessPage() {
     );
   }
 
+  // Navigation warning modal (rendered in all states)
+  const leaveModal = (
+    <ConfirmModal
+      isOpen={showLeaveModal}
+      title="Leave Skin Wellness?"
+      message="Are you sure you want to leave? The skin analysis session will be abandoned."
+      confirmLabel="Leave"
+      cancelLabel="Stay"
+      variant="warning"
+      onConfirm={handleConfirmLeave}
+      onCancel={handleCancelLeave}
+    />
+  );
+
   // Analysis animation state
   if (viewState === 'analysing') {
-    return <SkinAnalysisLoading photoUrl={photoUrl} onComplete={handleAnalysisComplete} />;
+    // Animation completes when API result is ready (completed or failed)
+    const isAnalysisReady = analysisStatus === 'completed' || analysisStatus === 'failed';
+    return (
+      <>
+        <SkinAnalysisLoading
+          photoUrl={photoUrl}
+          onComplete={handleAnalysisComplete}
+          isAnalysisReady={isAnalysisReady}
+        />
+        {leaveModal}
+      </>
+    );
   }
 
   // Results state
   if (viewState === 'results' && analysisResults) {
     return (
-      <SkinWellnessResults
-        results={analysisResults}
-        patientId={entryData.patientId}
-        photoUrls={photoUrls}
-        patientName={patientName}
-        sessionDate={sessionDate}
-        skinHealthOverview={skinHealthOverview}
-        imageQuality={imageQuality}
-        patientAttributes={patientAttributes}
-        initialCategoryDetails={categoryDetails}
-        isUsingRealData={isUsingRealData}
-      />
+      <>
+        <SkinWellnessResults
+          results={analysisResults}
+          patientId={entryData.patientId}
+          photoUrls={photoUrls}
+          patientName={patientName}
+          sessionDate={sessionDate}
+          skinHealthOverview={skinHealthOverview}
+          imageQuality={imageQuality}
+          patientAttributes={patientAttributes}
+          initialCategoryDetails={categoryDetails}
+          isUsingRealData={isUsingRealData}
+        />
+        {leaveModal}
+      </>
     );
   }
 

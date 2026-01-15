@@ -9,16 +9,18 @@ import { SkinWellnessStepProgress } from './SkinWellnessStepProgress';
  * SkinAnalysisLoading - Premium animation screen for skin wellness analysis
  *
  * Renders within the dashboard layout (not full screen).
- * Displays for exactly 10 seconds with premium visual effects.
+ * Displays until AI analysis is ready (with minimum animation time for UX).
  */
 
 interface SkinAnalysisLoadingProps {
   photoUrl: string | null;
   onComplete: () => void;
+  isAnalysisReady?: boolean; // When true, animation can complete
 }
 
-const ANALYSIS_DURATION = 10000;
+const MIN_ANIMATION_TIME = 5000; // Minimum 5 seconds for good UX
 const CATEGORY_CYCLE_INTERVAL = 1000;
+const TOTAL_CYCLE_TIME = 10000; // One full cycle through categories
 
 const PARTICLE_POSITIONS = [
   { left: '10%', delay: '0s', size: 3 },
@@ -30,22 +32,35 @@ const PARTICLE_POSITIONS = [
   { left: '95%', delay: '0.6s', size: 3 },
 ];
 
-export function SkinAnalysisLoading({ photoUrl, onComplete }: SkinAnalysisLoadingProps) {
+export function SkinAnalysisLoading({ photoUrl, onComplete, isAnalysisReady = false }: SkinAnalysisLoadingProps) {
   const { state: authState } = useAuth();
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+  const [hasTriggeredComplete, setHasTriggeredComplete] = useState(false);
 
-  // Progress tracking for blur effect
+  // Track minimum animation time
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMinTimeElapsed(true);
+    }, MIN_ANIMATION_TIME);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Progress tracking - cycles continuously until ready
   useEffect(() => {
     const startTime = Date.now();
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      setProgress(Math.min(elapsed / ANALYSIS_DURATION, 1));
+      // Progress cycles through 0-100% repeatedly
+      const cycleProgress = (elapsed % TOTAL_CYCLE_TIME) / TOTAL_CYCLE_TIME;
+      setProgress(cycleProgress);
     }, 100);
     return () => clearInterval(interval);
   }, []);
 
+  // Category cycling
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentCategoryIndex((prev) => (prev + 1) % SKIN_WELLNESS_CATEGORIES.length);
@@ -53,13 +68,14 @@ export function SkinAnalysisLoading({ photoUrl, onComplete }: SkinAnalysisLoadin
     return () => clearInterval(interval);
   }, []);
 
+  // Complete when both: minimum time elapsed AND analysis is ready
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (minTimeElapsed && isAnalysisReady && !hasTriggeredComplete) {
+      setHasTriggeredComplete(true);
       setIsExiting(true);
       setTimeout(onComplete, 300);
-    }, ANALYSIS_DURATION);
-    return () => clearTimeout(timer);
-  }, [onComplete]);
+    }
+  }, [minTimeElapsed, isAnalysisReady, hasTriggeredComplete, onComplete]);
 
   const currentCategory = SKIN_WELLNESS_CATEGORIES[currentCategoryIndex];
 
