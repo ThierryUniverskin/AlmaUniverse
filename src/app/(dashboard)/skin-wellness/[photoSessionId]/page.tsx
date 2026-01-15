@@ -502,7 +502,7 @@ export default function SkinWellnessPage() {
       <div className="min-h-full flex items-center justify-center bg-stone-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mx-auto mb-4" />
-          <p className="text-stone-500">Preparing analysis...</p>
+          <p className="text-stone-500">Loading...</p>
         </div>
       </div>
     );
