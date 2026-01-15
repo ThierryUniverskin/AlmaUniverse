@@ -126,6 +126,7 @@ export default function ClinicalDocumentationPage() {
 
   // Step 6 state - Session Summary
   const [showEnterWellnessModal, setShowEnterWellnessModal] = useState(false);
+  const [wellnessEntryStep, setWellnessEntryStep] = useState<3 | 6>(6); // Track where we're entering Skin Wellness from
 
   // Step 1 state - Patient Selection
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -538,6 +539,62 @@ export default function ClinicalDocumentationPage() {
     }
   };
 
+  // Handle Skip to Skin Wellness (Step 3 → Skin Wellness directly)
+  const handleSkipToWellness = async () => {
+    if (isSubmitting || !documentingPatient || !clinicalSession) return;
+
+    // Validate: frontal photo is required
+    if (!photoFormData.frontalPhoto) {
+      showToast('Please capture the frontal photo', 'error');
+      return;
+    }
+
+    // Validate: consent is required
+    if (!photoFormData.photoConsentGiven) {
+      showToast('Please confirm patient consent before saving', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Save photos first
+      const doctorId = authState.doctor?.id || '';
+      const result = await savePhotoSession(documentingPatient.id, photoFormData, doctorId);
+
+      if (result) {
+        // Save the photo session ID
+        setSavedPhotoSessionId(result.id);
+
+        // Update clinical session with photo session
+        const updatedSession = await savePhotosToSession(clinicalSession.id, result.id);
+        if (updatedSession) {
+          setClinicalSession(updatedSession);
+        }
+
+        // Trigger background skin analysis
+        if (doctorId) {
+          triggerAnalysis(result.id, doctorId, clinicalSession.id).catch((error) => {
+            logger.error('Background skin analysis failed:', error);
+          });
+        }
+
+        showToast('Photos saved successfully', 'success');
+
+        // Set entry step to 3 and show the modal
+        setWellnessEntryStep(3);
+        setShowEnterWellnessModal(true);
+      } else {
+        showToast('Failed to save photos', 'error');
+      }
+    } catch (error) {
+      logger.error('Error saving photos:', error);
+      showToast('Failed to save photos', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Handle Skip Skin Concerns (Step 4 - skip concerns and go to Step 5)
   const handleSkipConcerns = async () => {
     if (!documentingPatient || !clinicalSession) return;
@@ -620,6 +677,7 @@ export default function ClinicalDocumentationPage() {
 
   // Handle Continue to Skin Wellness Mode (Step 6) - opens modal
   const handleContinueToWellness = () => {
+    setWellnessEntryStep(6);
     setShowEnterWellnessModal(true);
   };
 
@@ -630,42 +688,50 @@ export default function ClinicalDocumentationPage() {
     setIsSubmitting(true);
 
     try {
-      // Complete medical phase of clinical session
-      const updatedSession = await completeMedicalPhase(
-        clinicalSession.id,
-        skinConcernsData.selectedConcerns,
-        treatmentData.selectedTreatments
-      );
+      // Only complete medical phase if entering from step 6 (full flow)
+      if (wellnessEntryStep === 6) {
+        const updatedSession = await completeMedicalPhase(
+          clinicalSession.id,
+          skinConcernsData.selectedConcerns,
+          treatmentData.selectedTreatments
+        );
 
-      if (updatedSession) {
+        if (!updatedSession) {
+          showToast('Failed to save clinical evaluation', 'error');
+          setIsSubmitting(false);
+          return;
+        }
+
         // Also save notes if present
         if (treatmentData.generalNotes) {
           await updateClinicalSession(clinicalSession.id, {
             notes: treatmentData.generalNotes,
           });
         }
-
-        setHasUnsavedChanges(false);
-        setShowEnterWellnessModal(false);
-        showToast('Clinical documentation saved. Entering Skin Wellness Mode...', 'success');
-
-        // Save all state so we can return to step 6 with all data intact
-        sessionStorage.setItem('clinicalDocStep', '6');
-        sessionStorage.setItem('clinicalDocPatientId', documentingPatient.id);
-        sessionStorage.setItem('clinicalDocSessionId', clinicalSession.id);
-        if (savedPhotoSessionId) {
-          sessionStorage.setItem('clinicalDocPhotoSessionId', savedPhotoSessionId);
-        }
-        sessionStorage.setItem('clinicalDocSkinConcerns', JSON.stringify(skinConcernsData));
-        sessionStorage.setItem('clinicalDocTreatments', JSON.stringify(treatmentData));
-        sessionStorage.setItem('clinicalDocPhotoForm', JSON.stringify(photoFormData));
-        sessionStorage.setItem('clinicalDocMedicalHistory', JSON.stringify(medicalHistoryData));
-
-        // Navigate to Skin Wellness page with clinical session ID
-        router.push(buildSkinWellnessUrl(savedPhotoSessionId!, documentingPatient.id, clinicalSession.id));
-      } else {
-        showToast('Failed to save clinical evaluation', 'error');
       }
+
+      setHasUnsavedChanges(false);
+      setShowEnterWellnessModal(false);
+
+      const message = wellnessEntryStep === 3
+        ? 'Entering Skin Wellness Mode...'
+        : 'Clinical documentation saved. Entering Skin Wellness Mode...';
+      showToast(message, 'success');
+
+      // Save state so we can return to the correct step
+      sessionStorage.setItem('clinicalDocStep', String(wellnessEntryStep));
+      sessionStorage.setItem('clinicalDocPatientId', documentingPatient.id);
+      sessionStorage.setItem('clinicalDocSessionId', clinicalSession.id);
+      if (savedPhotoSessionId) {
+        sessionStorage.setItem('clinicalDocPhotoSessionId', savedPhotoSessionId);
+      }
+      sessionStorage.setItem('clinicalDocSkinConcerns', JSON.stringify(skinConcernsData));
+      sessionStorage.setItem('clinicalDocTreatments', JSON.stringify(treatmentData));
+      sessionStorage.setItem('clinicalDocPhotoForm', JSON.stringify(photoFormData));
+      sessionStorage.setItem('clinicalDocMedicalHistory', JSON.stringify(medicalHistoryData));
+
+      // Navigate to Skin Wellness page with clinical session ID
+      router.push(buildSkinWellnessUrl(savedPhotoSessionId!, documentingPatient.id, clinicalSession.id));
     } catch (error) {
       logger.error('Error saving clinical evaluation:', error);
       showToast('Failed to save clinical evaluation', 'error');
@@ -853,6 +919,19 @@ export default function ClinicalDocumentationPage() {
           disabled={!photoFormData.frontalPhoto || !photoFormData.photoConsentGiven || isSubmitting}
         >
           Continue
+        </Button>
+      </div>
+
+      {/* Secondary Option: Skip to Skin Wellness */}
+      <div className="mt-4">
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-full border-sky-200 text-sky-700 hover:bg-sky-50 hover:border-sky-300"
+          onClick={handleSkipToWellness}
+          disabled={!photoFormData.frontalPhoto || !photoFormData.photoConsentGiven || isSubmitting}
+        >
+          Skip to Skin Wellness Analysis
         </Button>
       </div>
     </>

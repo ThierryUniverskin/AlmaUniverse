@@ -68,6 +68,19 @@ export default function SkinWellnessPage() {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
+  // Track which step we entered from (3 = photos, 6 = summary)
+  const [entryStep, setEntryStep] = useState<3 | 6>(6);
+
+  // Load entry step from sessionStorage on mount
+  useEffect(() => {
+    const savedStep = sessionStorage.getItem('clinicalDocStep');
+    if (savedStep === '3') {
+      setEntryStep(3);
+    } else {
+      setEntryStep(6);
+    }
+  }, []);
+
   // Load photo on mount
   useEffect(() => {
     async function loadPhoto() {
@@ -262,6 +275,12 @@ export default function SkinWellnessPage() {
   const handleCancelLeave = () => {
     setShowLeaveModal(false);
     setPendingNavigation(null);
+  };
+
+  // Handle back to clinical documentation
+  const handleBackToDocumentation = () => {
+    // Navigate back to clinical documentation - sessionStorage already has the state
+    router.push('/clinical-documentation/new');
   };
 
   // Check for real API analysis result
@@ -479,6 +498,8 @@ export default function SkinWellnessPage() {
           patientAttributes={patientAttributes}
           initialCategoryDetails={categoryDetails}
           isUsingRealData={isUsingRealData}
+          onBack={handleBackToDocumentation}
+          entryStep={entryStep}
         />
         {leaveModal}
       </>

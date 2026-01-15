@@ -22,6 +22,7 @@ interface SkinWellnessResultsProps {
   results: SkinAnalysisResult[];
   patientId: string;
   onBack?: () => void;
+  entryStep?: 3 | 6; // Which step we entered from (3 = photos, 6 = summary)
   photoUrls?: {
     frontal: string | null;
     left: string | null;
@@ -50,7 +51,7 @@ function getScoreColor(score: number): { bg: string; text: string; border: strin
   return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' };
 }
 
-export function SkinWellnessResults({ results: initialResults, patientId, onBack, photoUrls, patientName, sessionDate, skinHealthOverview, imageQuality, patientAttributes: initialAttributes, initialCategoryDetails, isUsingRealData }: SkinWellnessResultsProps) {
+export function SkinWellnessResults({ results: initialResults, patientId, onBack, entryStep = 6, photoUrls, patientName, sessionDate, skinHealthOverview, imageQuality, patientAttributes: initialAttributes, initialCategoryDetails, isUsingRealData }: SkinWellnessResultsProps) {
   const router = useRouter();
   const { state: authState } = useAuth();
   const sidebarOffset = useSidebarOffset();
@@ -783,7 +784,7 @@ export function SkinWellnessResults({ results: initialResults, patientId, onBack
             className="flex-1"
             onClick={handleBack}
           >
-            Back
+            {entryStep === 3 ? 'Back to Photos' : 'Back to Summary'}
           </Button>
           <Button
             size="lg"
