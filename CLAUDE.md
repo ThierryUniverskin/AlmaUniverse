@@ -274,37 +274,51 @@ Key files:
 The third step of Skin Wellness Mode allows doctors to recommend personalized skincare products:
 
 **Product Categories:**
-| Category | Products | Notes |
-|----------|----------|-------|
-| Cleanse | Hydrating Oil Cleanser ($41), Clarifying Gel Cleanser ($52) | |
-| Prep | Daily Radiance Pads ($85), Barrier Renewal Pads ($85) | 30 units each |
-| Strengthen | Barrier Nourishing Crème Light/Rich ($68), Barrier Restoring Balm ($83), HA Boosting Serum ($80) | |
-| Sunscreen | Daily Mineral Serum SPF50 ($75) | Zinc oxide-only |
-| Kits | Recovery Kit ($78), Aging Skin Kit ($103), Pigment Control Kit ($76) | Single SKU |
-| **Treat** | *(Future: personalized serums)* | Not yet implemented |
+| Category | Products | Duration | Apply Time |
+|----------|----------|----------|------------|
+| Cleanse | Hydrating Oil Cleanser ($41), Clarifying Gel Cleanser ($52) | 60 days | AM&PM |
+| Prep | Daily Radiance Pads ($85), Barrier Renewal Pads ($85) | 30-60 days | AM&PM / PM |
+| Strengthen | Barrier Nourishing Crème Light/Rich ($68), Barrier Restoring Balm ($83), HA Boosting Serum ($80) | 30-60 days | AM&PM |
+| Sunscreen | Daily Mineral Serum SPF50 ($75) | 90 days | AM |
+| Kits | Recovery Kit ($78), Aging Skin Kit ($103), Pigment Control Kit ($76) | 30 days | AM&PM |
+| **Treat** | *(Future: personalized serums)* | - | - |
 
 **Database Architecture:**
 - `universkin_products` - Master product catalog (12 products)
+  - `duration_days` - How long product lasts (30, 60, 90 days)
+  - `when_to_apply` - Application time ('AM', 'PM', 'AM&PM')
 - `country_universkin_products` - Country availability (currently US only)
 - `doctor_universkin_products` - Doctor price overrides (future)
 - `universkin_product_country_prices` - Country-specific pricing (future)
 
-**Features:**
-- Category tabs (pill-style, sky blue theme)
-- Product cards with size selector (if multiple sizes)
-- Quantity selector (+/- buttons)
-- Selected products summary panel (sticky on desktop)
-- Order total with product count
-- Static fallback for offline support
+**UI Design (matches Treatment Selection pattern):**
+- Accordion-style category sections (expandable/collapsible)
+- AI auto-recommends one product per category
+- Product cards with:
+  - 2:3 aspect ratio product images (clickable for lightbox preview)
+  - Quantity selector (Qty)
+  - Application time selector (AM/PM/AM&PM icons)
+  - Duration badge (days)
+  - Price display
+- Total card shows estimated cost + shortest routine duration
+- Premium serum bottle icon in header (sky blue gradient)
+
+**Application Time Icons:**
+- Sun icon = AM (Morning)
+- Moon icon = PM (Evening)
+- Sun + Moon = AM&PM (Morning & Evening)
 
 Key files:
 - `src/app/(dashboard)/skin-wellness/[photoSessionId]/skincare/page.tsx` - Main page
-- `src/components/skincare/CategoryTabs.tsx` - Category navigation
-- `src/components/skincare/ProductCard.tsx` - Product selection card
-- `src/components/skincare/SelectedProductsSummary.tsx` - Order summary
-- `src/lib/universkinProducts.ts` - Product data and utilities
-- `supabase/migrations/015_add_universkin_products.sql` - Database migration
-- `supabase/seed-universkin-products.sql` - Product seed data
+- `src/components/skincare/SkincareCategorySection.tsx` - Accordion category section
+- `src/components/skincare/SelectedProductCard.tsx` - Selected product with controls
+- `src/components/skincare/ProductSelectionModal.tsx` - Add product modal
+- `src/components/ui/ImageLightbox.tsx` - Full-screen image preview
+- `src/lib/universkinProducts.ts` - Product data, utilities, duration calculation
+- `src/types/index.ts` - `WhenToApply` type, `UniverskinProduct`, `SelectedUniverskinProduct`
+- `supabase/migrations/015_add_universkin_products.sql` - Base tables migration
+- `supabase/migrations/016_add_universkin_duration_and_apply_time.sql` - Duration/apply time columns
+- `supabase/seed-universkin-products.sql` - Product seed data with all fields
 
 #### SkinXS Diagnostic API Integration
 

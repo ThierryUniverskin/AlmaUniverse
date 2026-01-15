@@ -74,6 +74,7 @@ export function ProductCard({
         size: localSize,
         quantity: localQuantity,
         priceCents: priceCents * localQuantity,
+        whenToApply: product.whenToApply,
       });
     }
   };

@@ -1,11 +1,11 @@
 -- Seed data for Universkin products
--- Run after 015_add_universkin_products.sql migration
+-- Run after 015_add_universkin_products.sql and 016_add_universkin_duration_and_apply_time.sql migrations
 
 -- ============================================================================
 -- Insert Products
 -- ============================================================================
 
-INSERT INTO universkin_products (id, name, category, description, default_size, available_sizes, default_price_cents, display_order)
+INSERT INTO universkin_products (id, name, category, description, default_size, available_sizes, default_price_cents, display_order, duration_days, when_to_apply)
 VALUES
   -- Cleanse (category order: 1)
   (
@@ -16,7 +16,9 @@ VALUES
     '100ml',
     ARRAY['100ml'],
     4100,
-    10
+    10,
+    60,
+    'AM&PM'
   ),
   (
     'clarifying-gel-cleanser',
@@ -26,7 +28,9 @@ VALUES
     '100ml',
     ARRAY['100ml'],
     5200,
-    11
+    11,
+    60,
+    'AM&PM'
   ),
 
   -- Prep (category order: 2)
@@ -38,7 +42,9 @@ VALUES
     '30 units',
     ARRAY['30 units'],
     8500,
-    20
+    20,
+    30,
+    'AM&PM'
   ),
   (
     'barrier-renewal-pads',
@@ -48,7 +54,9 @@ VALUES
     '30 units',
     ARRAY['30 units'],
     8500,
-    21
+    21,
+    60,
+    'PM'
   ),
 
   -- Strengthen (category order: 4)
@@ -60,7 +68,9 @@ VALUES
     '50ml',
     ARRAY['50ml'],
     6800,
-    40
+    40,
+    30,
+    'AM&PM'
   ),
   (
     'barrier-nourishing-creme-rich',
@@ -70,7 +80,9 @@ VALUES
     '50ml',
     ARRAY['50ml'],
     6800,
-    41
+    41,
+    30,
+    'AM&PM'
   ),
   (
     'barrier-restoring-balm',
@@ -80,7 +92,9 @@ VALUES
     '30ml',
     ARRAY['30ml'],
     8300,
-    42
+    42,
+    60,
+    'AM&PM'
   ),
   (
     'ha-boosting-serum',
@@ -90,7 +104,9 @@ VALUES
     '30ml',
     ARRAY['30ml'],
     8000,
-    43
+    43,
+    60,
+    'AM&PM'
   ),
 
   -- Sunscreen (category order: 5)
@@ -102,7 +118,9 @@ VALUES
     '50ml',
     ARRAY['50ml'],
     7500,
-    50
+    50,
+    90,
+    'AM'
   ),
 
   -- Kits (category order: 6)
@@ -114,7 +132,9 @@ VALUES
     '4 products',
     ARRAY['4 products'],
     7800,
-    60
+    60,
+    30,
+    'AM&PM'
   ),
   (
     'aging-skin-kit',
@@ -124,7 +144,9 @@ VALUES
     '4 products',
     ARRAY['4 products'],
     10300,
-    61
+    61,
+    30,
+    'AM&PM'
   ),
   (
     'pigment-control-kit',
@@ -134,7 +156,9 @@ VALUES
     '3 products',
     ARRAY['3 products'],
     7600,
-    62
+    62,
+    30,
+    'AM&PM'
   )
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
@@ -143,7 +167,9 @@ ON CONFLICT (id) DO UPDATE SET
   default_size = EXCLUDED.default_size,
   available_sizes = EXCLUDED.available_sizes,
   default_price_cents = EXCLUDED.default_price_cents,
-  display_order = EXCLUDED.display_order;
+  display_order = EXCLUDED.display_order,
+  duration_days = EXCLUDED.duration_days,
+  when_to_apply = EXCLUDED.when_to_apply;
 
 -- ============================================================================
 -- Insert US Availability

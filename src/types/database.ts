@@ -453,6 +453,8 @@ export interface DbUniverskinProduct {
   default_price_cents: number | null;
   image_url: string | null;
   display_order: number;
+  duration_days: number | null;
+  when_to_apply: string | null;
   is_active: boolean;
   created_at: string;
 }

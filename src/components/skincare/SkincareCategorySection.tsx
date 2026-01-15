@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { UniverskinProduct, UniverskinCategory, SelectedUniverskinProduct } from '@/types';
+import { UniverskinProduct, UniverskinCategory, SelectedUniverskinProduct, WhenToApply } from '@/types';
 import { SelectedProductCard } from './SelectedProductCard';
 
 interface SkincareCategorySectionProps {
@@ -14,6 +14,7 @@ interface SkincareCategorySectionProps {
   recommendedProductIds: string[];
   onAddClick: () => void;
   onUpdateQuantity: (productId: string, quantity: number) => void;
+  onUpdateWhenToApply: (productId: string, whenToApply: WhenToApply) => void;
   onRemoveProduct: (productId: string) => void;
   disabled?: boolean;
 }
@@ -93,6 +94,7 @@ export function SkincareCategorySection({
   recommendedProductIds,
   onAddClick,
   onUpdateQuantity,
+  onUpdateWhenToApply,
   onRemoveProduct,
   disabled = false,
 }: SkincareCategorySectionProps) {
@@ -160,6 +162,7 @@ export function SkincareCategorySection({
                     selection={selection}
                     isRecommended={recommendedProductIds.includes(selection.productId)}
                     onUpdateQuantity={(qty) => onUpdateQuantity(selection.productId, qty)}
+                    onUpdateWhenToApply={(when) => onUpdateWhenToApply(selection.productId, when)}
                     onRemove={() => onRemoveProduct(selection.productId)}
                     disabled={disabled}
                   />

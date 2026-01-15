@@ -12,10 +12,11 @@ import {
   groupProductsByCategory,
   formatProductPrice,
   calculateTotalPrice,
+  calculateMinDuration,
   getRecommendedProducts,
   productToSelection,
 } from '@/lib/universkinProducts';
-import { UniverskinCategory, UniverskinProduct, SelectedUniverskinProduct } from '@/types';
+import { UniverskinCategory, UniverskinProduct, SelectedUniverskinProduct, WhenToApply } from '@/types';
 
 /**
  * Skincare Selection Page
@@ -34,6 +35,7 @@ export default function SkincareSelectionPage() {
 
   // Get patientId from URL params or sessionStorage
   const [patientId, setPatientId] = useState<string | null>(null);
+  const [patientName, setPatientName] = useState<string>('');
   const [clinicalSessionId, setClinicalSessionId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,6 +60,38 @@ export default function SkincareSelectionPage() {
       }
     }
   }, [searchParams]);
+
+  // Fetch patient name
+  useEffect(() => {
+    const fetchPatientName = async () => {
+      if (!patientId || !authState.accessToken) return;
+
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/patients?id=eq.${patientId}&select=first_name,last_name`,
+          {
+            headers: {
+              apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              Authorization: `Bearer ${authState.accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (response.ok) {
+          const patients = await response.json();
+          if (patients.length > 0) {
+            setPatientName(`${patients[0].first_name} ${patients[0].last_name}`);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch patient name:', error);
+      }
+    };
+
+    fetchPatientName();
+  }, [patientId, authState.accessToken]);
 
   // Product state
   const [products] = useState<UniverskinProduct[]>(UNIVERSKIN_PRODUCTS);
@@ -135,8 +169,12 @@ export default function SkincareSelectionPage() {
   };
 
   // Add product from modal
-  const handleSelectProduct = (product: UniverskinProduct) => {
-    setSelections((prev) => [...prev, productToSelection(product)]);
+  const handleSelectProduct = (product: UniverskinProduct, size?: string) => {
+    const selection = productToSelection(product);
+    if (size) {
+      selection.size = size;
+    }
+    setSelections((prev) => [...prev, selection]);
     closeModal();
   };
 
@@ -158,6 +196,15 @@ export default function SkincareSelectionPage() {
   // Remove product
   const handleRemoveProduct = (productId: string) => {
     setSelections((prev) => prev.filter((s) => s.productId !== productId));
+  };
+
+  // Update when to apply
+  const handleUpdateWhenToApply = (productId: string, whenToApply: WhenToApply) => {
+    setSelections((prev) =>
+      prev.map((s) =>
+        s.productId === productId ? { ...s, whenToApply } : s
+      )
+    );
   };
 
   // Navigation
@@ -187,6 +234,7 @@ export default function SkincareSelectionPage() {
   // Calculate totals
   const totalCents = calculateTotalPrice(selections);
   const totalItems = selections.reduce((sum, s) => sum + s.quantity, 0);
+  const minDuration = calculateMinDuration(selections, products);
 
   return (
     <div className="min-h-full relative bg-gradient-to-b from-sky-100 via-sky-50 to-sky-50/50">
@@ -215,26 +263,44 @@ export default function SkincareSelectionPage() {
       </div>
 
       {/* Content */}
-      <div className="relative max-w-3xl mx-auto px-6 pt-20 pb-8">
-        {/* Header */}
-        <div className="mb-6">
-          {/* Centered logo */}
-          <div className="flex items-center justify-center mb-3">
-            <img
-              src="/images/skinxs-logo.svg"
-              alt="SkinXS"
-              className="h-10 w-auto"
-            />
+      <div className="relative max-w-2xl mx-auto p-8 lg:p-10">
+        {/* Header - matching treatment selection page */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center mb-4">
+            {/* Premium Skincare Icon */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-sky-300 to-sky-400 rounded-full blur-lg opacity-20 scale-105" />
+              <svg className="relative h-14 w-14" viewBox="0 0 56 56" fill="none">
+                <defs>
+                  <linearGradient id="skincareGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#9ca3af" />
+                    <stop offset="100%" stopColor="#0ea5e9" />
+                  </linearGradient>
+                  <filter id="skincareShadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#0ea5e9" floodOpacity="0.15"/>
+                  </filter>
+                </defs>
+                <circle cx="28" cy="28" r="27" fill="white" filter="url(#skincareShadow)" />
+                <circle cx="28" cy="28" r="25" fill="url(#skincareGradient)" opacity="0.05" />
+                {/* Serum bottle icon */}
+                <path d="M24 16h8v3h-8z" stroke="url(#skincareGradient)" strokeWidth="1.5" fill="none" strokeLinejoin="round" />
+                <path d="M22 19h12l2 4H20l2-4z" stroke="url(#skincareGradient)" strokeWidth="1.5" fill="none" strokeLinejoin="round" />
+                <rect x="20" y="23" width="16" height="18" rx="2" stroke="url(#skincareGradient)" strokeWidth="1.5" fill="none" />
+                {/* Droplet inside bottle */}
+                <path d="M28 28c0 0-3 3.5-3 5.5a3 3 0 006 0c0-2-3-5.5-3-5.5z" stroke="url(#skincareGradient)" strokeWidth="1.2" fill="none" strokeLinejoin="round" />
+                {/* Sparkle accents */}
+                <circle cx="18" cy="18" r="1.5" fill="url(#skincareGradient)" opacity="0.5" />
+                <circle cx="38" cy="18" r="1" fill="url(#skincareGradient)" opacity="0.4" />
+                <circle cx="38" cy="38" r="1.5" fill="url(#skincareGradient)" opacity="0.5" />
+              </svg>
+            </div>
           </div>
-          {/* Title */}
-          <div className="text-center">
-            <h1 className="text-xl font-semibold text-stone-800 mb-1">
-              Personalized Skincare Routine
-            </h1>
-            <p className="text-sm text-stone-500">
-              AI-recommended products based on the skin analysis
-            </p>
-          </div>
+          <h1 className="text-2xl font-semibold text-stone-900 mb-1">
+            Personalized Skincare Routine
+          </h1>
+          <p className="text-stone-500 text-sm">
+            for {patientName || 'Patient'}
+          </p>
         </div>
 
         {/* Category Accordion Sections */}
@@ -250,21 +316,35 @@ export default function SkincareSelectionPage() {
               recommendedProductIds={recommendedProductIds}
               onAddClick={() => openModal(category)}
               onUpdateQuantity={handleUpdateQuantity}
+              onUpdateWhenToApply={handleUpdateWhenToApply}
               onRemoveProduct={handleRemoveProduct}
             />
           ))}
         </div>
 
-        {/* Order Summary */}
-        {selections.length > 0 && (
-          <div className="bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl p-4 text-white shadow-lg mb-6">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sky-100 text-sm">Routine Total</span>
-              <span className="text-2xl font-bold">{formatProductPrice(totalCents)}</span>
+        {/* Routine Total - matching EBD treatment total design */}
+        {selections.length > 0 && totalCents > 0 && (
+          <div className="bg-sky-50 border border-sky-200 rounded-xl p-4 mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-sky-900">
+                Estimated Total
+              </span>
+              <span className="text-lg font-semibold text-sky-700">
+                {formatProductPrice(totalCents)}
+              </span>
             </div>
-            <p className="text-sky-200 text-xs">
-              {selections.length} product{selections.length !== 1 ? 's' : ''} &middot; {totalItems} item{totalItems !== 1 ? 's' : ''} total
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-sky-600">
+                {selections.length} product{selections.length !== 1 ? 's' : ''} ({totalItems} item{totalItems !== 1 ? 's' : ''})
+              </p>
+              <div className="flex items-center gap-1.5 text-xs text-sky-600">
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 6v6l4 2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="font-medium">{minDuration} day routine</span>
+              </div>
+            </div>
           </div>
         )}
 

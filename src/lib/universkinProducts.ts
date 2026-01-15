@@ -9,7 +9,7 @@
  * - Doctor price override (future)
  */
 
-import { UniverskinProduct, UniverskinCategory } from '@/types';
+import { UniverskinProduct, UniverskinCategory, SelectedUniverskinProduct, WhenToApply } from '@/types';
 import { DbUniverskinProduct } from '@/types/database';
 import { logger } from './logger';
 
@@ -29,6 +29,8 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultPriceCents: 4100,
     imageUrl: '/images/products/hydrating-oil-cleanser.jpg',
     displayOrder: 10,
+    durationDays: 60,
+    whenToApply: 'AM&PM',
   },
   {
     id: 'clarifying-gel-cleanser',
@@ -40,6 +42,8 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultPriceCents: 5200,
     imageUrl: '/images/products/clarifying-gel-cleanser.jpg',
     displayOrder: 11,
+    durationDays: 60,
+    whenToApply: 'AM&PM',
   },
   // Prep
   {
@@ -52,6 +56,8 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultPriceCents: 8500,
     imageUrl: '/images/products/daily-radiance-pads.jpg',
     displayOrder: 20,
+    durationDays: 30,
+    whenToApply: 'AM&PM',
   },
   {
     id: 'barrier-renewal-pads',
@@ -63,6 +69,8 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultPriceCents: 8500,
     imageUrl: '/images/products/barrier-renewal-pads.jpg',
     displayOrder: 21,
+    durationDays: 60,
+    whenToApply: 'PM',
   },
   // Strengthen
   {
@@ -75,6 +83,8 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultPriceCents: 6800,
     imageUrl: '/images/products/barrier-nourishing-creme-light.jpg',
     displayOrder: 40,
+    durationDays: 30,
+    whenToApply: 'AM&PM',
   },
   {
     id: 'barrier-nourishing-creme-rich',
@@ -86,6 +96,8 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     imageUrl: '/images/products/barrier-nourishing-creme-rich.jpg',
     defaultPriceCents: 6800,
     displayOrder: 41,
+    durationDays: 30,
+    whenToApply: 'AM&PM',
   },
   {
     id: 'barrier-restoring-balm',
@@ -97,6 +109,8 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultPriceCents: 8300,
     imageUrl: '/images/products/barrier-restoring-balm.jpg',
     displayOrder: 42,
+    durationDays: 60,
+    whenToApply: 'AM&PM',
   },
   {
     id: 'ha-boosting-serum',
@@ -108,6 +122,8 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultPriceCents: 8000,
     imageUrl: '/images/products/ha-boosting-serum.jpg',
     displayOrder: 43,
+    durationDays: 60,
+    whenToApply: 'AM&PM',
   },
   // Sunscreen
   {
@@ -120,6 +136,8 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultPriceCents: 7500,
     imageUrl: '/images/products/daily-mineral-serum-spf50.jpg',
     displayOrder: 50,
+    durationDays: 90,
+    whenToApply: 'AM',
   },
   // Kits
   {
@@ -132,6 +150,8 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultPriceCents: 7800,
     imageUrl: '/images/products/recovery-kit.jpg',
     displayOrder: 60,
+    durationDays: 30,
+    whenToApply: 'AM&PM',
   },
   {
     id: 'aging-skin-kit',
@@ -143,6 +163,8 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultPriceCents: 10300,
     imageUrl: '/images/products/aging-skin-kit.jpg',
     displayOrder: 61,
+    durationDays: 30,
+    whenToApply: 'AM&PM',
   },
   {
     id: 'pigment-control-kit',
@@ -154,6 +176,8 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultPriceCents: 7600,
     imageUrl: '/images/products/pigment-control-kit.jpg',
     displayOrder: 62,
+    durationDays: 30,
+    whenToApply: 'AM&PM',
   },
 ];
 
@@ -198,6 +222,8 @@ function dbToProduct(db: DbUniverskinProduct): UniverskinProduct {
     defaultPriceCents: db.default_price_cents || 0,
     imageUrl: db.image_url || undefined,
     displayOrder: db.display_order,
+    durationDays: db.duration_days || 30,
+    whenToApply: (db.when_to_apply as WhenToApply) || 'AM&PM',
   };
 }
 
@@ -405,6 +431,23 @@ export function calculateTotalPrice(
   return selections.reduce((total, item) => total + item.priceCents * item.quantity, 0);
 }
 
+/**
+ * Calculate minimum duration from selected products
+ */
+export function calculateMinDuration(
+  selections: SelectedUniverskinProduct[],
+  products: UniverskinProduct[]
+): number {
+  if (selections.length === 0) return 0;
+
+  const durations = selections.map((sel) => {
+    const product = products.find((p) => p.id === sel.productId);
+    return product?.durationDays || 30;
+  });
+
+  return Math.min(...durations);
+}
+
 // ============================================================================
 // AI Recommendation Functions
 // ============================================================================
@@ -452,16 +495,12 @@ export function getRecommendedProducts(
 /**
  * Convert product to selection format
  */
-export function productToSelection(product: UniverskinProduct): {
-  productId: string;
-  size: string;
-  quantity: number;
-  priceCents: number;
-} {
+export function productToSelection(product: UniverskinProduct): SelectedUniverskinProduct {
   return {
     productId: product.id,
     size: product.defaultSize,
     quantity: 1,
     priceCents: product.defaultPriceCents,
+    whenToApply: product.whenToApply,
   };
 }

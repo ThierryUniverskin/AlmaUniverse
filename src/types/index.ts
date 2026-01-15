@@ -376,6 +376,8 @@ export interface EBDProcedureFormData {
 
 export type UniverskinCategory = 'cleanse' | 'prep' | 'treat' | 'strengthen' | 'kit' | 'sunscreen';
 
+export type WhenToApply = 'AM' | 'PM' | 'AM&PM';
+
 export interface UniverskinProduct {
   id: string;
   name: string;
@@ -386,6 +388,8 @@ export interface UniverskinProduct {
   defaultPriceCents: number;
   imageUrl?: string;
   displayOrder: number;
+  durationDays: number; // How long the product lasts (e.g., 30, 60, 90 days)
+  whenToApply: WhenToApply; // Default application time
 }
 
 // Selected product for skincare recommendation
@@ -394,6 +398,7 @@ export interface SelectedUniverskinProduct {
   size: string;
   quantity: number;
   priceCents: number;
+  whenToApply: WhenToApply; // Doctor can change this
 }
 
 // ===========================================
