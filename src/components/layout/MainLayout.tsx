@@ -18,8 +18,11 @@ function MainLayoutContent({ children }: MainLayoutProps) {
         onToggle={toggleSidebar}
       />
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        <main className="flex-1 overflow-auto">
-          <div className="animate-fade-in h-full">
+        <main
+          className="flex-1 overflow-auto"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          <div className="animate-fade-in min-h-full">
             {children}
           </div>
         </main>

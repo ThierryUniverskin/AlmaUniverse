@@ -335,7 +335,7 @@ export function SkinWellnessResults({ results: initialResults, patientId, photoS
       </div>
 
       {/* Content */}
-      <div className="relative max-w-3xl mx-auto px-6 md:px-7 pt-20 md:pt-[5.5rem] lg:pt-24 pb-10">
+      <div className="relative max-w-3xl mx-auto px-6 pt-16 md:px-7 md:pt-20 lg:pt-16 pb-12">
         {/* Header */}
         <div className="mb-6">
           {/* Centered logo */}

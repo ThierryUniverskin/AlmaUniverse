@@ -131,7 +131,7 @@ export function SkinAnalysisLoading({ photoUrl, onComplete, isAnalysisReady = fa
       </div>
 
       {/* Content */}
-      <div className="relative max-w-2xl mx-auto px-8 md:px-9 pt-20 md:pt-[5.5rem] lg:pt-24 pb-10">
+      <div className="relative max-w-2xl mx-auto p-8 md:px-9 md:pt-20 lg:p-10 pb-12">
         {/* Logo with Progress Ring */}
         <div className="flex items-center justify-center mb-6">
           <div className="relative">
