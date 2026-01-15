@@ -2,6 +2,19 @@ import { PhotoSession, PhotoSessionFormData, PhotoSource, PhotoConsentLog, PHOTO
 import { DbPhotoSession } from '@/types/database';
 import { logger } from '@/lib/logger';
 
+// Polyfill for crypto.randomUUID (not available in older iOS browsers)
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // Fallback for older browsers
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 // Convert database row to app type
 function dbToPhotoSession(row: DbPhotoSession): PhotoSession {
   return {
@@ -322,7 +335,7 @@ export async function savePhotoSession(
   }
 
   // Generate a temporary session ID for organizing uploads
-  const sessionId = crypto.randomUUID();
+  const sessionId = generateUUID();
 
   // Upload photos and collect URLs
   const photoUrls: {
