@@ -233,7 +233,7 @@ export function PhotoSlot({
                     e.stopPropagation();
                     setShowFullscreen(true);
                   }}
-                  className="h-10 w-10 rounded-full bg-white flex items-center justify-center hover:bg-stone-100 transition-colors"
+                  className="h-11 w-11 rounded-full bg-white flex items-center justify-center hover:bg-stone-100 transition-colors"
                   title="View"
                 >
                   <svg className="h-5 w-5 text-stone-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -248,7 +248,7 @@ export function PhotoSlot({
                     e.stopPropagation();
                     handleRetake();
                   }}
-                  className="h-10 w-10 rounded-full bg-white flex items-center justify-center hover:bg-stone-100 transition-colors"
+                  className="h-11 w-11 rounded-full bg-white flex items-center justify-center hover:bg-stone-100 transition-colors"
                   title="Retake"
                 >
                   <svg className="h-5 w-5 text-stone-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -264,7 +264,7 @@ export function PhotoSlot({
                     e.stopPropagation();
                     onRemove();
                   }}
-                  className="h-10 w-10 rounded-full bg-white flex items-center justify-center hover:bg-red-50 transition-colors"
+                  className="h-11 w-11 rounded-full bg-white flex items-center justify-center hover:bg-red-50 transition-colors"
                   title="Remove"
                 >
                   <svg className="h-5 w-5 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

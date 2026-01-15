@@ -45,7 +45,7 @@ export default function LoginPage() {
   return (
     <div className="h-screen w-screen flex overflow-hidden bg-white">
         {/* Left Side - Form */}
-        <div className="w-full md:w-3/5 lg:w-1/2 flex flex-col">
+        <div className="w-full lg:w-1/2 flex flex-col">
           {/* Header */}
           <header className="flex items-center justify-between px-8 py-5">
             <Image
@@ -209,8 +209,8 @@ export default function LoginPage() {
           </footer>
         </div>
 
-        {/* Right Side - Branded Hero */}
-        <div className="hidden md:block w-2/5 lg:w-1/2 relative">
+        {/* Right Side - Branded Hero (hidden in portrait, visible on landscape tablets and desktop) */}
+        <div className="hidden lg:block lg:w-1/2 relative">
             {/* Background Image */}
             <Image
               src="/images/iStock-2097461666.jpg"

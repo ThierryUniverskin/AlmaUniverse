@@ -33,14 +33,14 @@ export function PhotoConsentSection({
 
       {/* Consent Checkbox */}
       <div className="flex items-start gap-3">
-        <div className="flex items-center h-6">
+        <div className="flex items-center h-6 min-w-[44px] min-h-[44px] -m-2.5 p-2.5">
           <input
             type="checkbox"
             id="photo-consent"
             checked={consentGiven}
             onChange={(e) => onConsentChange(e.target.checked)}
             disabled={disabled}
-            className="h-5 w-5 rounded border-stone-300 text-purple-600 focus:ring-purple-500 focus:ring-offset-0 disabled:opacity-50 cursor-pointer accent-purple-600"
+            className="h-6 w-6 rounded border-stone-300 text-purple-600 focus:ring-purple-500 focus:ring-offset-0 disabled:opacity-50 cursor-pointer accent-purple-600"
           />
         </div>
         <div className="flex-1">
