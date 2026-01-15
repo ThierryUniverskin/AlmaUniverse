@@ -529,8 +529,17 @@ export default function ClinicalDocumentationPage() {
       setCurrentStep(4);
     } catch (error) {
       logger.error('Error saving photos:', error);
+      console.error('[ClinicalDoc] Photo save error:', error);
+      console.error('[ClinicalDoc] Photo form data:', {
+        source: photoFormData.source,
+        frontalPhotoType: photoFormData.frontalPhoto ? (photoFormData.frontalPhoto instanceof File ? 'File' : typeof photoFormData.frontalPhoto) : 'null',
+        frontalPhotoSize: photoFormData.frontalPhoto instanceof File ? photoFormData.frontalPhoto.size : 'N/A',
+        consent: photoFormData.photoConsentGiven,
+      });
       if (error instanceof PhotoUploadError) {
         showToast(`${error.message}${error.details ? `: ${error.details}` : ''}`, 'error');
+      } else if (error instanceof Error) {
+        showToast(`Photo error: ${error.message}`, 'error');
       } else {
         showToast('Failed to save photos. Please try again.', 'error');
       }
@@ -596,8 +605,11 @@ export default function ClinicalDocumentationPage() {
       router.push(buildSkinWellnessUrl(photoSessionId, documentingPatient.id, clinicalSession.id));
     } catch (error) {
       logger.error('Error saving photos:', error);
+      console.error('[ClinicalDoc] Photo save error (wellness):', error);
       if (error instanceof PhotoUploadError) {
         showToast(`${error.message}${error.details ? `: ${error.details}` : ''}`, 'error');
+      } else if (error instanceof Error) {
+        showToast(`Photo error: ${error.message}`, 'error');
       } else {
         showToast('Failed to save photos. Please try again.', 'error');
       }
