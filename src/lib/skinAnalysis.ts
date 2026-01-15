@@ -32,6 +32,7 @@ export interface AnalysisStatus {
   status: 'pending' | 'completed' | 'failed';
   errorMessage?: string;
   result?: ParsedAnalysisResult;
+  skinAnalysisId?: string; // Database record ID for validated diagnostics
 }
 
 export interface PhotoUrls {
@@ -501,7 +502,7 @@ export async function getAnalysisResult(photoSessionId: string): Promise<Analysi
     result.categoryDetails = getAllCategoryDetails(record.raw_response);
   }
 
-  return { status: 'completed', result };
+  return { status: 'completed', result, skinAnalysisId: record.id };
 }
 
 // ============================================================================

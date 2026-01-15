@@ -10,6 +10,7 @@ import { SkinWellnessStepProgress } from './SkinWellnessStepProgress';
 import { Button } from '@/components/ui/Button';
 import { SkinAnalysisResult, ImageQualityAssessment, PatientAttributes, SKIN_WELLNESS_CATEGORIES } from '@/lib/skinWellnessCategories';
 import { SkinWellnessDetail, getCategoryDetails } from '@/lib/skinWellnessDetails';
+import { saveValidatedDiagnostic, computeModifications } from '@/lib/skinWellnessValidation';
 
 /**
  * SkinWellnessResults - Results overview screen
@@ -21,6 +22,8 @@ import { SkinWellnessDetail, getCategoryDetails } from '@/lib/skinWellnessDetail
 interface SkinWellnessResultsProps {
   results: SkinAnalysisResult[];
   patientId: string;
+  photoSessionId: string;
+  skinAnalysisId: string | null;
   onBack?: () => void;
   entryStep?: 3 | 6; // Which step we entered from (3 = photos, 6 = summary)
   photoUrls?: {
@@ -51,7 +54,7 @@ function getScoreColor(score: number): { bg: string; text: string; border: strin
   return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' };
 }
 
-export function SkinWellnessResults({ results: initialResults, patientId, onBack, entryStep = 6, photoUrls, patientName, sessionDate, skinHealthOverview, imageQuality, patientAttributes: initialAttributes, initialCategoryDetails, isUsingRealData }: SkinWellnessResultsProps) {
+export function SkinWellnessResults({ results: initialResults, patientId, photoSessionId, skinAnalysisId, onBack, entryStep = 6, photoUrls, patientName, sessionDate, skinHealthOverview, imageQuality, patientAttributes: initialAttributes, initialCategoryDetails, isUsingRealData }: SkinWellnessResultsProps) {
   const router = useRouter();
   const { state: authState } = useAuth();
   const sidebarOffset = useSidebarOffset();
@@ -65,6 +68,11 @@ export function SkinWellnessResults({ results: initialResults, patientId, onBack
   const [overviewText, setOverviewText] = useState(skinHealthOverview || '');
   const [isEditingOverview, setIsEditingOverview] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Store initial AI values for comparison (used when computing modifications)
+  const [initialOverviewText] = useState(skinHealthOverview || '');
 
   // Store parameter details for each category (persists changes across modal open/close)
   // Use real API data if available, otherwise fall back to mock data
@@ -216,9 +224,64 @@ export function SkinWellnessResults({ results: initialResults, patientId, onBack
       })
     : null;
 
-  const handleContinueToSkincare = () => {
-    // v1: Navigate to patient page (future: skincare recommendations)
-    router.push(`/patients/${patientId}`);
+  const handleContinueToSkincare = async () => {
+    // Don't save if already saving
+    if (isSaving) return;
+
+    // Validate we have required data
+    if (!skinAnalysisId || !authState.doctor?.id) {
+      console.warn('[SkinWellnessResults] Missing skinAnalysisId or doctorId, skipping save');
+      router.push(`/skin-wellness/${photoSessionId}/skincare`);
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      // Compute modifications (diff between AI original and doctor's validated values)
+      const modifications = computeModifications(
+        initialResults,
+        results,
+        initialCategoryDetails || null,
+        categoryDetails,
+        initialAttributes || null,
+        attributes,
+        initialOverviewText,
+        overviewText,
+        { face: getRecommendedConcerns().faceConcerns, additional: getRecommendedConcerns().additionalConcerns },
+        { face: selectedFaceConcerns, additional: selectedAdditionalConcerns },
+        concernsManuallyEdited
+      );
+
+      // Save validated diagnostic to database
+      const saved = await saveValidatedDiagnostic({
+        photoSessionId,
+        skinAnalysisId,
+        doctorId: authState.doctor.id,
+        validatedScores: results,
+        validatedDetails: categoryDetails,
+        validatedAttributes: attributes,
+        validatedOverviewText: overviewText,
+        priorityFaceConcerns: selectedFaceConcerns,
+        priorityAdditionalConcerns: selectedAdditionalConcerns,
+        concernsManuallyEdited,
+        modifications,
+      });
+
+      if (!saved) {
+        throw new Error('Failed to save validation');
+      }
+
+      console.log('[SkinWellnessResults] Validation saved:', saved.id);
+
+      // Navigate to skincare selection page
+      router.push(`/skin-wellness/${photoSessionId}/skincare`);
+    } catch (error) {
+      console.error('[SkinWellnessResults] Error saving validation:', error);
+      setSaveError('Failed to save your changes. Please try again.');
+      setIsSaving(false);
+    }
   };
 
   const handleBack = () => {
@@ -776,6 +839,13 @@ export function SkinWellnessResults({ results: initialResults, patientId, onBack
           )}
         </div>
 
+        {/* Save Error Message */}
+        {saveError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl animate-fade-in">
+            <p className="text-sm text-red-600 text-center">{saveError}</p>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="flex gap-4">
           <Button
@@ -783,15 +853,27 @@ export function SkinWellnessResults({ results: initialResults, patientId, onBack
             size="lg"
             className="flex-1"
             onClick={handleBack}
+            disabled={isSaving}
           >
             {entryStep === 3 ? 'Back to Photos' : 'Back to Summary'}
           </Button>
           <Button
             size="lg"
-            className="flex-1 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 focus:ring-sky-500/30"
+            className="flex-1 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 focus:ring-sky-500/30 disabled:opacity-50"
             onClick={handleContinueToSkincare}
+            disabled={isSaving}
           >
-            Continue
+            {isSaving ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Saving...
+              </span>
+            ) : (
+              'Continue'
+            )}
           </Button>
         </div>
 

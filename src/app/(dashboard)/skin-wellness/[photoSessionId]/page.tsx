@@ -63,6 +63,7 @@ export default function SkinWellnessPage() {
   const [analysisStatus, setAnalysisStatus] = useState<'checking' | 'pending' | 'completed' | 'failed' | 'mock'>('checking');
   const [isUsingRealData, setIsUsingRealData] = useState(false);
   const [apiResult, setApiResult] = useState<ParsedAnalysisResult | null>(null); // Store API result when ready
+  const [skinAnalysisId, setSkinAnalysisId] = useState<string | null>(null); // Database record ID for validation
 
   // Navigation warning state
   const [showLeaveModal, setShowLeaveModal] = useState(false);
@@ -312,6 +313,7 @@ export default function SkinWellnessPage() {
 
       if (status?.status === 'completed' && status.result) {
         setApiResult(status.result);
+        setSkinAnalysisId(status.skinAnalysisId || null);
         setAnalysisStatus('completed');
         return true; // Done polling
       }
@@ -490,6 +492,8 @@ export default function SkinWellnessPage() {
         <SkinWellnessResults
           results={analysisResults}
           patientId={entryData.patientId}
+          photoSessionId={photoSessionId}
+          skinAnalysisId={skinAnalysisId}
           photoUrls={photoUrls}
           patientName={patientName}
           sessionDate={sessionDate}
