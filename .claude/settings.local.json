@@ -53,7 +53,8 @@
       "Bash(git -C /home/harlfoxem/AlmaUniverse log --oneline --all)",
       "Bash(npx supabase db push:*)",
       "Bash(npx supabase:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(git diff:*)"
     ]
   }
 }

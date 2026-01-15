@@ -28,7 +28,7 @@ import {
 export default function ClinicalDocumentationPage() {
   const router = useRouter();
   const { patients, isLoading: patientsLoading, addPatient } = usePatients();
-  const { state: authState } = useAuth();
+  const { state: authState, logout } = useAuth();
   const { showToast } = useToast();
 
   // Get doctor's country for phone prefix default
@@ -204,14 +204,25 @@ export default function ClinicalDocumentationPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // Intercept link clicks for in-app navigation
+  // Intercept link clicks and logout button for in-app navigation
   useEffect(() => {
-    const handleLinkClick = (e: MouseEvent) => {
+    const handleClick = (e: MouseEvent) => {
       if (!hasUnsavedChanges) return;
 
       const target = e.target as HTMLElement;
-      const link = target.closest('a');
 
+      // Check for logout button click
+      const button = target.closest('button');
+      if (button && button.textContent?.trim().toLowerCase() === 'logout') {
+        e.preventDefault();
+        e.stopPropagation();
+        setPendingNavigation('/login');
+        setShowLeaveModal(true);
+        return;
+      }
+
+      // Check for link clicks
+      const link = target.closest('a');
       if (link && link.href && !link.href.includes('/clinical-documentation/new')) {
         const url = new URL(link.href);
         if (url.origin === window.location.origin) {
@@ -223,8 +234,8 @@ export default function ClinicalDocumentationPage() {
       }
     };
 
-    document.addEventListener('click', handleLinkClick, true);
-    return () => document.removeEventListener('click', handleLinkClick, true);
+    document.addEventListener('click', handleClick, true);
+    return () => document.removeEventListener('click', handleClick, true);
   }, [hasUnsavedChanges]);
 
   // Handle confirmed navigation (abandon session if exists)
@@ -254,7 +265,10 @@ export default function ClinicalDocumentationPage() {
     sessionStorage.removeItem('clinicalDocPhotoForm');
     sessionStorage.removeItem('clinicalDocMedicalHistory');
 
-    if (pendingNavigation) {
+    // Handle logout specially - call logout() instead of router.push
+    if (pendingNavigation === '/login') {
+      logout();
+    } else if (pendingNavigation) {
       router.push(pendingNavigation);
     }
     setPendingNavigation(null);
