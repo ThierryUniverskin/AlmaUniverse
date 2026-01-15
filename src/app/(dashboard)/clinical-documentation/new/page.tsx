@@ -11,7 +11,7 @@ import { Patient, PatientFormDataExtended, PatientMedicalHistory, PatientMedical
 import { logger } from '@/lib/logger';
 import { validatePatientFormWithConsent } from '@/lib/validation';
 import { getMedicalHistory, saveMedicalHistory, updateMedicalHistory, historyToFormData } from '@/lib/medicalHistory';
-import { savePhotoSession } from '@/lib/photoSession';
+import { savePhotoSession, PhotoUploadError } from '@/lib/photoSession';
 import { buildSkinWellnessUrl } from '@/lib/skinWellness';
 import { triggerAnalysis } from '@/lib/skinAnalysis';
 import {
@@ -492,48 +492,48 @@ export default function ClinicalDocumentationPage() {
       const doctorId = authState.doctor?.id || '';
       const result = await savePhotoSession(documentingPatient.id, photoFormData, doctorId);
 
-      if (result) {
-        // Save the photo session ID for linking to clinical evaluation
-        setSavedPhotoSessionId(result.id);
+      // Save the photo session ID for linking to clinical evaluation
+      setSavedPhotoSessionId(result.id);
 
-        // Update clinical session with photo session
-        const updatedSession = await savePhotosToSession(clinicalSession.id, result.id);
-        if (updatedSession) {
-          setClinicalSession(updatedSession);
-          console.log('[ClinicalDoc] Photos linked to session');
-        }
-
-        showToast('Photos saved successfully', 'success');
-
-        // Trigger background skin analysis (fire and forget)
-        // This runs in the background so results are ready when entering Skin Wellness Mode
-        // Pass clinical session ID so the analysis is linked
-        console.log('[SkinAnalysis] Attempting to trigger analysis:', {
-          photoSessionId: result.id,
-          doctorId,
-          clinicalSessionId: clinicalSession.id,
-        });
-        if (doctorId) {
-          triggerAnalysis(result.id, doctorId, clinicalSession.id)
-            .then((response) => {
-              console.log('[SkinAnalysis] Trigger response:', response);
-            })
-            .catch((error) => {
-              console.error('[SkinAnalysis] Background skin analysis failed:', error);
-              logger.error('Background skin analysis failed:', error);
-              // Don't block the flow - analysis can be retried when entering Skin Wellness
-            });
-        } else {
-          console.warn('[SkinAnalysis] No doctorId - skipping analysis trigger');
-        }
-
-        setCurrentStep(4);
-      } else {
-        showToast('Failed to save photos', 'error');
+      // Update clinical session with photo session
+      const updatedSession = await savePhotosToSession(clinicalSession.id, result.id);
+      if (updatedSession) {
+        setClinicalSession(updatedSession);
+        console.log('[ClinicalDoc] Photos linked to session');
       }
+
+      showToast('Photos saved successfully', 'success');
+
+      // Trigger background skin analysis (fire and forget)
+      // This runs in the background so results are ready when entering Skin Wellness Mode
+      // Pass clinical session ID so the analysis is linked
+      console.log('[SkinAnalysis] Attempting to trigger analysis:', {
+        photoSessionId: result.id,
+        doctorId,
+        clinicalSessionId: clinicalSession.id,
+      });
+      if (doctorId) {
+        triggerAnalysis(result.id, doctorId, clinicalSession.id)
+          .then((response) => {
+            console.log('[SkinAnalysis] Trigger response:', response);
+          })
+          .catch((error) => {
+            console.error('[SkinAnalysis] Background skin analysis failed:', error);
+            logger.error('Background skin analysis failed:', error);
+            // Don't block the flow - analysis can be retried when entering Skin Wellness
+          });
+      } else {
+        console.warn('[SkinAnalysis] No doctorId - skipping analysis trigger');
+      }
+
+      setCurrentStep(4);
     } catch (error) {
       logger.error('Error saving photos:', error);
-      showToast('Failed to save photos', 'error');
+      if (error instanceof PhotoUploadError) {
+        showToast(`${error.message}${error.details ? `: ${error.details}` : ''}`, 'error');
+      } else {
+        showToast('Failed to save photos. Please try again.', 'error');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -562,45 +562,45 @@ export default function ClinicalDocumentationPage() {
       const doctorId = authState.doctor?.id || '';
       const result = await savePhotoSession(documentingPatient.id, photoFormData, doctorId);
 
-      if (result) {
-        // Save the photo session ID
-        const photoSessionId = result.id;
-        setSavedPhotoSessionId(photoSessionId);
+      // Save the photo session ID
+      const photoSessionId = result.id;
+      setSavedPhotoSessionId(photoSessionId);
 
-        // Update clinical session with photo session
-        const updatedSession = await savePhotosToSession(clinicalSession.id, photoSessionId);
-        if (updatedSession) {
-          setClinicalSession(updatedSession);
-        }
-
-        // Trigger background skin analysis
-        if (doctorId) {
-          triggerAnalysis(photoSessionId, doctorId, clinicalSession.id).catch((error) => {
-            logger.error('Background skin analysis failed:', error);
-          });
-        }
-
-        // Save state to sessionStorage so we can return to step 3
-        setHasUnsavedChanges(false);
-        sessionStorage.setItem('clinicalDocStep', '3');
-        sessionStorage.setItem('clinicalDocPatientId', documentingPatient.id);
-        sessionStorage.setItem('clinicalDocSessionId', clinicalSession.id);
-        sessionStorage.setItem('clinicalDocPhotoSessionId', photoSessionId);
-        sessionStorage.setItem('clinicalDocSkinConcerns', JSON.stringify(skinConcernsData));
-        sessionStorage.setItem('clinicalDocTreatments', JSON.stringify(treatmentData));
-        sessionStorage.setItem('clinicalDocPhotoForm', JSON.stringify(photoFormData));
-        sessionStorage.setItem('clinicalDocMedicalHistory', JSON.stringify(medicalHistoryData));
-
-        showToast('Entering Skin Wellness Mode...', 'success');
-
-        // Navigate directly to Skin Wellness (no modal needed when skipping clinical flow)
-        router.push(buildSkinWellnessUrl(photoSessionId, documentingPatient.id, clinicalSession.id));
-      } else {
-        showToast('Failed to save photos', 'error');
+      // Update clinical session with photo session
+      const updatedSession = await savePhotosToSession(clinicalSession.id, photoSessionId);
+      if (updatedSession) {
+        setClinicalSession(updatedSession);
       }
+
+      // Trigger background skin analysis
+      if (doctorId) {
+        triggerAnalysis(photoSessionId, doctorId, clinicalSession.id).catch((error) => {
+          logger.error('Background skin analysis failed:', error);
+        });
+      }
+
+      // Save state to sessionStorage so we can return to step 3
+      setHasUnsavedChanges(false);
+      sessionStorage.setItem('clinicalDocStep', '3');
+      sessionStorage.setItem('clinicalDocPatientId', documentingPatient.id);
+      sessionStorage.setItem('clinicalDocSessionId', clinicalSession.id);
+      sessionStorage.setItem('clinicalDocPhotoSessionId', photoSessionId);
+      sessionStorage.setItem('clinicalDocSkinConcerns', JSON.stringify(skinConcernsData));
+      sessionStorage.setItem('clinicalDocTreatments', JSON.stringify(treatmentData));
+      sessionStorage.setItem('clinicalDocPhotoForm', JSON.stringify(photoFormData));
+      sessionStorage.setItem('clinicalDocMedicalHistory', JSON.stringify(medicalHistoryData));
+
+      showToast('Entering Skin Wellness Mode...', 'success');
+
+      // Navigate directly to Skin Wellness (no modal needed when skipping clinical flow)
+      router.push(buildSkinWellnessUrl(photoSessionId, documentingPatient.id, clinicalSession.id));
     } catch (error) {
       logger.error('Error saving photos:', error);
-      showToast('Failed to save photos', 'error');
+      if (error instanceof PhotoUploadError) {
+        showToast(`${error.message}${error.details ? `: ${error.details}` : ''}`, 'error');
+      } else {
+        showToast('Failed to save photos. Please try again.', 'error');
+      }
     } finally {
       setIsSubmitting(false);
     }

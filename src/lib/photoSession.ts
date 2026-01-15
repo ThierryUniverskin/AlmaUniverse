@@ -27,23 +27,41 @@ function getAccessToken(): string | null {
   return sessionData?.access_token || null;
 }
 
+// Custom error class for photo upload failures
+export class PhotoUploadError extends Error {
+  constructor(message: string, public details?: string) {
+    super(message);
+    this.name = 'PhotoUploadError';
+  }
+}
+
 // Upload a photo to Supabase Storage
 export async function uploadPhoto(
   patientId: string,
   sessionId: string,
   photoType: 'frontal' | 'left-profile' | 'right-profile',
   file: File
-): Promise<string | null> {
+): Promise<string> {
   const accessToken = getAccessToken();
   if (!accessToken) {
     logger.error('[PhotoSession] No access token');
-    return null;
+    throw new PhotoUploadError('Authentication required', 'No access token found');
+  }
+
+  // Validate file before upload
+  if (!file || file.size === 0) {
+    throw new PhotoUploadError('Invalid photo file', 'File is empty or missing');
   }
 
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const ext = file.name.split('.').pop() || 'jpg';
     const path = `${patientId}/${sessionId}/${photoType}.${ext}`;
+
+    // Use a fallback content type if file.type is empty (common on iOS)
+    const contentType = file.type || 'image/jpeg';
+
+    console.log('[PhotoSession] Uploading photo:', { photoType, size: file.size, type: contentType, path });
 
     const response = await fetch(
       `${supabaseUrl}/storage/v1/object/patient-photos/${path}`,
@@ -52,7 +70,7 @@ export async function uploadPhoto(
         headers: {
           'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
           'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': file.type,
+          'Content-Type': contentType,
           'x-upsert': 'true', // Allow overwriting
         },
         body: file,
@@ -62,14 +80,24 @@ export async function uploadPhoto(
     if (!response.ok) {
       const errorText = await response.text();
       logger.error('[PhotoSession] Failed to upload photo:', response.status, errorText);
-      return null;
+      throw new PhotoUploadError(
+        `Upload failed (${response.status})`,
+        errorText.substring(0, 200)
+      );
     }
 
+    console.log('[PhotoSession] Photo uploaded successfully:', path);
     // Return the storage path (not full URL, we'll generate signed URLs when needed)
     return path;
   } catch (error) {
+    if (error instanceof PhotoUploadError) {
+      throw error;
+    }
     logger.error('[PhotoSession] Error uploading photo:', error);
-    return null;
+    throw new PhotoUploadError(
+      'Network error during upload',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
   }
 }
 
@@ -282,10 +310,15 @@ export async function savePhotoSession(
   patientId: string,
   formData: PhotoSessionFormData,
   doctorId?: string
-): Promise<PhotoSession | null> {
+): Promise<PhotoSession> {
   // Log consent before saving photos
   if (doctorId && formData.photoConsentGiven) {
     await logPhotoConsent(patientId, doctorId, formData.photoConsentGiven);
+  }
+
+  // Validate source
+  if (!formData.source) {
+    throw new PhotoUploadError('Photo source is required', 'Please select how photos were captured');
   }
 
   // Generate a temporary session ID for organizing uploads
@@ -300,22 +333,28 @@ export async function savePhotoSession(
 
   // Upload frontal photo (required)
   if (formData.frontalPhoto instanceof File) {
+    console.log('[PhotoSession] Uploading frontal photo file:', {
+      name: formData.frontalPhoto.name,
+      size: formData.frontalPhoto.size,
+      type: formData.frontalPhoto.type,
+    });
     const path = await uploadPhoto(patientId, sessionId, 'frontal', formData.frontalPhoto);
-    if (!path) {
-      logger.error('[PhotoSession] Failed to upload frontal photo');
-      return null;
-    }
     photoUrls.frontalPhotoUrl = path;
   } else if (typeof formData.frontalPhoto === 'string') {
     // Extract storage path from URL if needed (handles signed URLs from previous sessions)
     photoUrls.frontalPhotoUrl = extractStoragePath(formData.frontalPhoto);
+  } else {
+    throw new PhotoUploadError('Frontal photo is required', 'Please capture or upload the frontal photo');
   }
 
   // Upload left profile photo (optional)
   if (formData.leftProfilePhoto instanceof File) {
-    const path = await uploadPhoto(patientId, sessionId, 'left-profile', formData.leftProfilePhoto);
-    if (path) {
+    try {
+      const path = await uploadPhoto(patientId, sessionId, 'left-profile', formData.leftProfilePhoto);
       photoUrls.leftProfilePhotoUrl = path;
+    } catch (error) {
+      // Log but don't fail for optional photos
+      console.warn('[PhotoSession] Failed to upload left profile photo:', error);
     }
   } else if (typeof formData.leftProfilePhoto === 'string') {
     // Extract storage path from URL if needed
@@ -324,9 +363,12 @@ export async function savePhotoSession(
 
   // Upload right profile photo (optional)
   if (formData.rightProfilePhoto instanceof File) {
-    const path = await uploadPhoto(patientId, sessionId, 'right-profile', formData.rightProfilePhoto);
-    if (path) {
+    try {
+      const path = await uploadPhoto(patientId, sessionId, 'right-profile', formData.rightProfilePhoto);
       photoUrls.rightProfilePhotoUrl = path;
+    } catch (error) {
+      // Log but don't fail for optional photos
+      console.warn('[PhotoSession] Failed to upload right profile photo:', error);
     }
   } else if (typeof formData.rightProfilePhoto === 'string') {
     // Extract storage path from URL if needed
@@ -334,9 +376,10 @@ export async function savePhotoSession(
   }
 
   // Create the session record
-  if (!formData.source) {
-    logger.error('Photo source is required');
-    return null;
+  const session = await createPhotoSession(patientId, formData.source, photoUrls);
+  if (!session) {
+    throw new PhotoUploadError('Failed to create photo session', 'Database error');
   }
-  return createPhotoSession(patientId, formData.source, photoUrls);
+
+  return session;
 }
