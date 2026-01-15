@@ -441,3 +441,36 @@ export type DbDoctorDevice = Database['public']['Tables']['doctor_devices']['Row
 export type DbCountryDevice = Database['public']['Tables']['country_devices']['Row'];
 export type DbDoctorProcedure = Database['public']['Tables']['doctor_procedures']['Row'];
 export type DbEBDDeviceCountryPrice = Database['public']['Tables']['ebd_device_country_prices']['Row'];
+
+// Universkin Products types (manual until schema regenerated)
+export interface DbUniverskinProduct {
+  id: string;
+  name: string;
+  category: string;
+  description: string | null;
+  default_size: string | null;
+  available_sizes: string[] | null;
+  default_price_cents: number | null;
+  image_url: string | null;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface DbCountryUniverskinProduct {
+  id: string;
+  country_code: string;
+  product_id: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface DbDoctorUniverskinProduct {
+  id: string;
+  doctor_id: string;
+  product_id: string;
+  price_cents: number | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}

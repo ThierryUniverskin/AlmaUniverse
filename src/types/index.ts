@@ -371,6 +371,32 @@ export interface EBDProcedureFormData {
 }
 
 // ===========================================
+// Universkin Products Types (Skincare)
+// ===========================================
+
+export type UniverskinCategory = 'cleanse' | 'prep' | 'treat' | 'strengthen' | 'kit' | 'sunscreen';
+
+export interface UniverskinProduct {
+  id: string;
+  name: string;
+  category: UniverskinCategory;
+  description: string;
+  defaultSize: string;
+  availableSizes: string[];
+  defaultPriceCents: number;
+  imageUrl?: string;
+  displayOrder: number;
+}
+
+// Selected product for skincare recommendation
+export interface SelectedUniverskinProduct {
+  productId: string;
+  size: string;
+  quantity: number;
+  priceCents: number;
+}
+
+// ===========================================
 // Treatment Selection Types (Multi-Category)
 // ===========================================
 

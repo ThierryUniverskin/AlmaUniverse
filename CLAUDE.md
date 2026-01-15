@@ -267,7 +267,44 @@ Database table: `skin_analysis_validations`
 Key files:
 - `supabase/migrations/014_add_skin_analysis_validations.sql` - Database migration
 - `src/lib/skinWellnessValidation.ts` - Save/load validation functions
-- `src/app/(dashboard)/skin-wellness/[photoSessionId]/skincare/page.tsx` - Skincare placeholder page
+- `src/app/(dashboard)/skin-wellness/[photoSessionId]/skincare/page.tsx` - Skincare selection page
+
+#### Universkin Products (Skincare Selection)
+
+The third step of Skin Wellness Mode allows doctors to recommend personalized skincare products:
+
+**Product Categories:**
+| Category | Products | Notes |
+|----------|----------|-------|
+| Cleanse | Hydrating Oil Cleanser ($41), Clarifying Gel Cleanser ($52) | |
+| Prep | Daily Radiance Pads ($85), Barrier Renewal Pads ($85) | 30 units each |
+| Strengthen | Barrier Nourishing Crème Light/Rich ($68), Barrier Restoring Balm ($83), HA Boosting Serum ($80) | |
+| Sunscreen | Daily Mineral Serum SPF50 ($75) | Zinc oxide-only |
+| Kits | Recovery Kit ($78), Aging Skin Kit ($103), Pigment Control Kit ($76) | Single SKU |
+| **Treat** | *(Future: personalized serums)* | Not yet implemented |
+
+**Database Architecture:**
+- `universkin_products` - Master product catalog (12 products)
+- `country_universkin_products` - Country availability (currently US only)
+- `doctor_universkin_products` - Doctor price overrides (future)
+- `universkin_product_country_prices` - Country-specific pricing (future)
+
+**Features:**
+- Category tabs (pill-style, sky blue theme)
+- Product cards with size selector (if multiple sizes)
+- Quantity selector (+/- buttons)
+- Selected products summary panel (sticky on desktop)
+- Order total with product count
+- Static fallback for offline support
+
+Key files:
+- `src/app/(dashboard)/skin-wellness/[photoSessionId]/skincare/page.tsx` - Main page
+- `src/components/skincare/CategoryTabs.tsx` - Category navigation
+- `src/components/skincare/ProductCard.tsx` - Product selection card
+- `src/components/skincare/SelectedProductsSummary.tsx` - Order summary
+- `src/lib/universkinProducts.ts` - Product data and utilities
+- `supabase/migrations/015_add_universkin_products.sql` - Database migration
+- `supabase/seed-universkin-products.sql` - Product seed data
 
 #### SkinXS Diagnostic API Integration
 
@@ -415,6 +452,9 @@ src/
 - `doctor_devices` - Junction table: devices per doctor (with custom price_cents)
 - `country_devices` - Junction table: which devices available per country
 - `doctor_procedures` - Custom procedures per doctor (with price_cents)
+- `universkin_products` - Master skincare product catalog (12 products)
+- `country_universkin_products` - Country availability for skincare products
+- `doctor_universkin_products` - Doctor price overrides for skincare products
 
 ### EBD Devices Database
 The EBD devices are stored in database with fallback to static data. To set up:
