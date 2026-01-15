@@ -54,7 +54,9 @@
       "Bash(npx supabase db push:*)",
       "Bash(npx supabase:*)",
       "Bash(git restore:*)",
-      "Bash(git diff:*)"
+      "Bash(git diff:*)",
+      "Bash(file:*)",
+      "Bash(convert:*)"
     ]
   }
 }
