@@ -958,19 +958,7 @@ export default function ClinicalDocumentationPage() {
   };
 
   return (
-    <div className="min-h-full relative">
-      {/* Base background */}
-      <div className="absolute inset-0 bg-stone-50" />
-      {/* Medical doodles pattern - greyscale */}
-      <div
-        className="absolute inset-0 opacity-[0.04]"
-        style={{
-          backgroundImage: 'url(/images/medical-doodles-bg.svg)',
-          backgroundSize: '440px 440px',
-          backgroundRepeat: 'repeat',
-          filter: 'grayscale(100%)',
-        }}
-      />
+    <div className="min-h-full relative bg-gradient-to-b from-purple-100 via-purple-50 to-purple-50/50">
 
       {/* Top bar with doctor name (left) and step progress (right) */}
       <div className="absolute top-6 left-6 right-6 lg:top-8 lg:left-10 lg:right-10 z-10 flex items-center justify-between">
