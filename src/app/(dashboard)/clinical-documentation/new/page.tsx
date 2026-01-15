@@ -1055,7 +1055,7 @@ export default function ClinicalDocumentationPage() {
     <div className="min-h-full relative bg-gradient-to-b from-purple-100 via-purple-50 to-purple-50/50">
 
       {/* Top bar with doctor name (left) and step progress (right) */}
-      <div className="absolute top-6 left-6 right-6 lg:top-8 lg:left-10 lg:right-10 z-10 flex items-center justify-between">
+      <div className="absolute top-6 left-6 right-6 md:top-7 md:left-8 md:right-8 lg:top-8 lg:left-10 lg:right-10 z-10 flex items-center justify-between">
         {/* Doctor name with avatar */}
         <div className="flex items-center gap-2.5">
           {authState.doctor && (
@@ -1079,7 +1079,7 @@ export default function ClinicalDocumentationPage() {
       </div>
 
       {/* Content */}
-      <div className="relative p-8 lg:p-10 max-w-2xl mx-auto">
+      <div className="relative p-8 md:p-9 lg:p-10 max-w-2xl mx-auto">
         {/* Step Content */}
         {currentStep === 1 && renderStep1()}
         {currentStep === 2 && renderStep2()}

@@ -29,7 +29,7 @@ export default function PatientsPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8 h-full flex flex-col">
+    <div className="p-6 md:p-7 lg:p-8 h-full flex flex-col">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
@@ -119,7 +119,7 @@ export default function PatientsPage() {
                 placeholder="Search..."
                 value={searchInput}
                 onChange={e => setSearchInput(e.target.value)}
-                className="pl-10 pr-4 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 w-64"
+                className="pl-10 pr-4 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 w-64 md:w-72"
               />
             </div>
             <Button variant="outline" size="sm">

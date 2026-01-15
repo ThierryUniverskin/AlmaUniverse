@@ -158,7 +158,7 @@ export default function SettingsPage() {
       />
 
       {/* Sticky Header */}
-      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-stone-200 px-6 lg:px-10 py-6">
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-stone-200 px-6 md:px-8 lg:px-10 py-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
             {/* Settings Icon with gradient and glow */}
@@ -195,8 +195,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Two-column layout */}
-      <div className="relative p-6 lg:p-10">
-        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8">
+      <div className="relative p-6 md:p-8 lg:p-10">
+        <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] lg:grid-cols-[240px_1fr] gap-6 md:gap-8">
           {/* Left: Settings Sidebar */}
           <div className="lg:sticky lg:top-28 lg:self-start">
             <SettingsSidebar
@@ -206,7 +206,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Right: Content */}
-          <div className="bg-white rounded-2xl border border-stone-200 p-6 lg:p-8">
+          <div className="bg-white rounded-2xl border border-stone-200 p-6 md:p-7 lg:p-8">
             {activeSection === 'clinic-devices' && (
               <ClinicDevicesSection
                 availableDevices={availableDevices}

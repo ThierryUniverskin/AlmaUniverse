@@ -239,7 +239,7 @@ export default function SkincareSelectionPage() {
   return (
     <div className="min-h-full relative bg-gradient-to-b from-sky-100 via-sky-50 to-sky-50/50">
       {/* Top bar with doctor name (left) and step progress (right) */}
-      <div className="absolute top-6 left-6 right-6 lg:top-8 lg:left-10 lg:right-10 z-10 flex items-center justify-between">
+      <div className="absolute top-6 left-6 right-6 md:top-7 md:left-8 md:right-8 lg:top-8 lg:left-10 lg:right-10 z-10 flex items-center justify-between">
         {/* Doctor name with avatar */}
         <div className="flex items-center gap-2.5">
           {authState.doctor && (
@@ -263,7 +263,7 @@ export default function SkincareSelectionPage() {
       </div>
 
       {/* Content */}
-      <div className="relative max-w-2xl mx-auto p-8 lg:p-10">
+      <div className="relative max-w-2xl mx-auto p-8 md:p-9 lg:p-10">
         {/* Header - matching treatment selection page */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center mb-4">

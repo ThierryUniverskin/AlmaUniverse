@@ -62,7 +62,7 @@ export function EnterSkinWellnessModal({
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
       {/* Modal Card - with glow effect and entrance animation */}
-      <div className="relative bg-white rounded-2xl shadow-elevated max-w-lg w-full overflow-hidden ring-1 ring-sky-200 shadow-[0_0_40px_-10px_rgba(14,165,233,0.3)] animate-[modalEnter_0.3s_ease-out]">
+      <div className="relative bg-white rounded-2xl shadow-elevated max-w-lg md:max-w-xl w-full overflow-hidden ring-1 ring-sky-200 shadow-[0_0_40px_-10px_rgba(14,165,233,0.3)] animate-[modalEnter_0.3s_ease-out]">
         {/* Header with gradient */}
         <div className="relative px-6 py-5 bg-gradient-to-r from-sky-50 via-sky-50 to-white border-b border-sky-100">
           {/* Close button */}

@@ -131,6 +131,7 @@ const config: Config = {
       },
       fontSize: {
         '2xs': ['0.6875rem', { lineHeight: '1rem' }],
+        '3.5xl': ['2rem', { lineHeight: '2.25rem' }], // Tablet intermediate (between 3xl and 4xl)
       },
       letterSpacing: {
         'tighter': '-0.03em',

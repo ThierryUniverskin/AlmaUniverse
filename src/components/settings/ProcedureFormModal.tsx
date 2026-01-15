@@ -147,7 +147,7 @@ export function ProcedureFormModal({
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-md md:max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200">
           <h2 className="text-lg font-semibold text-stone-900">
@@ -285,7 +285,7 @@ export function ProcedureFormModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2.5 text-sm font-medium text-stone-700 bg-white border border-stone-200 rounded-lg
+              className="flex-1 px-4 py-2.5 min-h-[44px] text-sm font-medium text-stone-700 bg-white border border-stone-200 rounded-lg
                        hover:bg-stone-50 transition-colors
                        disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -294,7 +294,7 @@ export function ProcedureFormModal({
             <button
               type="submit"
               disabled={isSubmitting || !formData.name.trim()}
-              className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-purple-600 rounded-lg
+              className="flex-1 px-4 py-2.5 min-h-[44px] text-sm font-medium text-white bg-purple-600 rounded-lg
                        hover:bg-purple-700 transition-colors
                        disabled:opacity-50 disabled:cursor-not-allowed
                        flex items-center justify-center gap-2"

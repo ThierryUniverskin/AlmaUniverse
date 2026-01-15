@@ -45,7 +45,7 @@ export default function LoginPage() {
   return (
     <div className="h-screen w-screen flex overflow-hidden bg-white">
         {/* Left Side - Form */}
-        <div className="w-full lg:w-1/2 flex flex-col">
+        <div className="w-full md:w-3/5 lg:w-1/2 flex flex-col">
           {/* Header */}
           <header className="flex items-center justify-between px-8 py-5">
             <Image
@@ -68,7 +68,7 @@ export default function LoginPage() {
 
           {/* Form Container */}
           <div className="flex-1 flex items-center justify-center px-8 py-8">
-            <div className="w-full max-w-sm">
+            <div className="w-full max-w-sm md:max-w-md">
               {/* User Icon */}
               <div className="flex justify-center mb-6">
                 <div className="h-14 w-14 rounded-full bg-stone-100 flex items-center justify-center">
@@ -210,7 +210,7 @@ export default function LoginPage() {
         </div>
 
         {/* Right Side - Branded Hero */}
-        <div className="hidden lg:block w-1/2 relative">
+        <div className="hidden md:block w-2/5 lg:w-1/2 relative">
             {/* Background Image */}
             <Image
               src="/images/iStock-2097461666.jpg"

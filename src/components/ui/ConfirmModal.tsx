@@ -68,7 +68,7 @@ function ConfirmModal({
         className="flex min-h-full items-center justify-center p-4 transition-[padding] duration-300"
         style={{ paddingLeft: sidebarOffset }}
       >
-        <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 transform transition-all">
+        <div className="relative bg-white rounded-2xl shadow-xl max-w-md md:max-w-lg w-full p-6 transform transition-all">
           {/* Icon */}
           <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${iconBgColor} mb-4`}>
             {variant === 'danger' ? (
@@ -96,7 +96,7 @@ function ConfirmModal({
           <div className="mt-6 flex gap-3">
             <Button
               variant="outline"
-              className="flex-1"
+              className="flex-1 min-h-[44px]"
               onClick={onCancel}
             >
               {cancelLabel}
@@ -105,10 +105,10 @@ function ConfirmModal({
               variant={variant === 'danger' ? 'outline' : 'primary'}
               className={
                 variant === 'danger'
-                  ? 'flex-1 border-error-300 text-error-600 hover:bg-error-50'
+                  ? 'flex-1 min-h-[44px] border-error-300 text-error-600 hover:bg-error-50'
                   : variant === 'info'
-                  ? 'flex-1 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 focus:ring-sky-500/30'
-                  : 'flex-1'
+                  ? 'flex-1 min-h-[44px] bg-sky-600 hover:bg-sky-700 active:bg-sky-800 focus:ring-sky-500/30'
+                  : 'flex-1 min-h-[44px]'
               }
               onClick={onConfirm}
             >

@@ -149,7 +149,7 @@ export function CategoryDetailModal({
       onClick={handleBackdropClick}
     >
       <div
-        className="bg-white rounded-2xl shadow-xl max-w-lg w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col"
+        className="bg-white rounded-2xl shadow-xl max-w-lg md:max-w-xl w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -395,13 +395,13 @@ export function CategoryDetailModal({
         <div className="px-6 py-4 border-t border-stone-200 flex justify-end gap-3">
           <button
             onClick={handleCancel}
-            className="px-4 py-2 text-sm font-medium text-stone-600 hover:text-stone-800 transition-colors"
+            className="px-4 py-2.5 min-h-[44px] text-sm font-medium text-stone-600 hover:text-stone-800 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors"
+            className="px-5 py-2.5 min-h-[44px] text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors"
           >
             Save Changes
           </button>

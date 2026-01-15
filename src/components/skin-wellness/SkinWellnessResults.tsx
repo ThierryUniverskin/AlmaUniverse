@@ -311,7 +311,7 @@ export function SkinWellnessResults({ results: initialResults, patientId, photoS
       onClick={() => setActiveSlice(null)}
     >
       {/* Top bar with doctor name (left) and step progress (right) */}
-      <div className="absolute top-6 left-6 right-6 lg:top-8 lg:left-10 lg:right-10 z-10 flex items-center justify-between">
+      <div className="absolute top-6 left-6 right-6 md:top-7 md:left-8 md:right-8 lg:top-8 lg:left-10 lg:right-10 z-10 flex items-center justify-between">
         {/* Doctor name with avatar */}
         <div className="flex items-center gap-2.5">
           {authState.doctor && (
@@ -335,7 +335,7 @@ export function SkinWellnessResults({ results: initialResults, patientId, photoS
       </div>
 
       {/* Content */}
-      <div className="relative max-w-3xl mx-auto px-6 pt-16 pb-8">
+      <div className="relative max-w-3xl mx-auto px-6 md:px-7 pt-16 pb-8">
         {/* Header */}
         <div className="mb-6">
           {/* Centered logo */}

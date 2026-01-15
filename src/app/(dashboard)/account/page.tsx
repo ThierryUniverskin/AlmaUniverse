@@ -200,7 +200,7 @@ export default function AccountPage() {
       />
 
       {/* Sticky Header */}
-      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-stone-200 px-6 lg:px-10 py-6">
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-stone-200 px-6 md:px-8 lg:px-10 py-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
           {/* Premium Doctor Account Icon with gradient and glow */}
@@ -256,15 +256,15 @@ export default function AccountPage() {
       </div>
 
       {/* Two-column layout */}
-      <div className="relative p-6 lg:p-10">
-        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8">
+      <div className="relative p-6 md:p-8 lg:p-10">
+        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-6 md:gap-8">
           {/* Left: Profile Sidebar - shows live preview of form changes */}
           <div className="lg:sticky lg:top-28 lg:self-start">
             <ProfileSidebar doctor={{ ...state.doctor, ...formData }} />
           </div>
 
           {/* Right: Tabs + Content */}
-          <div className="bg-white rounded-2xl border border-stone-200 p-6 lg:p-8">
+          <div className="bg-white rounded-2xl border border-stone-200 p-6 md:p-7 lg:p-8">
             <Tabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
 
             <div className="mt-8">
