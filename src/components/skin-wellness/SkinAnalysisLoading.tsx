@@ -18,7 +18,7 @@ interface SkinAnalysisLoadingProps {
   isAnalysisReady?: boolean; // When true, animation can complete
 }
 
-const MIN_ANIMATION_TIME = 5000; // Minimum 5 seconds for good UX
+const MIN_ANIMATION_TIME = 10000; // Minimum 10 seconds for good UX
 const CATEGORY_CYCLE_INTERVAL = 1000;
 const TOTAL_CYCLE_TIME = 10000; // One full cycle through categories
 

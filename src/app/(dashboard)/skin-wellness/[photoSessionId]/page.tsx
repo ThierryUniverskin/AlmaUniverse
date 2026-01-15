@@ -13,6 +13,7 @@ import { mapCategoryScores, getAllCategoryDetails, type ParsedAnalysisResult } f
 import { SkinWellnessDetail } from '@/lib/skinWellnessDetails';
 import { startAnalysisPhase, completeAnalysisPhase, updateClinicalSession } from '@/lib/clinicalSession';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { useAuth } from '@/context/AuthContext';
 
 /**
  * Skin Wellness Mode Page
@@ -39,6 +40,7 @@ export default function SkinWellnessPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { logout } = useAuth();
 
   const photoSessionId = params.photoSessionId as string;
   const entryData = parseSkinWellnessParams(photoSessionId, searchParams);
@@ -187,15 +189,26 @@ export default function SkinWellnessPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [viewState]);
 
-  // Navigation warning: intercept link clicks
+  // Navigation warning: intercept link clicks and logout button
   useEffect(() => {
-    const handleLinkClick = (e: MouseEvent) => {
+    const handleClick = (e: MouseEvent) => {
       // Always intercept when on analysis or results page
       if (viewState !== 'analysing' && viewState !== 'results') return;
 
       const target = e.target as HTMLElement;
-      const link = target.closest('a');
 
+      // Check for logout button click
+      const button = target.closest('button');
+      if (button && button.textContent?.trim().toLowerCase() === 'logout') {
+        e.preventDefault();
+        e.stopPropagation();
+        setPendingNavigation('/login'); // Logout redirects to login
+        setShowLeaveModal(true);
+        return;
+      }
+
+      // Check for link clicks
+      const link = target.closest('a');
       if (link && link.href) {
         const url = new URL(link.href);
         // Only intercept internal links (not current page)
@@ -208,8 +221,8 @@ export default function SkinWellnessPage() {
       }
     };
 
-    document.addEventListener('click', handleLinkClick, true);
-    return () => document.removeEventListener('click', handleLinkClick, true);
+    document.addEventListener('click', handleClick, true);
+    return () => document.removeEventListener('click', handleClick, true);
   }, [viewState]);
 
   // Handle confirmed navigation (abandon session)
@@ -227,7 +240,10 @@ export default function SkinWellnessPage() {
       }
     }
 
-    if (pendingNavigation) {
+    // Handle logout specially - call logout() instead of router.push
+    if (pendingNavigation === '/login') {
+      logout();
+    } else if (pendingNavigation) {
       router.push(pendingNavigation);
     }
     setPendingNavigation(null);
