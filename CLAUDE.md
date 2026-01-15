@@ -238,6 +238,37 @@ Key files:
 - `src/lib/skinWellnessDetails.ts` - Parameter definitions and mock data
 - `src/components/skin-wellness/CategoryDetailModal.tsx` - Parameter editing UI
 
+#### Doctor Validation System
+
+When doctors review AI analysis results, they can modify all values. The validated diagnostic is saved when clicking "Continue":
+
+**What Gets Saved:**
+- Category visibility scores (0-10)
+- Parameter details per category
+- Patient attributes (gender, eye color, Fitzpatrick, skin thickness, skin type)
+- Overview text (editable)
+- Priority skin concerns (up to 3 face + additional areas)
+
+**Change Tracking:**
+The `modifications` JSONB field tracks all doctor changes vs AI original values for future ML training:
+- Score changes per category
+- Parameter detail changes
+- Attribute changes
+- Overview text changed (boolean)
+- Concerns manually edited (boolean)
+
+**Upsert Logic:**
+- One validation per photo session (UNIQUE constraint on `photo_session_id`)
+- If doctor returns from skincare page and makes changes, previous validation is overwritten
+- When returning from skincare page, saved values are restored (skips analysis animation)
+
+Database table: `skin_analysis_validations`
+
+Key files:
+- `supabase/migrations/014_add_skin_analysis_validations.sql` - Database migration
+- `src/lib/skinWellnessValidation.ts` - Save/load validation functions
+- `src/app/(dashboard)/skin-wellness/[photoSessionId]/skincare/page.tsx` - Skincare placeholder page
+
 #### SkinXS Diagnostic API Integration
 
 Real AI-powered skin analysis via the SkinXS API:
