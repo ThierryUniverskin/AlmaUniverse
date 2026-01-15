@@ -27,6 +27,7 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultSize: '100ml',
     availableSizes: ['100ml'],
     defaultPriceCents: 4100,
+    imageUrl: '/images/products/hydrating-oil-cleanser.jpg',
     displayOrder: 10,
   },
   {
@@ -37,6 +38,7 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultSize: '100ml',
     availableSizes: ['100ml'],
     defaultPriceCents: 5200,
+    imageUrl: '/images/products/clarifying-gel-cleanser.jpg',
     displayOrder: 11,
   },
   // Prep
@@ -48,6 +50,7 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultSize: '30 units',
     availableSizes: ['30 units'],
     defaultPriceCents: 8500,
+    imageUrl: '/images/products/daily-radiance-pads.jpg',
     displayOrder: 20,
   },
   {
@@ -58,6 +61,7 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultSize: '30 units',
     availableSizes: ['30 units'],
     defaultPriceCents: 8500,
+    imageUrl: '/images/products/barrier-renewal-pads.jpg',
     displayOrder: 21,
   },
   // Strengthen
@@ -69,6 +73,7 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultSize: '50ml',
     availableSizes: ['50ml'],
     defaultPriceCents: 6800,
+    imageUrl: '/images/products/barrier-nourishing-creme-light.jpg',
     displayOrder: 40,
   },
   {
@@ -78,6 +83,7 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     description: 'Multifunctional rich and creamy emulsion based on biomimetic peptides and omega-3 from Camelina oil that helps protect, strengthen and improve skin texture.',
     defaultSize: '50ml',
     availableSizes: ['50ml'],
+    imageUrl: '/images/products/barrier-nourishing-creme-rich.jpg',
     defaultPriceCents: 6800,
     displayOrder: 41,
   },
@@ -89,6 +95,7 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultSize: '30ml',
     availableSizes: ['30ml'],
     defaultPriceCents: 8300,
+    imageUrl: '/images/products/barrier-restoring-balm.jpg',
     displayOrder: 42,
   },
   {
@@ -99,6 +106,7 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultSize: '30ml',
     availableSizes: ['30ml'],
     defaultPriceCents: 8000,
+    imageUrl: '/images/products/ha-boosting-serum.jpg',
     displayOrder: 43,
   },
   // Sunscreen
@@ -110,6 +118,7 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultSize: '50ml',
     availableSizes: ['50ml'],
     defaultPriceCents: 7500,
+    imageUrl: '/images/products/daily-mineral-serum-spf50.jpg',
     displayOrder: 50,
   },
   // Kits
@@ -121,6 +130,7 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultSize: '4 products',
     availableSizes: ['4 products'],
     defaultPriceCents: 7800,
+    imageUrl: '/images/products/recovery-kit.jpg',
     displayOrder: 60,
   },
   {
@@ -131,6 +141,7 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultSize: '4 products',
     availableSizes: ['4 products'],
     defaultPriceCents: 10300,
+    imageUrl: '/images/products/aging-skin-kit.jpg',
     displayOrder: 61,
   },
   {
@@ -141,6 +152,7 @@ export const UNIVERSKIN_PRODUCTS: UniverskinProduct[] = [
     defaultSize: '3 products',
     availableSizes: ['3 products'],
     defaultPriceCents: 7600,
+    imageUrl: '/images/products/pigment-control-kit.jpg',
     displayOrder: 62,
   },
 ];
@@ -391,4 +403,65 @@ export function calculateTotalPrice(
   selections: { productId: string; quantity: number; priceCents: number }[]
 ): number {
   return selections.reduce((total, item) => total + item.priceCents * item.quantity, 0);
+}
+
+// ============================================================================
+// AI Recommendation Functions
+// ============================================================================
+
+/**
+ * Get AI-recommended products based on skin analysis.
+ * For testing: returns one product per category.
+ * In production: will use skin analysis scores to recommend appropriate products.
+ */
+export function getRecommendedProducts(
+  products: UniverskinProduct[]
+): UniverskinProduct[] {
+  // Group by category
+  const grouped = groupProductsByCategory(products);
+
+  // For testing: pick first product from each category (except treat)
+  const recommendations: UniverskinProduct[] = [];
+
+  // Cleanse - recommend hydrating oil cleanser (gentler)
+  if (grouped.cleanse.length > 0) {
+    recommendations.push(grouped.cleanse[0]);
+  }
+
+  // Prep - recommend daily radiance pads
+  if (grouped.prep.length > 0) {
+    recommendations.push(grouped.prep[0]);
+  }
+
+  // Strengthen - recommend HA boosting serum (universal)
+  const haSerum = grouped.strengthen.find((p) => p.id === 'ha-boosting-serum');
+  if (haSerum) {
+    recommendations.push(haSerum);
+  } else if (grouped.strengthen.length > 0) {
+    recommendations.push(grouped.strengthen[0]);
+  }
+
+  // Sunscreen - always recommend SPF
+  if (grouped.sunscreen.length > 0) {
+    recommendations.push(grouped.sunscreen[0]);
+  }
+
+  return recommendations;
+}
+
+/**
+ * Convert product to selection format
+ */
+export function productToSelection(product: UniverskinProduct): {
+  productId: string;
+  size: string;
+  quantity: number;
+  priceCents: number;
+} {
+  return {
+    productId: product.id,
+    size: product.defaultSize,
+    quantity: 1,
+    priceCents: product.defaultPriceCents,
+  };
 }

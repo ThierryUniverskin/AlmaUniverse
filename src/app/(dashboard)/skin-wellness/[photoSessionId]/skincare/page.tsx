@@ -5,21 +5,24 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { SkinWellnessStepProgress } from '@/components/skin-wellness/SkinWellnessStepProgress';
-import { CategoryTabs, ProductCard, SelectedProductsSummary } from '@/components/skincare';
+import { SkincareCategorySection, ProductSelectionModal } from '@/components/skincare';
 import {
   UNIVERSKIN_PRODUCTS,
   UNIVERSKIN_CATEGORIES,
   groupProductsByCategory,
   formatProductPrice,
   calculateTotalPrice,
+  getRecommendedProducts,
+  productToSelection,
 } from '@/lib/universkinProducts';
 import { UniverskinCategory, UniverskinProduct, SelectedUniverskinProduct } from '@/types';
 
 /**
  * Skincare Selection Page
  *
- * Shows personalized skincare products organized by category.
- * Allows doctors to select products, sizes, and quantities for patients.
+ * Shows personalized skincare products organized by category in accordion cards.
+ * AI recommends one product per category based on skin analysis.
+ * Doctors can remove recommended products and add new ones.
  */
 export default function SkincareSelectionPage() {
   const params = useParams();
@@ -34,7 +37,6 @@ export default function SkincareSelectionPage() {
   const [clinicalSessionId, setClinicalSessionId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Try URL params first, then sessionStorage
     const urlPatientId = searchParams.get('patientId');
     const urlSessionId = searchParams.get('clinicalSessionId');
 
@@ -59,8 +61,28 @@ export default function SkincareSelectionPage() {
 
   // Product state
   const [products] = useState<UniverskinProduct[]>(UNIVERSKIN_PRODUCTS);
-  const [activeCategory, setActiveCategory] = useState<UniverskinCategory>('cleanse');
   const [selections, setSelections] = useState<SelectedUniverskinProduct[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState<Set<UniverskinCategory>>(new Set());
+  const [modalCategory, setModalCategory] = useState<{ id: UniverskinCategory; label: string } | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Get AI recommended products
+  const recommendedProducts = useMemo(() => getRecommendedProducts(products), [products]);
+  const recommendedProductIds = useMemo(() => recommendedProducts.map((p) => p.id), [recommendedProducts]);
+
+  // Initialize with AI recommendations on first load
+  useEffect(() => {
+    if (!isInitialized && recommendedProducts.length > 0) {
+      const initialSelections = recommendedProducts.map(productToSelection);
+      setSelections(initialSelections);
+
+      // Expand categories that have products
+      const categoriesWithProducts = new Set(recommendedProducts.map((p) => p.category));
+      setExpandedCategories(categoriesWithProducts);
+
+      setIsInitialized(true);
+    }
+  }, [isInitialized, recommendedProducts]);
 
   // Group products by category
   const groupedProducts = useMemo(() => groupProductsByCategory(products), [products]);
@@ -68,54 +90,57 @@ export default function SkincareSelectionPage() {
   // Get visible categories (exclude 'treat' for now)
   const visibleCategories = UNIVERSKIN_CATEGORIES.filter((cat) => cat.id !== 'treat');
 
-  // Count selections per category
-  const selectionCounts = useMemo(() => {
-    const counts: Record<UniverskinCategory, number> = {
-      cleanse: 0,
-      prep: 0,
-      treat: 0,
-      strengthen: 0,
-      sunscreen: 0,
-      kit: 0,
+  // Get selections per category
+  const selectionsByCategory = useMemo(() => {
+    const byCategory: Record<UniverskinCategory, SelectedUniverskinProduct[]> = {
+      cleanse: [],
+      prep: [],
+      treat: [],
+      strengthen: [],
+      sunscreen: [],
+      kit: [],
     };
 
     selections.forEach((sel) => {
       const product = products.find((p) => p.id === sel.productId);
       if (product) {
-        counts[product.category]++;
+        byCategory[product.category].push(sel);
       }
     });
 
-    return counts;
+    return byCategory;
   }, [selections, products]);
 
-  // Get selection for a specific product
-  const getSelection = (productId: string): SelectedUniverskinProduct | undefined => {
-    return selections.find((s) => s.productId === productId);
+  // Toggle category expansion
+  const toggleCategory = (categoryId: UniverskinCategory) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
   };
 
-  // Add product to selections
-  const handleAddProduct = (selection: SelectedUniverskinProduct) => {
-    setSelections((prev) => [...prev, selection]);
+  // Open product selection modal
+  const openModal = (category: { id: UniverskinCategory; label: string }) => {
+    setModalCategory(category);
   };
 
-  // Update existing selection
-  const handleUpdateProduct = (selection: SelectedUniverskinProduct) => {
-    setSelections((prev) =>
-      prev.map((s) =>
-        s.productId === selection.productId
-          ? { ...selection, priceCents: products.find((p) => p.id === selection.productId)?.defaultPriceCents! * selection.quantity }
-          : s
-      )
-    );
+  // Close modal
+  const closeModal = () => {
+    setModalCategory(null);
   };
 
-  // Remove product from selections
-  const handleRemoveProduct = (productId: string) => {
-    setSelections((prev) => prev.filter((s) => s.productId !== productId));
+  // Add product from modal
+  const handleSelectProduct = (product: UniverskinProduct) => {
+    setSelections((prev) => [...prev, productToSelection(product)]);
+    closeModal();
   };
 
-  // Update quantity from summary panel
+  // Update product quantity
   const handleUpdateQuantity = (productId: string, quantity: number) => {
     if (quantity < 1) return;
     const product = products.find((p) => p.id === productId);
@@ -128,6 +153,11 @@ export default function SkincareSelectionPage() {
           : s
       )
     );
+  };
+
+  // Remove product
+  const handleRemoveProduct = (productId: string) => {
+    setSelections((prev) => prev.filter((s) => s.productId !== productId));
   };
 
   // Navigation
@@ -154,8 +184,9 @@ export default function SkincareSelectionPage() {
     router.push('/dashboard');
   };
 
-  // Calculate total
+  // Calculate totals
   const totalCents = calculateTotalPrice(selections);
+  const totalItems = selections.reduce((sum, s) => sum + s.quantity, 0);
 
   return (
     <div className="min-h-full relative bg-gradient-to-b from-sky-100 via-sky-50 to-sky-50/50">
@@ -184,7 +215,7 @@ export default function SkincareSelectionPage() {
       </div>
 
       {/* Content */}
-      <div className="relative max-w-5xl mx-auto px-6 pt-20 pb-8">
+      <div className="relative max-w-3xl mx-auto px-6 pt-20 pb-8">
         {/* Header */}
         <div className="mb-6">
           {/* Centered logo */}
@@ -198,134 +229,83 @@ export default function SkincareSelectionPage() {
           {/* Title */}
           <div className="text-center">
             <h1 className="text-xl font-semibold text-stone-800 mb-1">
-              Personalized Skincare
+              Personalized Skincare Routine
             </h1>
             <p className="text-sm text-stone-500">
-              Select products based on the skin analysis
+              AI-recommended products based on the skin analysis
             </p>
           </div>
         </div>
 
-        {/* Category Tabs */}
-        <div className="mb-6">
-          <CategoryTabs
-            activeCategory={activeCategory}
-            onChange={setActiveCategory}
-            productCounts={selectionCounts}
-          />
+        {/* Category Accordion Sections */}
+        <div className="space-y-3 mb-6">
+          {visibleCategories.map((category) => (
+            <SkincareCategorySection
+              key={category.id}
+              category={category}
+              isExpanded={expandedCategories.has(category.id)}
+              onToggle={() => toggleCategory(category.id)}
+              selectedProducts={selectionsByCategory[category.id]}
+              products={products}
+              recommendedProductIds={recommendedProductIds}
+              onAddClick={() => openModal(category)}
+              onUpdateQuantity={handleUpdateQuantity}
+              onRemoveProduct={handleRemoveProduct}
+            />
+          ))}
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Product Grid - 2 columns on lg, spans 2/3 */}
-          <div className="lg:col-span-2">
-            {/* Category Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-stone-800">
-                {visibleCategories.find((c) => c.id === activeCategory)?.label}
-              </h2>
-              <span className="text-sm text-stone-500">
-                {groupedProducts[activeCategory]?.length || 0} product{(groupedProducts[activeCategory]?.length || 0) !== 1 ? 's' : ''}
-              </span>
+        {/* Order Summary */}
+        {selections.length > 0 && (
+          <div className="bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl p-4 text-white shadow-lg mb-6">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sky-100 text-sm">Routine Total</span>
+              <span className="text-2xl font-bold">{formatProductPrice(totalCents)}</span>
             </div>
-
-            {/* Products Grid */}
-            {groupedProducts[activeCategory]?.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                {groupedProducts[activeCategory].map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    selection={getSelection(product.id)}
-                    onAdd={handleAddProduct}
-                    onUpdate={handleUpdateProduct}
-                    onRemove={handleRemoveProduct}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-white/60 rounded-xl border border-sky-100">
-                <svg
-                  className="w-12 h-12 text-sky-200 mx-auto mb-3"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <path d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611l-4.396.732a2.25 2.25 0 01-1.478-.4L12 19.5l-2.261 1.145a2.25 2.25 0 01-1.478.4l-4.396-.732c-1.717-.293-2.3-2.379-1.067-3.611L5 14.5" />
-                </svg>
-                <p className="text-stone-500">No products available in this category yet.</p>
-              </div>
-            )}
+            <p className="text-sky-200 text-xs">
+              {selections.length} product{selections.length !== 1 ? 's' : ''} &middot; {totalItems} item{totalItems !== 1 ? 's' : ''} total
+            </p>
           </div>
+        )}
 
-          {/* Summary Panel - Sticky on desktop */}
-          <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-24 space-y-4">
-              {/* Selected Products Summary */}
-              <SelectedProductsSummary
-                selections={selections}
-                products={products}
-                onRemove={handleRemoveProduct}
-                onUpdateQuantity={handleUpdateQuantity}
-              />
-
-              {/* Empty State when no selections */}
-              {selections.length === 0 && (
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-sky-100 p-6 text-center">
-                  <div className="w-12 h-12 bg-sky-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-6 h-6 text-sky-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M6 5v1H4.667a1.75 1.75 0 00-1.743 1.598l-.826 9.5A1.75 1.75 0 003.84 19H16.16a1.75 1.75 0 001.743-1.902l-.826-9.5A1.75 1.75 0 0015.333 6H14V5a4 4 0 00-8 0zm4-2.5A2.5 2.5 0 007.5 5v1h5V5A2.5 2.5 0 0010 2.5z" />
-                    </svg>
-                  </div>
-                  <p className="text-sm font-medium text-stone-700 mb-1">No products selected</p>
-                  <p className="text-xs text-stone-500">
-                    Browse categories and add products to create a personalized skincare routine.
-                  </p>
-                </div>
-              )}
-
-              {/* Order Total */}
-              {selections.length > 0 && (
-                <div className="bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl p-4 text-white shadow-lg">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sky-100 text-sm">Order Total</span>
-                    <span className="text-2xl font-bold">{formatProductPrice(totalCents)}</span>
-                  </div>
-                  <p className="text-sky-200 text-xs">
-                    {selections.length} product{selections.length !== 1 ? 's' : ''} &middot; {selections.reduce((sum, s) => sum + s.quantity, 0)} item{selections.reduce((sum, s) => sum + s.quantity, 0) !== 1 ? 's' : ''} total
-                  </p>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="flex-1"
-                  onClick={handleBack}
-                >
-                  Back
-                </Button>
-                <Button
-                  size="lg"
-                  className="flex-1 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 focus:ring-sky-500/30"
-                  onClick={handleFinish}
-                >
-                  {selections.length > 0 ? 'Complete' : 'Skip'}
-                </Button>
-              </div>
-
-              {/* Disclaimer */}
-              <p className="text-xs text-stone-400 text-center leading-relaxed">
-                Product recommendations are based on cosmetic appearance analysis.
-                They do not diagnose or treat medical conditions.
-              </p>
-            </div>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex gap-3 mb-6">
+          <Button
+            variant="outline"
+            size="lg"
+            className="flex-1"
+            onClick={handleBack}
+          >
+            Back
+          </Button>
+          <Button
+            size="lg"
+            className="flex-1 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 focus:ring-sky-500/30"
+            onClick={handleFinish}
+          >
+            {selections.length > 0 ? 'Complete' : 'Skip'}
+          </Button>
         </div>
+
+        {/* Disclaimer */}
+        <p className="text-xs text-stone-400 text-center leading-relaxed">
+          Product recommendations are based on cosmetic appearance analysis.
+          They do not diagnose or treat medical conditions.
+        </p>
       </div>
+
+      {/* Product Selection Modal */}
+      {modalCategory && (
+        <ProductSelectionModal
+          isOpen={true}
+          onClose={closeModal}
+          category={modalCategory}
+          products={products}
+          selectedProductIds={selections.map((s) => s.productId)}
+          recommendedProductIds={recommendedProductIds}
+          onSelectProduct={handleSelectProduct}
+        />
+      )}
     </div>
   );
 }
