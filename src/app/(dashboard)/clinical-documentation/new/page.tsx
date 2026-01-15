@@ -12,9 +12,18 @@ import { logger } from '@/lib/logger';
 import { validatePatientFormWithConsent } from '@/lib/validation';
 import { getMedicalHistory, saveMedicalHistory, updateMedicalHistory, historyToFormData } from '@/lib/medicalHistory';
 import { savePhotoSession } from '@/lib/photoSession';
-import { createClinicalEvaluation } from '@/lib/clinicalEvaluation';
 import { buildSkinWellnessUrl } from '@/lib/skinWellness';
 import { triggerAnalysis } from '@/lib/skinAnalysis';
+import {
+  createClinicalSession,
+  updateClinicalSession,
+  startSession,
+  advanceStep,
+  skipPhotos,
+  savePhotosToSession,
+  completeMedicalPhase,
+  type ClinicalSession,
+} from '@/lib/clinicalSession';
 
 export default function ClinicalDocumentationPage() {
   const router = useRouter();
@@ -27,6 +36,35 @@ export default function ClinicalDocumentationPage() {
 
   // Step management
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
+
+  // Initialize clinical session on page load
+  useEffect(() => {
+    const initSession = async () => {
+      if (!authState.doctor?.id) return;
+
+      // Check if we're returning from Skin Wellness with an existing session
+      const savedSessionId = sessionStorage.getItem('clinicalDocSessionId');
+
+      if (savedSessionId) {
+        // Restore existing session (we already have the data in sessionStorage)
+        // The session ID is enough - we'll restore UI state from other sessionStorage items
+        setClinicalSession({ id: savedSessionId } as ClinicalSession);
+        setIsSessionLoading(false);
+      } else {
+        // Create new clinical session
+        const session = await createClinicalSession({ doctorId: authState.doctor.id });
+        if (session) {
+          setClinicalSession(session);
+          console.log('[ClinicalDoc] Created clinical session:', session.id);
+        } else {
+          logger.error('[ClinicalDoc] Failed to create clinical session');
+        }
+        setIsSessionLoading(false);
+      }
+    };
+
+    initSession();
+  }, [authState.doctor?.id]);
 
   // Restore state from sessionStorage when returning from Skin Wellness
   useEffect(() => {
@@ -74,7 +112,7 @@ export default function ClinicalDocumentationPage() {
         }
       }
 
-      // Clear sessionStorage
+      // Clear sessionStorage (except session ID which is needed until we're done)
       sessionStorage.removeItem('clinicalDocStep');
       sessionStorage.removeItem('clinicalDocPatientId');
       sessionStorage.removeItem('clinicalDocPhotoSessionId');
@@ -82,6 +120,7 @@ export default function ClinicalDocumentationPage() {
       sessionStorage.removeItem('clinicalDocTreatments');
       sessionStorage.removeItem('clinicalDocPhotoForm');
       sessionStorage.removeItem('clinicalDocMedicalHistory');
+      sessionStorage.removeItem('clinicalDocSessionId');
     }
   }, [patients]);
 
@@ -111,6 +150,10 @@ export default function ClinicalDocumentationPage() {
 
   // Track saved photo session ID for linking to clinical evaluation
   const [savedPhotoSessionId, setSavedPhotoSessionId] = useState<string | null>(null);
+
+  // Clinical session - created at the start, updated through the flow
+  const [clinicalSession, setClinicalSession] = useState<ClinicalSession | null>(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
 
   // Shared state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -240,7 +283,7 @@ export default function ClinicalDocumentationPage() {
 
   // Handle Continue (Step 1 → Step 2)
   const handleContinue = async () => {
-    if (isSubmitting) return;
+    if (isSubmitting || !clinicalSession) return;
 
     setIsSubmitting(true);
 
@@ -280,6 +323,13 @@ export default function ClinicalDocumentationPage() {
         showToast('Please select a patient', 'error');
         setIsSubmitting(false);
         return;
+      }
+
+      // Update clinical session: start with patient
+      const updatedSession = await startSession(clinicalSession.id, patient.id);
+      if (updatedSession) {
+        setClinicalSession(updatedSession);
+        console.log('[ClinicalDoc] Session started with patient:', patient.id);
       }
 
       // Set documenting patient
@@ -333,7 +383,7 @@ export default function ClinicalDocumentationPage() {
 
   // Handle Continue (Step 2 → Step 3) - Save medical history and go to photos
   const handleContinueToStep3 = async () => {
-    if (isSubmitting || !documentingPatient) return;
+    if (isSubmitting || !documentingPatient || !clinicalSession) return;
 
     setIsSubmitting(true);
 
@@ -349,6 +399,10 @@ export default function ClinicalDocumentationPage() {
       }
 
       if (result) {
+        // Update clinical session step
+        const updatedSession = await advanceStep(clinicalSession.id, 3);
+        if (updatedSession) setClinicalSession(updatedSession);
+
         showToast('Medical history saved', 'success');
         setCurrentStep(3);
       } else {
@@ -363,15 +417,23 @@ export default function ClinicalDocumentationPage() {
   };
 
   // Handle Skip Photo Collection (Step 3 - skip photos and go to step 4)
-  const handleSkipPhotos = () => {
-    if (!documentingPatient) return;
+  const handleSkipPhotos = async () => {
+    if (!documentingPatient || !clinicalSession) return;
+
+    // Update clinical session: mark photos as skipped, analysis will be skipped too
+    const updatedSession = await skipPhotos(clinicalSession.id);
+    if (updatedSession) {
+      setClinicalSession(updatedSession);
+      console.log('[ClinicalDoc] Photos skipped, analysis_status set to skipped');
+    }
+
     showToast('Photo collection skipped', 'info');
     setCurrentStep(4);
   };
 
   // Handle Continue (Step 3 → Step 4) - Save photos and go to skin concerns
   const handleContinueToStep4 = async () => {
-    if (isSubmitting || !documentingPatient) return;
+    if (isSubmitting || !documentingPatient || !clinicalSession) return;
 
     // Validate: frontal photo is required
     if (!photoFormData.frontalPhoto) {
@@ -395,13 +457,26 @@ export default function ClinicalDocumentationPage() {
       if (result) {
         // Save the photo session ID for linking to clinical evaluation
         setSavedPhotoSessionId(result.id);
+
+        // Update clinical session with photo session
+        const updatedSession = await savePhotosToSession(clinicalSession.id, result.id);
+        if (updatedSession) {
+          setClinicalSession(updatedSession);
+          console.log('[ClinicalDoc] Photos linked to session');
+        }
+
         showToast('Photos saved successfully', 'success');
 
         // Trigger background skin analysis (fire and forget)
         // This runs in the background so results are ready when entering Skin Wellness Mode
-        console.log('[SkinAnalysis] Attempting to trigger analysis:', { photoSessionId: result.id, doctorId });
+        // Pass clinical session ID so the analysis is linked
+        console.log('[SkinAnalysis] Attempting to trigger analysis:', {
+          photoSessionId: result.id,
+          doctorId,
+          clinicalSessionId: clinicalSession.id,
+        });
         if (doctorId) {
-          triggerAnalysis(result.id, doctorId)
+          triggerAnalysis(result.id, doctorId, clinicalSession.id)
             .then((response) => {
               console.log('[SkinAnalysis] Trigger response:', response);
             })
@@ -427,44 +502,62 @@ export default function ClinicalDocumentationPage() {
   };
 
   // Handle Skip Skin Concerns (Step 4 - skip concerns and go to Step 5)
-  const handleSkipConcerns = () => {
-    if (!documentingPatient) return;
+  const handleSkipConcerns = async () => {
+    if (!documentingPatient || !clinicalSession) return;
+
+    // Update clinical session: no concerns
+    const updatedSession = await advanceStep(clinicalSession.id, 5, { hasConcerns: false });
+    if (updatedSession) setClinicalSession(updatedSession);
+
     showToast('Skin concerns skipped', 'info');
     setCurrentStep(5);
   };
 
   // Handle Continue (Step 4 → Step 5) - Continue to EBD device selection
-  const handleContinueToStep5 = () => {
-    if (!documentingPatient) return;
+  const handleContinueToStep5 = async () => {
+    if (!documentingPatient || !clinicalSession) return;
+
+    // Update clinical session: has concerns if any selected
+    const hasConcerns = skinConcernsData.selectedConcerns.length > 0;
+    const updatedSession = await advanceStep(clinicalSession.id, 5, { hasConcerns });
+    if (updatedSession) setClinicalSession(updatedSession);
+
     setCurrentStep(5);
   };
 
   // Handle Continue (Step 5 → Step 6) - Go to session summary
-  const handleContinueToStep6 = () => {
-    if (!documentingPatient) return;
+  const handleContinueToStep6 = async () => {
+    if (!documentingPatient || !clinicalSession) return;
+
+    // Update clinical session step
+    const updatedSession = await advanceStep(clinicalSession.id, 6);
+    if (updatedSession) setClinicalSession(updatedSession);
+
     setCurrentStep(6);
   };
 
   // Handle Finish Session (Step 6 - save all data and return to patient page)
   const handleFinishSession = async () => {
-    if (!documentingPatient || !authState.doctor) return;
+    if (!documentingPatient || !authState.doctor || !clinicalSession) return;
 
     setIsSubmitting(true);
 
     try {
-      // Create clinical evaluation session with all data
-      const session = await createClinicalEvaluation(
-        documentingPatient.id,
-        authState.doctor.id,
-        {
-          photoSessionId: savedPhotoSessionId,
-          selectedSkinConcerns: skinConcernsData.selectedConcerns,
-          selectedTreatments: treatmentData.selectedTreatments,
-          notes: treatmentData.generalNotes || undefined,
-        }
+      // Complete medical phase of clinical session
+      const updatedSession = await completeMedicalPhase(
+        clinicalSession.id,
+        skinConcernsData.selectedConcerns,
+        treatmentData.selectedTreatments
       );
 
-      if (session) {
+      if (updatedSession) {
+        // Also save notes if present
+        if (treatmentData.generalNotes) {
+          await updateClinicalSession(clinicalSession.id, {
+            notes: treatmentData.generalNotes,
+          });
+        }
+
         setHasUnsavedChanges(false);
         const concernCount = skinConcernsData.selectedConcerns.length;
         const treatmentCount = treatmentData.selectedTreatments.length;
@@ -493,26 +586,28 @@ export default function ClinicalDocumentationPage() {
     setShowEnterWellnessModal(true);
   };
 
-  // Handle Enter Skin Wellness Mode from modal - save session and redirect (temporary: to patient page)
+  // Handle Enter Skin Wellness Mode from modal - save session and redirect
   const handleEnterWellnessMode = async () => {
-    if (!documentingPatient || !authState.doctor) return;
+    if (!documentingPatient || !authState.doctor || !clinicalSession) return;
 
     setIsSubmitting(true);
 
     try {
-      // Save clinical evaluation first
-      const session = await createClinicalEvaluation(
-        documentingPatient.id,
-        authState.doctor.id,
-        {
-          photoSessionId: savedPhotoSessionId,
-          selectedSkinConcerns: skinConcernsData.selectedConcerns,
-          selectedTreatments: treatmentData.selectedTreatments,
-          notes: treatmentData.generalNotes || undefined,
-        }
+      // Complete medical phase of clinical session
+      const updatedSession = await completeMedicalPhase(
+        clinicalSession.id,
+        skinConcernsData.selectedConcerns,
+        treatmentData.selectedTreatments
       );
 
-      if (session) {
+      if (updatedSession) {
+        // Also save notes if present
+        if (treatmentData.generalNotes) {
+          await updateClinicalSession(clinicalSession.id, {
+            notes: treatmentData.generalNotes,
+          });
+        }
+
         setHasUnsavedChanges(false);
         setShowEnterWellnessModal(false);
         showToast('Clinical documentation saved. Entering Skin Wellness Mode...', 'success');
@@ -520,6 +615,7 @@ export default function ClinicalDocumentationPage() {
         // Save all state so we can return to step 6 with all data intact
         sessionStorage.setItem('clinicalDocStep', '6');
         sessionStorage.setItem('clinicalDocPatientId', documentingPatient.id);
+        sessionStorage.setItem('clinicalDocSessionId', clinicalSession.id);
         if (savedPhotoSessionId) {
           sessionStorage.setItem('clinicalDocPhotoSessionId', savedPhotoSessionId);
         }
@@ -528,8 +624,8 @@ export default function ClinicalDocumentationPage() {
         sessionStorage.setItem('clinicalDocPhotoForm', JSON.stringify(photoFormData));
         sessionStorage.setItem('clinicalDocMedicalHistory', JSON.stringify(medicalHistoryData));
 
-        // Navigate to Skin Wellness page
-        router.push(buildSkinWellnessUrl(savedPhotoSessionId!, documentingPatient.id));
+        // Navigate to Skin Wellness page with clinical session ID
+        router.push(buildSkinWellnessUrl(savedPhotoSessionId!, documentingPatient.id, clinicalSession.id));
       } else {
         showToast('Failed to save clinical evaluation', 'error');
       }

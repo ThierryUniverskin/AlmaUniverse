@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { photoSessionId, doctorId } = body;
-    console.log('[skin-analysis] Request body:', { photoSessionId, doctorId });
+    const { photoSessionId, doctorId, clinicalSessionId } = body;
+    console.log('[skin-analysis] Request body:', { photoSessionId, doctorId, clinicalSessionId });
 
     if (!photoSessionId || !doctorId) {
       console.error('[skin-analysis] Missing required fields');
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save pending status
-    await savePendingAnalysis(photoSessionId, photoSession.patientId, doctorId);
+    await savePendingAnalysis(photoSessionId, photoSession.patientId, doctorId, clinicalSessionId);
 
     // Increment usage counter
     await incrementUsage(doctorId);
@@ -151,7 +151,8 @@ export async function POST(request: NextRequest) {
       photoSessionId,
       photoSession.patientId,
       doctorId,
-      parsedResult
+      parsedResult,
+      clinicalSessionId
     );
 
     if (!saved) {

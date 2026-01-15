@@ -234,12 +234,13 @@ export async function saveAnalysisResult(
   photoSessionId: string,
   patientId: string,
   doctorId: string,
-  result: ParsedAnalysisResult
+  result: ParsedAnalysisResult,
+  clinicalSessionId?: string
 ): Promise<boolean> {
   const supabaseUrl = getSupabaseUrl();
   const serviceKey = getSupabaseServiceKey();
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     photo_session_id: photoSessionId,
     patient_id: patientId,
     doctor_id: doctorId,
@@ -276,6 +277,11 @@ export async function saveAnalysisResult(
     completed_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
+
+  // Add clinical_session_id if provided
+  if (clinicalSessionId) {
+    payload.clinical_session_id = clinicalSessionId;
+  }
 
   // Delete existing record for this photo session (if any)
   await fetch(
@@ -315,7 +321,8 @@ export async function saveAnalysisResult(
 export async function savePendingAnalysis(
   photoSessionId: string,
   patientId: string,
-  doctorId: string
+  doctorId: string,
+  clinicalSessionId?: string
 ): Promise<boolean> {
   const supabaseUrl = getSupabaseUrl();
   const serviceKey = getSupabaseServiceKey();
@@ -332,13 +339,18 @@ export async function savePendingAnalysis(
     }
   );
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     photo_session_id: photoSessionId,
     patient_id: patientId,
     doctor_id: doctorId,
     raw_response: {}, // Empty placeholder
     status: 'pending',
   };
+
+  // Add clinical_session_id if provided
+  if (clinicalSessionId) {
+    payload.clinical_session_id = clinicalSessionId;
+  }
 
   const response = await fetch(`${supabaseUrl}/rest/v1/skin_analysis_results`, {
     method: 'POST',
@@ -560,7 +572,8 @@ export async function callSkinXSApi(
  */
 export async function triggerAnalysis(
   photoSessionId: string,
-  doctorId: string
+  doctorId: string,
+  clinicalSessionId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const response = await fetch('/api/skin-analysis', {
@@ -568,7 +581,7 @@ export async function triggerAnalysis(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ photoSessionId, doctorId }),
+      body: JSON.stringify({ photoSessionId, doctorId, clinicalSessionId }),
     });
 
     if (!response.ok) {

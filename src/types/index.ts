@@ -450,4 +450,5 @@ export interface SkinWellnessEntryData {
   photoSessionId: string;
   patientId: string;
   consentConfirmed: boolean;
+  clinicalSessionId?: string; // For tracking session status (operational, not clinical data)
 }

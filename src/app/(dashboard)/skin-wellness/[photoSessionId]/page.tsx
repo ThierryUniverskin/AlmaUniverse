@@ -11,6 +11,7 @@ import { SkinWellnessResults } from '@/components/skin-wellness/SkinWellnessResu
 import { getAnalysisResult, type AnalysisStatus } from '@/lib/skinAnalysis';
 import { mapCategoryScores, getAllCategoryDetails, type ParsedAnalysisResult } from '@/lib/skinAnalysisMapping';
 import { SkinWellnessDetail } from '@/lib/skinWellnessDetails';
+import { startAnalysisPhase, completeAnalysisPhase } from '@/lib/clinicalSession';
 
 /**
  * Skin Wellness Mode Page
@@ -142,6 +143,13 @@ export default function SkinWellnessPage() {
 
         setPhotoUrls(urls);
 
+        // Mark analysis phase as in progress
+        if (entryData.clinicalSessionId) {
+          startAnalysisPhase(entryData.clinicalSessionId).catch((err) => {
+            console.error('Failed to start analysis phase:', err);
+          });
+        }
+
         // Start analysis animation
         setViewState('analysing');
       } catch (err) {
@@ -203,7 +211,14 @@ export default function SkinWellnessPage() {
     setIsUsingRealData(true);
     setAnalysisStatus('completed');
     setViewState('results');
-  }, []);
+
+    // Mark analysis phase as completed
+    if (entryData?.clinicalSessionId) {
+      completeAnalysisPhase(entryData.clinicalSessionId).catch((err) => {
+        console.error('Failed to complete analysis phase:', err);
+      });
+    }
+  }, [entryData]);
 
   // Handle analysis completion (called when animation ends)
   const handleAnalysisComplete = useCallback(async () => {

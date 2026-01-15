@@ -29,13 +29,18 @@ export function validateSkinWellnessEntry(
  * Build Skin Wellness URL with only allowed params
  *
  * CRITICAL: Do not add any medical/diagnostic data to URL.
- * Only photoSessionId (path) and patientId (query) are permitted.
+ * Only photoSessionId (path), patientId (query), and clinicalSessionId (operational) are permitted.
  */
 export function buildSkinWellnessUrl(
   photoSessionId: string,
-  patientId: string
+  patientId: string,
+  clinicalSessionId?: string
 ): string {
-  return `/skin-wellness/${photoSessionId}?patientId=${encodeURIComponent(patientId)}`;
+  let url = `/skin-wellness/${photoSessionId}?patientId=${encodeURIComponent(patientId)}`;
+  if (clinicalSessionId) {
+    url += `&clinicalSessionId=${encodeURIComponent(clinicalSessionId)}`;
+  }
+  return url;
 }
 
 /**
@@ -46,6 +51,7 @@ export function parseSkinWellnessParams(
   searchParams: URLSearchParams
 ): SkinWellnessEntryData | null {
   const patientId = searchParams.get('patientId');
+  const clinicalSessionId = searchParams.get('clinicalSessionId');
 
   if (!photoSessionId || !patientId) {
     return null;
@@ -55,6 +61,7 @@ export function parseSkinWellnessParams(
     photoSessionId,
     patientId,
     consentConfirmed: true, // Implied - they got here through consent gate
+    clinicalSessionId: clinicalSessionId || undefined,
   };
 }
 
