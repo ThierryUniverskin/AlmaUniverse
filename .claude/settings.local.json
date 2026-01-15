@@ -41,7 +41,19 @@
       "Bash(git push:*)",
       "Bash(xargs kill -9)",
       "Bash(grep:*)",
-      "Bash(npm audit:*)"
+      "Bash(npm audit:*)",
+      "Bash(unzip:*)",
+      "Bash(git revert:*)",
+      "Bash(wc:*)",
+      "Bash(xargs:*)",
+      "Bash(for port in 3000 3001 3002 3003 3004 3005)",
+      "Bash(do lsof -ti :$port)",
+      "Bash(done)",
+      "Bash(fuser:*)",
+      "Bash(git -C /home/harlfoxem/AlmaUniverse log --oneline --all)",
+      "Bash(npx supabase db push:*)",
+      "Bash(npx supabase:*)",
+      "Bash(git restore:*)"
     ]
   }
 }

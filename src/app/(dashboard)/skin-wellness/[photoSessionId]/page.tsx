@@ -240,6 +240,16 @@ export default function SkinWellnessPage() {
       }
     }
 
+    // Clear clinical documentation sessionStorage to prevent restoring abandoned session
+    sessionStorage.removeItem('clinicalDocStep');
+    sessionStorage.removeItem('clinicalDocPatientId');
+    sessionStorage.removeItem('clinicalDocSessionId');
+    sessionStorage.removeItem('clinicalDocPhotoSessionId');
+    sessionStorage.removeItem('clinicalDocSkinConcerns');
+    sessionStorage.removeItem('clinicalDocTreatments');
+    sessionStorage.removeItem('clinicalDocPhotoForm');
+    sessionStorage.removeItem('clinicalDocMedicalHistory');
+
     // Handle logout specially - call logout() instead of router.push
     if (pendingNavigation === '/login') {
       logout();

@@ -244,6 +244,16 @@ export default function ClinicalDocumentationPage() {
       }
     }
 
+    // Clear all clinical documentation sessionStorage to prevent restoring abandoned session
+    sessionStorage.removeItem('clinicalDocStep');
+    sessionStorage.removeItem('clinicalDocPatientId');
+    sessionStorage.removeItem('clinicalDocSessionId');
+    sessionStorage.removeItem('clinicalDocPhotoSessionId');
+    sessionStorage.removeItem('clinicalDocSkinConcerns');
+    sessionStorage.removeItem('clinicalDocTreatments');
+    sessionStorage.removeItem('clinicalDocPhotoForm');
+    sessionStorage.removeItem('clinicalDocMedicalHistory');
+
     if (pendingNavigation) {
       router.push(pendingNavigation);
     }
