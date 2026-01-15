@@ -263,7 +263,7 @@ export default function SkincareSelectionPage() {
       </div>
 
       {/* Content */}
-      <div className="relative max-w-2xl mx-auto p-8 md:p-9 lg:p-10">
+      <div className="relative max-w-2xl mx-auto px-8 md:px-9 lg:px-10 pt-20 md:pt-[5.5rem] lg:pt-24 pb-10">
         {/* Header - matching treatment selection page */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center mb-4">
