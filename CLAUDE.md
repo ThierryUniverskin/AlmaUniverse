@@ -63,7 +63,36 @@ Key files:
 - `src/lib/backgroundRemoval.ts` - remove.bg API integration
 - `src/lib/pricing.ts` - Multi-currency pricing utilities
 - `src/lib/medicalHistory.ts` - Health Background data functions
+- `src/lib/clinicalSession.ts` - Clinical session CRUD and status tracking
 - `src/components/clinical-documentation/EnterSkinWellnessModal.tsx` - Regulatory boundary modal
+
+#### Clinical Session Management
+
+Sessions are created at the START of clinical documentation and tracked through three phases:
+
+**Session Status:** `draft` → `in_progress` → `completed` (or `abandoned`)
+
+**Phase Statuses:**
+
+| Phase | Status Values | When Updated |
+|-------|--------------|--------------|
+| Medical Documentation | `pending` → `in_progress` → `completed` | Steps 1-6 of wizard |
+| Skin Wellness Analysis | `pending` → `in_progress` → `completed` (or `skipped`) | Skin Wellness Mode |
+| Skincare Recommendations | `pending` → `in_progress` → `completed` | Future feature |
+
+**Skip Scenarios:**
+- Photos skipped → `analysis_status` = `skipped`, proceeds to skincare
+- Concerns skipped → Still allows Skin Wellness (analysis uses photos only)
+
+**Key Functions (`src/lib/clinicalSession.ts`):**
+- `createClinicalSession()` - Called on page load
+- `startSession()` - When patient selected (draft → in_progress)
+- `skipPhotos()` / `savePhotosToSession()` - Photo step handlers
+- `completeMedicalPhase()` - After summary step
+- `startAnalysisPhase()` / `completeAnalysisPhase()` - Skin Wellness tracking
+- `completeSkincarePhase()` - Marks session complete
+
+**Database:** `clinical_evaluation_sessions` table with automatic `last_activity_at` updates via trigger.
 
 #### EBD Device Recommendation System
 
