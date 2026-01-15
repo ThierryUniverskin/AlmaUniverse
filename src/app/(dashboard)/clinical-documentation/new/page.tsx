@@ -539,7 +539,7 @@ export default function ClinicalDocumentationPage() {
     }
   };
 
-  // Handle Skip to Skin Wellness (Step 3 → Skin Wellness directly)
+  // Handle Skip to Skin Wellness (Step 3 → Skin Wellness directly, no modal)
   const handleSkipToWellness = async () => {
     if (isSubmitting || !documentingPatient || !clinicalSession) return;
 
@@ -564,26 +564,37 @@ export default function ClinicalDocumentationPage() {
 
       if (result) {
         // Save the photo session ID
-        setSavedPhotoSessionId(result.id);
+        const photoSessionId = result.id;
+        setSavedPhotoSessionId(photoSessionId);
 
         // Update clinical session with photo session
-        const updatedSession = await savePhotosToSession(clinicalSession.id, result.id);
+        const updatedSession = await savePhotosToSession(clinicalSession.id, photoSessionId);
         if (updatedSession) {
           setClinicalSession(updatedSession);
         }
 
         // Trigger background skin analysis
         if (doctorId) {
-          triggerAnalysis(result.id, doctorId, clinicalSession.id).catch((error) => {
+          triggerAnalysis(photoSessionId, doctorId, clinicalSession.id).catch((error) => {
             logger.error('Background skin analysis failed:', error);
           });
         }
 
-        showToast('Photos saved successfully', 'success');
+        // Save state to sessionStorage so we can return to step 3
+        setHasUnsavedChanges(false);
+        sessionStorage.setItem('clinicalDocStep', '3');
+        sessionStorage.setItem('clinicalDocPatientId', documentingPatient.id);
+        sessionStorage.setItem('clinicalDocSessionId', clinicalSession.id);
+        sessionStorage.setItem('clinicalDocPhotoSessionId', photoSessionId);
+        sessionStorage.setItem('clinicalDocSkinConcerns', JSON.stringify(skinConcernsData));
+        sessionStorage.setItem('clinicalDocTreatments', JSON.stringify(treatmentData));
+        sessionStorage.setItem('clinicalDocPhotoForm', JSON.stringify(photoFormData));
+        sessionStorage.setItem('clinicalDocMedicalHistory', JSON.stringify(medicalHistoryData));
 
-        // Set entry step to 3 and show the modal
-        setWellnessEntryStep(3);
-        setShowEnterWellnessModal(true);
+        showToast('Entering Skin Wellness Mode...', 'success');
+
+        // Navigate directly to Skin Wellness (no modal needed when skipping clinical flow)
+        router.push(buildSkinWellnessUrl(photoSessionId, documentingPatient.id, clinicalSession.id));
       } else {
         showToast('Failed to save photos', 'error');
       }
