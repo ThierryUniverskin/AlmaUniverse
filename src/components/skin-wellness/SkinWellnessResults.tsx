@@ -231,7 +231,7 @@ export function SkinWellnessResults({ results: initialResults, patientId, photoS
     // Validate we have required data
     if (!skinAnalysisId || !authState.doctor?.id) {
       console.warn('[SkinWellnessResults] Missing skinAnalysisId or doctorId, skipping save');
-      router.push(`/skin-wellness/${photoSessionId}/skincare`);
+      router.push(`/skin-wellness/${photoSessionId}/skincare?patientId=${patientId}`);
       return;
     }
 
@@ -276,7 +276,7 @@ export function SkinWellnessResults({ results: initialResults, patientId, photoS
       console.log('[SkinWellnessResults] Validation saved:', saved.id);
 
       // Navigate to skincare selection page
-      router.push(`/skin-wellness/${photoSessionId}/skincare`);
+      router.push(`/skin-wellness/${photoSessionId}/skincare?patientId=${patientId}`);
     } catch (error) {
       console.error('[SkinWellnessResults] Error saving validation:', error);
       setSaveError('Failed to save your changes. Please try again.');

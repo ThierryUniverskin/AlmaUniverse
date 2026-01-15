@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { SkinWellnessStepProgress } from '@/components/skin-wellness/SkinWellnessStepProgress';
@@ -21,13 +21,47 @@ import { SkinWellnessStepProgress } from '@/components/skin-wellness/SkinWellnes
 export default function SkincareSelectionPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { state: authState } = useAuth();
 
   const photoSessionId = params.photoSessionId as string;
 
+  // Get patientId from URL params or sessionStorage
+  const [patientId, setPatientId] = useState<string | null>(null);
+  const [clinicalSessionId, setClinicalSessionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Try URL params first, then sessionStorage
+    const urlPatientId = searchParams.get('patientId');
+    const urlSessionId = searchParams.get('clinicalSessionId');
+
+    if (urlPatientId) {
+      setPatientId(urlPatientId);
+    } else {
+      const storedPatientId = sessionStorage.getItem('clinicalDocPatientId');
+      if (storedPatientId) {
+        setPatientId(storedPatientId);
+      }
+    }
+
+    if (urlSessionId) {
+      setClinicalSessionId(urlSessionId);
+    } else {
+      const storedSessionId = sessionStorage.getItem('clinicalDocSessionId');
+      if (storedSessionId) {
+        setClinicalSessionId(storedSessionId);
+      }
+    }
+  }, [searchParams]);
+
   const handleBack = () => {
-    // Navigate back to results page
-    router.push(`/skin-wellness/${photoSessionId}`);
+    // Navigate back to results page with required params
+    let url = `/skin-wellness/${photoSessionId}`;
+    const params = new URLSearchParams();
+    if (patientId) params.set('patientId', patientId);
+    if (clinicalSessionId) params.set('clinicalSessionId', clinicalSessionId);
+    if (params.toString()) url += `?${params.toString()}`;
+    router.push(url);
   };
 
   const handleFinish = () => {

@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universkin AI - Shareholder Presentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --alma-purple: #442C5D;
+      --alma-purple-light: #6B4D8A;
+      --alma-purple-soft: #F5F0FA;
+      --skinxs-sky: #0EA5E9;
+      --skinxs-sky-light: #38BDF8;
+      --skinxs-sky-soft: #F0F9FF;
+      --bg-white: #FFFFFF;
+      --text-dark: #1A1A2E;
+      --text-body: #4A4A5A;
+      --text-muted: #8A8A9A;
+      --border-light: #E8E8EE;
+      --success-green: #10B981;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 1707px;
+      height: 898px;
+      overflow: hidden;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg-white);
+      color: var(--text-dark);
+    }
+
+    /* Slide container - fixed size */
+    .slide {
+      width: 1707px;
+      height: 898px;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, var(--bg-white) 0%, var(--alma-purple-soft) 50%, var(--skinxs-sky-soft) 100%);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Background */
+    .bg-pattern {
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(68, 44, 93, 0.05) 0%, transparent 30%),
+        radial-gradient(circle at 90% 80%, rgba(14, 165, 233, 0.05) 0%, transparent 30%);
+    }
+
+    .deco-circle {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid;
+      opacity: 0.1;
+    }
+
+    .deco-1 {
+      width: 450px;
+      height: 450px;
+      border-color: var(--alma-purple);
+      top: -150px;
+      right: -80px;
+    }
+
+    .deco-2 {
+      width: 300px;
+      height: 300px;
+      border-color: var(--skinxs-sky);
+      bottom: -100px;
+      left: -80px;
+    }
+
+    /* AI Neural Network Background */
+    .ai-network {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .ai-node {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: var(--alma-purple);
+      border-radius: 50%;
+      opacity: 0.15;
+    }
+
+    .ai-node::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 14px;
+      height: 14px;
+      border: 1px solid var(--alma-purple);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.4;
+    }
+
+    .ai-node.sky {
+      background: var(--skinxs-sky);
+    }
+    .ai-node.sky::before {
+      border-color: var(--skinxs-sky);
+    }
+
+    .ai-line {
+      position: absolute;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(68, 44, 93, 0.1), transparent);
+      transform-origin: left center;
+    }
+
+    .ai-line.sky {
+      background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.1), transparent);
+    }
+
+    /* Floating hexagons */
+    .ai-hex {
+      position: absolute;
+      width: 40px;
+      height: 46px;
+      opacity: 0.06;
+    }
+
+    .ai-hex::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: var(--alma-purple);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    }
+
+    .ai-hex.sky::before {
+      background: var(--skinxs-sky);
+    }
+
+    /* Header */
+    .header {
+      position: absolute;
+      top: 20px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logo-skinxs {
+      height: 56px;
+    }
+
+    .header-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .header-badge .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--alma-purple);
+      border-radius: 50%;
+    }
+
+    /* Main content */
+    .content {
+      position: relative;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: 60px 70px 20px;
+      gap: 60px;
+      flex: 1;
+      align-content: center;
+    }
+
+    .content::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 1px;
+      height: 40%;
+      background: linear-gradient(180deg, transparent 0%, rgba(68, 44, 93, 0.2) 20%, rgba(68, 44, 93, 0.2) 80%, transparent 100%);
+    }
+
+    /* Left column */
+    .left-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    .headline {
+      font-family: 'DM Serif Display', serif;
+      font-size: 52px;
+      font-weight: 400;
+      line-height: 1.1;
+      color: var(--text-dark);
+      margin-bottom: 16px;
+    }
+
+    .headline em {
+      font-style: italic;
+      color: var(--alma-purple);
+    }
+
+    .skinxs-note {
+      font-size: 13px;
+      color: var(--skinxs-sky);
+      font-weight: 500;
+      margin-bottom: 12px;
+      padding: 8px 14px;
+      background: var(--skinxs-sky-soft);
+      border-radius: 6px;
+      border-left: 3px solid var(--skinxs-sky);
+    }
+
+    .subheadline {
+      font-size: 17px;
+      color: var(--text-body);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--skinxs-sky);
+      margin-bottom: 16px;
+    }
+
+    .info-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .info-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    }
+
+    .info-card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: var(--alma-purple-soft);
+    }
+
+    .info-card:nth-child(2) .info-card-icon { background: var(--skinxs-sky-soft); }
+    .info-card:nth-child(3) .info-card-icon { background: linear-gradient(135deg, var(--alma-purple-soft), var(--skinxs-sky-soft)); }
+
+    .info-card-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2;
+      fill: none;
+      stroke: var(--alma-purple);
+    }
+
+    .info-card:nth-child(2) .info-card-icon svg { stroke: var(--skinxs-sky); }
+    .info-card:nth-child(3) .info-card-icon svg { stroke: var(--alma-purple); }
+    .info-card:nth-child(4) .info-card-icon { background: var(--skinxs-sky-soft); }
+    .info-card:nth-child(4) .info-card-icon svg { stroke: var(--skinxs-sky); }
+    .info-card:nth-child(5) .info-card-icon { background: linear-gradient(135deg, var(--alma-purple-soft), var(--skinxs-sky-soft)); }
+    .info-card:nth-child(5) .info-card-icon svg { stroke: var(--alma-purple-light); }
+
+    .info-card-content h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 2px;
+    }
+
+    .info-card-content p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .info-card-content strong {
+      color: var(--alma-purple);
+      font-weight: 600;
+    }
+
+    /* Right column */
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    .value-section {
+      margin-top: 30px;
+    }
+
+    /* Patient Journey Section - Horizontal */
+    .journey-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 16px;
+      gap: 16px;
+    }
+
+    .journey-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--alma-purple);
+    }
+
+    .journey-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .journey {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .journey-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      z-index: 2;
+      width: 90px;
+    }
+
+    .journey-node {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      position: relative;
+    }
+
+    .journey-node svg {
+      width: 24px;
+      height: 24px;
+      stroke-width: 1.5;
+      fill: none;
+      stroke: white;
+    }
+
+    .journey-node.step-1 {
+      background: linear-gradient(135deg, var(--skinxs-sky) 0%, #0284C7 100%);
+    }
+    .journey-node.step-2 {
+      background: linear-gradient(135deg, #7DD3FC 0%, var(--skinxs-sky) 100%);
+    }
+    .journey-node.step-3 {
+      background: linear-gradient(135deg, var(--alma-purple) 0%, var(--alma-purple-light) 100%);
+    }
+    .journey-node.step-4 {
+      background: linear-gradient(135deg, var(--alma-purple-light) 0%, #9061C2 100%);
+    }
+    .journey-node.step-5 {
+      background: linear-gradient(135deg, var(--success-green) 0%, #059669 100%);
+    }
+
+    .journey-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dark);
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .journey-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .journey-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 14px;
+    }
+
+    .journey-arrow svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-muted);
+      stroke-width: 1.5;
+      fill: none;
+      opacity: 0.4;
+    }
+
+    .value-section .section-title {
+      color: var(--alma-purple);
+    }
+
+    .value-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .value-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: white;
+      border-radius: 12px;
+      border-left: 4px solid var(--alma-purple);
+      box-shadow: 0 2px 8px rgba(68, 44, 93, 0.1);
+    }
+
+    .value-item-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--alma-purple);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .value-item-icon svg {
+      width: 18px;
+      height: 18px;
+      stroke: white;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .value-item-content h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 2px;
+    }
+
+    .value-item-content p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: flex;
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .stat-box {
+      flex: 1;
+      padding: 18px 22px;
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    }
+
+    .stat-box .number {
+      font-family: 'DM Serif Display', serif;
+      font-size: 34px;
+      color: var(--alma-purple);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-box .label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Footer */
+    .footer {
+      position: relative;
+      z-index: 10;
+      padding: 0 60px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-tagline {
+      font-size: 15px;
+      font-style: italic;
+      color: var(--text-muted);
+    }
+
+    .footer-tagline strong {
+      font-style: normal;
+      color: var(--alma-purple);
+    }
+  </style>
+</head>
+<body>
+  <div class="slide">
+    <!-- Background -->
+    <div class="bg-pattern"></div>
+    <div class="deco-circle deco-1"></div>
+    <div class="deco-circle deco-2"></div>
+
+    <!-- AI Neural Network Background -->
+    <div class="ai-network">
+      <!-- Nodes -->
+      <div class="ai-node" style="top: 12%; left: 8%;"></div>
+      <div class="ai-node sky" style="top: 25%; left: 15%;"></div>
+      <div class="ai-node" style="top: 8%; left: 25%;"></div>
+      <div class="ai-node sky" style="top: 45%; left: 5%;"></div>
+      <div class="ai-node" style="top: 70%; left: 12%;"></div>
+      <div class="ai-node sky" style="top: 85%; left: 25%;"></div>
+      <div class="ai-node" style="top: 15%; right: 20%;"></div>
+      <div class="ai-node sky" style="top: 30%; right: 8%;"></div>
+      <div class="ai-node" style="top: 55%; right: 5%;"></div>
+      <div class="ai-node sky" style="top: 75%; right: 15%;"></div>
+      <div class="ai-node" style="top: 90%; right: 30%;"></div>
+      <div class="ai-node sky" style="top: 5%; right: 45%;"></div>
+
+      <!-- Connecting lines -->
+      <div class="ai-line" style="top: 13%; left: 9%; width: 120px; transform: rotate(25deg);"></div>
+      <div class="ai-line sky" style="top: 26%; left: 16%; width: 80px; transform: rotate(-30deg);"></div>
+      <div class="ai-line" style="top: 46%; left: 6%; width: 100px; transform: rotate(50deg);"></div>
+      <div class="ai-line sky" style="top: 71%; left: 13%; width: 150px; transform: rotate(20deg);"></div>
+      <div class="ai-line" style="top: 16%; right: 21%; width: 130px; transform: rotate(40deg);"></div>
+      <div class="ai-line sky" style="top: 56%; right: 6%; width: 110px; transform: rotate(-35deg);"></div>
+      <div class="ai-line" style="top: 76%; right: 16%; width: 90px; transform: rotate(15deg);"></div>
+
+      <!-- Hexagons -->
+      <div class="ai-hex" style="top: 20%; left: 3%;"></div>
+      <div class="ai-hex sky" style="top: 60%; left: 8%;"></div>
+      <div class="ai-hex" style="top: 80%; right: 5%;"></div>
+      <div class="ai-hex sky" style="top: 10%; right: 12%;"></div>
+      <div class="ai-hex" style="top: 40%; right: 3%;"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-group">
+        <img src="skinxs-logo.svg" alt="SkinXs" class="logo-skinxs">
+      </div>
+      <div class="header-badge">
+        <span class="dot"></span>
+        Universkin AI Partnership
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="content">
+      <!-- Left column - How SkinXs was built -->
+      <div class="left-col">
+        <h1 class="headline">
+          SkinXs, The <em>Self-Learning</em><br>
+          Skincare Platform
+        </h1>
+        <p class="skinxs-note">SkinXs is Universkin's proprietary AI engine — the technology behind personalized skincare.</p>
+        <p class="subheadline">
+          8+ years of physician-validated clinical data powers intelligent skin analysis and personalized recommendations.
+        </p>
+
+        <div class="section-title">How SkinXs Was Built</div>
+        <div class="info-cards">
+          <div class="info-card">
+            <div class="info-card-icon">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="info-card-content">
+              <h3>Physician-Grade Data</h3>
+              <p>Built from <strong>thousands of dermatologists</strong> worldwide — structured questionnaires paired with standardized photos</p>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <div class="info-card-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+            <div class="info-card-content">
+              <h3>Self-Improving AI</h3>
+              <p>Every consultation enriches the database — <strong>network effect</strong> makes the system smarter with each use</p>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <div class="info-card-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div class="info-card-content">
+              <h3>Irreplicable Data Moat</h3>
+              <p>Doctor-validated diagnoses and outcomes — <strong>not consumer selfies</strong>. Cannot be bought or replicated.</p>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <div class="info-card-icon">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <div class="info-card-content">
+              <h3>Global Physician Network</h3>
+              <p>Data from <strong>diverse ethnicities and skin types</strong> — ensuring accuracy across all patient populations</p>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <div class="info-card-icon">
+              <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            </div>
+            <div class="info-card-content">
+              <h3>Closed-Loop Learning</h3>
+              <p>Prescriptions → patient outcomes → <strong>continuous AI refinement</strong>. Real-world results drive accuracy.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column - Journey + Value -->
+      <div class="right-col">
+        <div class="journey-section">
+          <div class="journey-title">One Platform, Complete Patient Journey</div>
+          <div class="journey-container">
+            <div class="journey">
+
+              <!-- Step 1: Skin Analysis - Camera/Scan icon -->
+              <div class="journey-step">
+                <div class="journey-node step-1">
+                  <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </div>
+                <span class="journey-label">Skin Analysis</span>
+                <span class="journey-desc">AI scans 10 skin categories</span>
+              </div>
+
+              <div class="journey-arrow">
+                <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </div>
+
+              <!-- Step 2: Device Match - Crosshair/Target icon -->
+              <div class="journey-step">
+                <div class="journey-node step-2">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+                </div>
+                <span class="journey-label">Device Match</span>
+                <span class="journey-desc">Recommends Alma EBD</span>
+              </div>
+
+              <div class="journey-arrow">
+                <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </div>
+
+              <!-- Step 3: EBD Treatment - Zap/Energy icon -->
+              <div class="journey-step">
+                <div class="journey-node step-3">
+                  <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </div>
+                <span class="journey-label">EBD Treatment</span>
+                <span class="journey-desc">In-clinic procedure</span>
+              </div>
+
+              <div class="journey-arrow">
+                <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </div>
+
+              <!-- Step 4: Skincare Rx - Droplet/Serum icon -->
+              <div class="journey-step">
+                <div class="journey-node step-4">
+                  <svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                </div>
+                <span class="journey-label">Skincare Rx</span>
+                <span class="journey-desc">Custom formulation</span>
+              </div>
+
+              <div class="journey-arrow">
+                <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </div>
+
+              <!-- Step 5: Retention - Heart/Loyalty icon -->
+              <div class="journey-step">
+                <div class="journey-node step-5">
+                  <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </div>
+                <span class="journey-label">Retention</span>
+                <span class="journey-desc">Repeat visits & refills</span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="value-section">
+          <div class="section-title">Value for Alma</div>
+          <div class="value-list">
+            <div class="value-item">
+              <div class="value-item-icon">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              </div>
+              <div class="value-item-content">
+                <h3>EBD Device Matching</h3>
+                <p>AI recommends optimal Alma devices based on patient skin analysis</p>
+              </div>
+            </div>
+
+            <div class="value-item">
+              <div class="value-item-icon">
+                <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              </div>
+              <div class="value-item-content">
+                <h3>Doctor Loyalty</h3>
+                <p>Platform stickiness keeps doctors invested in the Alma ecosystem</p>
+              </div>
+            </div>
+
+            <div class="value-item">
+              <div class="value-item-icon">
+                <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </div>
+              <div class="value-item-content">
+                <h3>Premium Positioning</h3>
+                <p>AI-powered analysis justifies premium clinic pricing</p>
+              </div>
+            </div>
+
+            <div class="value-item">
+              <div class="value-item-icon">
+                <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              </div>
+              <div class="value-item-content">
+                <h3>Upsell Opportunities</h3>
+                <p>AI identifies patients who would benefit from additional EBD treatments</p>
+              </div>
+            </div>
+
+            <div class="value-item">
+              <div class="value-item-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <div class="value-item-content">
+                <h3>Differentiation</h3>
+                <p>Only Alma offers integrated AI skin analysis + device matching</p>
+              </div>
+            </div>
+
+            <div class="value-item">
+              <div class="value-item-icon">
+                <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <div class="value-item-content">
+                <h3>Higher Compliance</h3>
+                <p>Personalized homecare improves treatment outcomes and referrals</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-tagline">"We've built something competitors <strong>can't buy</strong> — a clinical AI that grows smarter with every consultation."</div>
+    </div>
+  </div>
+</body>
+</html>
