@@ -927,7 +927,7 @@ export default function ClinicalDocumentationPage() {
         <Button
           variant="outline"
           size="lg"
-          className="w-full border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400"
+          className="w-full !border-purple-300 !text-purple-700 hover:!bg-purple-50 hover:!border-purple-400"
           onClick={handleSkipToWellness}
           disabled={!photoFormData.frontalPhoto || !photoFormData.photoConsentGiven || isSubmitting}
         >
