@@ -12,7 +12,7 @@ interface ConfirmModalProps {
   cancelLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
-  variant?: 'danger' | 'warning' | 'default';
+  variant?: 'danger' | 'warning' | 'default' | 'info';
 }
 
 function ConfirmModal({
@@ -52,8 +52,8 @@ function ConfirmModal({
 
   if (!isOpen) return null;
 
-  const iconColor = variant === 'danger' ? 'text-error-500' : variant === 'warning' ? 'text-warning-500' : 'text-purple-500';
-  const iconBgColor = variant === 'danger' ? 'bg-error-50' : variant === 'warning' ? 'bg-warning-50' : 'bg-purple-50';
+  const iconColor = variant === 'danger' ? 'text-error-500' : variant === 'warning' ? 'text-warning-500' : variant === 'info' ? 'text-sky-500' : 'text-purple-500';
+  const iconBgColor = variant === 'danger' ? 'bg-error-50' : variant === 'warning' ? 'bg-warning-50' : variant === 'info' ? 'bg-sky-50' : 'bg-purple-50';
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -103,7 +103,13 @@ function ConfirmModal({
             </Button>
             <Button
               variant={variant === 'danger' ? 'outline' : 'primary'}
-              className={variant === 'danger' ? 'flex-1 border-error-300 text-error-600 hover:bg-error-50' : 'flex-1'}
+              className={
+                variant === 'danger'
+                  ? 'flex-1 border-error-300 text-error-600 hover:bg-error-50'
+                  : variant === 'info'
+                  ? 'flex-1 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 focus:ring-sky-500/30'
+                  : 'flex-1'
+              }
               onClick={onConfirm}
             >
               {confirmLabel}

@@ -461,7 +461,7 @@ export default function SkinWellnessPage() {
       message="Are you sure you want to leave? The skin analysis session will be abandoned."
       confirmLabel="Leave"
       cancelLabel="Stay"
-      variant="warning"
+      variant="info"
       onConfirm={handleConfirmLeave}
       onCancel={handleCancelLeave}
     />
