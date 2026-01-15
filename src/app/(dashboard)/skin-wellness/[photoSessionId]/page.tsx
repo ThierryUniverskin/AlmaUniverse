@@ -12,6 +12,7 @@ import { getAnalysisResult, type AnalysisStatus } from '@/lib/skinAnalysis';
 import { mapCategoryScores, getAllCategoryDetails, type ParsedAnalysisResult } from '@/lib/skinAnalysisMapping';
 import { SkinWellnessDetail } from '@/lib/skinWellnessDetails';
 import { startAnalysisPhase, completeAnalysisPhase, updateClinicalSession } from '@/lib/clinicalSession';
+import { getValidatedDiagnostic } from '@/lib/skinWellnessValidation';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useAuth } from '@/context/AuthContext';
 
@@ -64,6 +65,12 @@ export default function SkinWellnessPage() {
   const [isUsingRealData, setIsUsingRealData] = useState(false);
   const [apiResult, setApiResult] = useState<ParsedAnalysisResult | null>(null); // Store API result when ready
   const [skinAnalysisId, setSkinAnalysisId] = useState<string | null>(null); // Database record ID for validation
+
+  // Validated diagnostic state (restored from database when coming back from skincare)
+  const [validatedFaceConcerns, setValidatedFaceConcerns] = useState<string[] | null>(null);
+  const [validatedAdditionalConcerns, setValidatedAdditionalConcerns] = useState<string[] | null>(null);
+  const [validatedConcernsManuallyEdited, setValidatedConcernsManuallyEdited] = useState(false);
+  const [validatedOverviewText, setValidatedOverviewText] = useState<string | null>(null);
 
   // Navigation warning state
   const [showLeaveModal, setShowLeaveModal] = useState(false);
@@ -165,6 +172,52 @@ export default function SkinWellnessPage() {
 
         setPhotoUrls(urls);
 
+        // Check if there's an existing validation (coming back from skincare page)
+        const existingValidation = await getValidatedDiagnostic(entryData.photoSessionId);
+
+        if (existingValidation) {
+          console.log('[SkinWellness] Found existing validation, restoring state');
+
+          // Set the skin analysis ID
+          setSkinAnalysisId(existingValidation.skinAnalysisId);
+
+          // Restore validated scores
+          setAnalysisResults(existingValidation.validatedScores);
+
+          // Restore validated details
+          if (existingValidation.validatedDetails) {
+            setCategoryDetails(existingValidation.validatedDetails);
+          }
+
+          // Restore validated attributes
+          if (existingValidation.validatedAttributes) {
+            setPatientAttributes(existingValidation.validatedAttributes);
+          }
+
+          // Restore validated overview text
+          if (existingValidation.validatedOverviewText) {
+            setSkinHealthOverview(existingValidation.validatedOverviewText);
+            setValidatedOverviewText(existingValidation.validatedOverviewText);
+          }
+
+          // Restore concern selections
+          setValidatedFaceConcerns(existingValidation.priorityFaceConcerns);
+          setValidatedAdditionalConcerns(existingValidation.priorityAdditionalConcerns);
+          setValidatedConcernsManuallyEdited(existingValidation.concernsManuallyEdited);
+
+          // Also fetch the original API result to get image quality data
+          const apiStatus = await checkAnalysisResult();
+          if (apiStatus?.status === 'completed' && apiStatus.result) {
+            setImageQuality(apiStatus.result.imageQuality);
+            setIsUsingRealData(true);
+          }
+
+          // Skip animation and go directly to results
+          setViewState('results');
+          return;
+        }
+
+        // No existing validation - run normal flow
         // Mark analysis phase as in progress
         if (entryData.clinicalSessionId) {
           startAnalysisPhase(entryData.clinicalSessionId).catch((err) => {
@@ -497,13 +550,16 @@ export default function SkinWellnessPage() {
           photoUrls={photoUrls}
           patientName={patientName}
           sessionDate={sessionDate}
-          skinHealthOverview={skinHealthOverview}
+          skinHealthOverview={validatedOverviewText || skinHealthOverview}
           imageQuality={imageQuality}
           patientAttributes={patientAttributes}
           initialCategoryDetails={categoryDetails}
           isUsingRealData={isUsingRealData}
           onBack={handleBackToDocumentation}
           entryStep={entryStep}
+          initialFaceConcerns={validatedFaceConcerns}
+          initialAdditionalConcerns={validatedAdditionalConcerns}
+          initialConcernsManuallyEdited={validatedConcernsManuallyEdited}
         />
         {leaveModal}
       </>

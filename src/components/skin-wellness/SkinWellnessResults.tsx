@@ -38,6 +38,10 @@ interface SkinWellnessResultsProps {
   patientAttributes?: PatientAttributes | null;
   initialCategoryDetails?: Record<string, SkinWellnessDetail[]> | null;
   isUsingRealData?: boolean;
+  // Restored validation state (when coming back from skincare)
+  initialFaceConcerns?: string[] | null;
+  initialAdditionalConcerns?: string[] | null;
+  initialConcernsManuallyEdited?: boolean;
 }
 
 /**
@@ -54,7 +58,7 @@ function getScoreColor(score: number): { bg: string; text: string; border: strin
   return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' };
 }
 
-export function SkinWellnessResults({ results: initialResults, patientId, photoSessionId, skinAnalysisId, onBack, entryStep = 6, photoUrls, patientName, sessionDate, skinHealthOverview, imageQuality, patientAttributes: initialAttributes, initialCategoryDetails, isUsingRealData }: SkinWellnessResultsProps) {
+export function SkinWellnessResults({ results: initialResults, patientId, photoSessionId, skinAnalysisId, onBack, entryStep = 6, photoUrls, patientName, sessionDate, skinHealthOverview, imageQuality, patientAttributes: initialAttributes, initialCategoryDetails, isUsingRealData, initialFaceConcerns, initialAdditionalConcerns, initialConcernsManuallyEdited }: SkinWellnessResultsProps) {
   const router = useRouter();
   const { state: authState } = useAuth();
   const sidebarOffset = useSidebarOffset();
@@ -139,11 +143,19 @@ export function SkinWellnessResults({ results: initialResults, patientId, photoS
     return { faceConcerns, additionalConcerns };
   };
 
-  // State for selected concerns (initialized from AI recommendation)
-  const [selectedFaceConcerns, setSelectedFaceConcerns] = useState<string[]>(() => getRecommendedConcerns().faceConcerns);
-  const [selectedAdditionalConcerns, setSelectedAdditionalConcerns] = useState<string[]>(() => getRecommendedConcerns().additionalConcerns);
+  // State for selected concerns (initialized from restored validation or AI recommendation)
+  const [selectedFaceConcerns, setSelectedFaceConcerns] = useState<string[]>(() =>
+    initialFaceConcerns && initialFaceConcerns.length > 0
+      ? initialFaceConcerns
+      : getRecommendedConcerns().faceConcerns
+  );
+  const [selectedAdditionalConcerns, setSelectedAdditionalConcerns] = useState<string[]>(() =>
+    initialAdditionalConcerns && initialAdditionalConcerns.length > 0
+      ? initialAdditionalConcerns
+      : getRecommendedConcerns().additionalConcerns
+  );
   const [isEditingConcerns, setIsEditingConcerns] = useState(false);
-  const [concernsManuallyEdited, setConcernsManuallyEdited] = useState(false);
+  const [concernsManuallyEdited, setConcernsManuallyEdited] = useState(initialConcernsManuallyEdited ?? false);
 
   // Auto-update concerns when results change (only if not manually edited)
   useEffect(() => {
