@@ -3,7 +3,6 @@
 Clinical management web app for health professionals - premium patient CRUD with luxury medical aesthetic.
 
 **Live URL:** https://alma-universe.vercel.app
-**Login:** `doctor@alma.health` / `alma2024`
 
 ---
 

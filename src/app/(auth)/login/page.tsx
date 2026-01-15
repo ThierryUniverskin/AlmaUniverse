@@ -189,12 +189,6 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              {/* Demo credentials hint */}
-              <div className="mt-6 p-3 rounded-lg bg-purple-50 border border-purple-100">
-                <p className="text-xs text-purple-700 text-center">
-                  Demo: <span className="font-medium">doctor@alma.health</span> / <span className="font-medium">alma2024</span>
-                </p>
-              </div>
             </div>
           </div>
 
