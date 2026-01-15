@@ -42,6 +42,8 @@ The clinical documentation wizard guides physicians through a 6-step process:
    - Clinical Medical History (Fitzpatrick type, recovery preferences, cancer, medications, conditions) - never used by AI
    - Cosmetic Safety Profile (pregnancy, menopause, sensitivities) - for ingredient exclusion
 3. **Photo Collection** - Capture frontal + profile photos with remove.bg background removal
+   - **Skip to Skin Wellness**: Secondary button to bypass steps 4-6 and go directly to Skin Wellness Mode
+   - When skipping, navigates directly (no modal) since doctor already chose cosmetic-only path
 4. **Skin Concerns** - Select from 17 medical skin conditions across 4 categories (drag & drop priority)
 5. **Treatment Selection** - Select treatments from 4 categories with pricing:
    - **EBD Devices** - Alma device catalog with compatibility-based organization
@@ -130,6 +132,15 @@ Non-medical cosmetic skin analysis feature, separate from clinical documentation
 - **SkinXS branding**: Sky blue color palette, SkinXS logo
 - **Data isolation**: Only uses photos and cosmetic preferences, NOT medical history
 - **SaMD compliance**: Explicit disclaimers that it does not diagnose, treat, prevent, or manage medical conditions
+
+#### Entry Points
+
+| Entry Point | From Step | Modal Shown | Back Button Returns To |
+|-------------|-----------|-------------|----------------------|
+| "Enter Skin Wellness Mode" | Step 6 (Summary) | Yes (regulatory disclosure) | Step 6 (Summary) |
+| "Skip to Skin Wellness Analysis" | Step 3 (Photos) | No (direct navigation) | Step 3 (Photos) |
+
+When entering from Step 3, the doctor has explicitly chosen to skip clinical documentation, so no regulatory modal is needed.
 
 #### Skin Wellness Flow (3 steps)
 
