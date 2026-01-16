@@ -188,7 +188,7 @@ export function TreatSection({
   );
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-sky-100 overflow-hidden shadow-sm">
+    <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-sky-100 shadow-sm">
       {/* Accordion Header */}
       <button
         type="button"

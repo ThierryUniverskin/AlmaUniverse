@@ -123,7 +123,8 @@ export function IngredientDropdown({
       return { top: '100%', left: 0, marginTop: 4 };
     }
     if (position.alignRight) {
-      return { top: position.top, right: 0 };
+      // Align to right edge of container
+      return { top: position.top, right: 0, left: 'auto' };
     }
     return { top: position.top, left: Math.max(0, position.left) };
   };
@@ -132,7 +133,7 @@ export function IngredientDropdown({
     <div
       ref={dropdownRef}
       className={cn(
-        'absolute z-50 w-[460px]',
+        'absolute z-50 w-[460px] max-w-[calc(100vw-32px)]',
         'bg-white rounded-lg shadow-lg border border-stone-200'
       )}
       style={getPositionStyle()}

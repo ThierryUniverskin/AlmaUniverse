@@ -62,34 +62,39 @@ export function OptionSwitcher({
   const descriptions = type === 'face' ? FACE_DESCRIPTIONS : OPTION_DESCRIPTIONS;
 
   return (
-    <div className="inline-flex rounded-md border border-stone-200 bg-white overflow-hidden">
-      {options.map((option, index) => {
-        const isSelected = selected === option;
-        const isCustom = option === 'custom';
-        const isFirst = index === 0;
-        const isLast = index === options.length - 1;
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] text-stone-400 uppercase tracking-wide">Formula</span>
+      <div className="inline-flex rounded-lg bg-stone-100 p-0.5">
+        {options.map((option) => {
+          const isSelected = selected === option;
+          const isCustom = option === 'custom';
 
-        return (
-          <button
-            key={option}
-            type="button"
-            onClick={() => !isCustom && onChange(option as SerumOption)}
-            disabled={disabled || isCustom}
-            title={descriptions[option]}
-            className={cn(
-              'px-2.5 py-1 text-[11px] font-medium transition-colors',
-              !isFirst && 'border-l border-stone-200',
-              isSelected
-                ? 'bg-sky-50 text-sky-700'
-                : 'text-stone-500 hover:text-stone-700 hover:bg-stone-50',
-              disabled && 'opacity-50 cursor-not-allowed',
-              isCustom && 'cursor-default italic'
-            )}
-          >
-            {OPTION_LABELS[option]}
-          </button>
-        );
-      })}
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => !isCustom && onChange(option as SerumOption)}
+              disabled={disabled || isCustom}
+              title={descriptions[option]}
+              className={cn(
+                'px-3 py-1.5 text-[11px] font-medium transition-all rounded-md',
+                isSelected
+                  ? 'bg-white text-sky-700 shadow-sm'
+                  : 'text-stone-500 hover:text-stone-700',
+                disabled && 'opacity-50 cursor-not-allowed',
+                isCustom && 'cursor-default italic'
+              )}
+            >
+              <span>{OPTION_LABELS[option]}</span>
+              {!isCustom && (
+                <span className="ml-1 text-[9px] text-stone-400">
+                  ({type === 'face' ? FACE_DESCRIPTIONS[option] : descriptions[option]})
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

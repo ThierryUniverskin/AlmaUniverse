@@ -158,7 +158,7 @@ export default function SkincareSelectionPage() {
   useEffect(() => {
     if (!isSerumInitialized) {
       const mockResponse = generateMockSerumRecommendations();
-      const initialConfigs = createInitialSerumConfigs(mockResponse, 'advanced');
+      const initialConfigs = createInitialSerumConfigs(mockResponse, 'clinical');
 
       setSerumApiResponse(mockResponse);
       setSerumRecommendations(mockResponse.ingredientRecommendations);
