@@ -56,6 +56,14 @@ export function SerumCard({
   const selectedIds = serum.ingredients.map((i) => i.id);
 
   const handleIngredientClick = (index: number, element: HTMLDivElement | null) => {
+    // If clicking the same ingredient that's already open, close the dropdown
+    if (dropdownOpen && editingIndex === index) {
+      setDropdownOpen(false);
+      setEditingIndex(null);
+      setDropdownPosition(null);
+      return;
+    }
+
     setEditingIndex(index);
     if (element && containerRef.current) {
       const containerRect = containerRef.current.getBoundingClientRect();

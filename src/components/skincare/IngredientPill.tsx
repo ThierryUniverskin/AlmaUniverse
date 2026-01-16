@@ -51,7 +51,7 @@ export function IngredientPill({
     <div className="relative" ref={pillRef}>
       <div
         className={cn(
-          'flex items-center gap-1 rounded-md border bg-white h-[26px] w-full',
+          'flex items-center gap-1 rounded-md border bg-white h-[32px] w-full',
           onClick && !disabled
             ? 'cursor-pointer hover:bg-stone-50 border-stone-200'
             : 'border-stone-200',
@@ -168,9 +168,9 @@ export function AddIngredientButton({
       onClick={(e) => onClick(e)}
       disabled={disabled}
       className={cn(
-        'flex items-center justify-center gap-1 rounded-md h-[26px] w-full',
+        'flex items-center justify-center gap-1 rounded-md h-[32px] w-full',
         'border border-dashed border-stone-300 hover:border-sky-400',
-        'text-[10px] font-medium text-stone-500 hover:text-sky-600',
+        'text-[11px] font-medium text-stone-500 hover:text-sky-600',
         'transition-colors',
         disabled && 'opacity-50 cursor-not-allowed hover:border-stone-300 hover:text-stone-500'
       )}
