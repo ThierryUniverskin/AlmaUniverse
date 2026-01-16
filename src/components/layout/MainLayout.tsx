@@ -19,10 +19,10 @@ function MainLayoutContent({ children }: MainLayoutProps) {
       />
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <main
-          className="flex-1 overflow-auto"
+          className="flex-1 overflow-y-auto overscroll-contain"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          <div className="animate-fade-in min-h-full">
+          <div className="animate-fade-in h-full">
             {children}
           </div>
         </main>
