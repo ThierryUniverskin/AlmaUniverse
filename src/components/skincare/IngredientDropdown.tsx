@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { SerumIngredient, SerumIngredientData, IngredientRecommendation, IngredientCategory } from '@/types';
 import { createIngredient } from '@/lib/serumIngredients';
@@ -62,6 +62,23 @@ export function IngredientDropdown({
   position,
 }: IngredientDropdownProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [alignRight, setAlignRight] = useState(false);
+
+  // Check if dropdown should be right-aligned to avoid overflow
+  useEffect(() => {
+    if (isOpen && dropdownRef.current && position) {
+      const dropdown = dropdownRef.current;
+      const rect = dropdown.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+
+      // If dropdown extends past viewport right edge, align right
+      if (rect.right > viewportWidth - 16) {
+        setAlignRight(true);
+      } else {
+        setAlignRight(false);
+      }
+    }
+  }, [isOpen, position]);
 
   // Group recommendations by category
   const groupedRecommendations = recommendations.reduce(
@@ -117,14 +134,25 @@ export function IngredientDropdown({
     'cannot_be_used',
   ];
 
+  // Calculate position style
+  const getPositionStyle = () => {
+    if (!position) {
+      return { top: '100%', left: 0, marginTop: 4 };
+    }
+    if (alignRight) {
+      return { top: position.top, right: 0 };
+    }
+    return { top: position.top, left: Math.max(0, position.left) };
+  };
+
   return (
     <div
       ref={dropdownRef}
       className={cn(
-        'absolute z-50 w-[460px] max-h-80 overflow-y-auto',
+        'absolute z-50 w-[460px]',
         'bg-white rounded-lg shadow-lg border border-stone-200'
       )}
-      style={position ? { top: position.top, left: Math.max(0, position.left) } : { top: '100%', left: 0, marginTop: 4 }}
+      style={getPositionStyle()}
     >
       {/* Categorized ingredient list */}
       <div className="p-2">
