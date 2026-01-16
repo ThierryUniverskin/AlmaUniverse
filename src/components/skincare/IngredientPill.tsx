@@ -80,7 +80,7 @@ export function IngredientPill({
           </div>
 
           {/* Ingredient name */}
-          <span className="text-[10px] font-medium text-stone-700 truncate">
+          <span className="text-[11px] font-medium text-stone-700 truncate">
             {ingredient.name}
           </span>
         </div>

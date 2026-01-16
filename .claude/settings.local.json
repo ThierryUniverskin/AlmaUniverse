@@ -56,7 +56,9 @@
       "Bash(git restore:*)",
       "Bash(git diff:*)",
       "Bash(file:*)",
-      "Bash(convert:*)"
+      "Bash(convert:*)",
+      "Bash(echo:*)",
+      "Bash(pgrep:*)"
     ]
   }
 }
