@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { SkinWellnessStepProgress } from '@/components/skin-wellness/SkinWellnessStepProgress';
-import { SkincareCategorySection, ProductSelectionModal } from '@/components/skincare';
+import { SkincareCategorySection, ProductSelectionModal, TreatSection } from '@/components/skincare';
 import {
   UNIVERSKIN_PRODUCTS,
   UNIVERSKIN_CATEGORIES,
@@ -16,7 +16,20 @@ import {
   getRecommendedProducts,
   productToSelection,
 } from '@/lib/universkinProducts';
-import { UniverskinCategory, UniverskinProduct, SelectedUniverskinProduct, WhenToApply } from '@/types';
+import { calculateTotalSerumPrice, SERUM_DURATION_DAYS } from '@/lib/serumIngredients';
+import {
+  generateMockSerumRecommendations,
+  createInitialSerumConfigs,
+} from '@/lib/mockSerumRecommendations';
+import {
+  UniverskinCategory,
+  UniverskinProduct,
+  SelectedUniverskinProduct,
+  WhenToApply,
+  SerumConfiguration,
+  IngredientRecommendation,
+  SerumRecommendationsResponse,
+} from '@/types';
 
 /**
  * Skincare Selection Page
@@ -101,6 +114,13 @@ export default function SkincareSelectionPage() {
   const [isInitialized, setIsInitialized] = useState(false);
   const pageTopRef = useRef<HTMLDivElement>(null);
 
+  // Serum state
+  const [serumConfigs, setSerumConfigs] = useState<SerumConfiguration[]>([]);
+  const [serumApiResponse, setSerumApiResponse] = useState<SerumRecommendationsResponse | null>(null);
+  const [serumRecommendations, setSerumRecommendations] = useState<IngredientRecommendation[]>([]);
+  const [isSerumExpanded, setIsSerumExpanded] = useState(true);
+  const [isSerumInitialized, setIsSerumInitialized] = useState(false);
+
   // Scroll to top on mount (for tablet compatibility)
   useEffect(() => {
     const scrollToTop = () => {
@@ -134,11 +154,30 @@ export default function SkincareSelectionPage() {
     }
   }, [isInitialized, recommendedProducts]);
 
+  // Initialize serum recommendations with mock data
+  useEffect(() => {
+    if (!isSerumInitialized) {
+      const mockResponse = generateMockSerumRecommendations();
+      const initialConfigs = createInitialSerumConfigs(mockResponse, 'advanced');
+
+      setSerumApiResponse(mockResponse);
+      setSerumRecommendations(mockResponse.ingredientRecommendations);
+      setSerumConfigs(initialConfigs);
+      setIsSerumInitialized(true);
+    }
+  }, [isSerumInitialized]);
+
   // Group products by category
   const groupedProducts = useMemo(() => groupProductsByCategory(products), [products]);
 
-  // Get visible categories (exclude 'treat' for now)
-  const visibleCategories = UNIVERSKIN_CATEGORIES.filter((cat) => cat.id !== 'treat');
+  // Split categories into before and after Treat section
+  // Order: Cleanse, Prep, [Treat Serums], Strengthen, Sunscreen, Kits
+  const categoriesBeforeTreat = UNIVERSKIN_CATEGORIES.filter(
+    (cat) => cat.id === 'cleanse' || cat.id === 'prep'
+  );
+  const categoriesAfterTreat = UNIVERSKIN_CATEGORIES.filter(
+    (cat) => cat.id === 'strengthen' || cat.id === 'sunscreen' || cat.id === 'kit'
+  );
 
   // Get selections per category
   const selectionsByCategory = useMemo(() => {
@@ -247,10 +286,16 @@ export default function SkincareSelectionPage() {
     router.push('/dashboard');
   };
 
-  // Calculate totals
-  const totalCents = calculateTotalPrice(selections);
+  // Calculate totals (products + serums)
+  const productTotalCents = calculateTotalPrice(selections);
+  const serumTotalCents = calculateTotalSerumPrice(serumConfigs);
+  const totalCents = productTotalCents + serumTotalCents;
   const totalItems = selections.reduce((sum, s) => sum + s.quantity, 0);
-  const minDuration = calculateMinDuration(selections, products);
+  const productMinDuration = calculateMinDuration(selections, products);
+  const serumDuration = serumConfigs.length > 0 ? SERUM_DURATION_DAYS : 0;
+  const minDuration = productMinDuration > 0 && serumDuration > 0
+    ? Math.min(productMinDuration, serumDuration)
+    : productMinDuration || serumDuration;
 
   return (
     <div ref={pageTopRef} className="min-h-screen relative bg-gradient-to-b from-sky-100 via-sky-50 to-sky-50/50">
@@ -332,7 +377,37 @@ export default function SkincareSelectionPage() {
 
         {/* Category Accordion Sections */}
         <div className="space-y-3 mb-6">
-          {visibleCategories.map((category) => (
+          {/* Cleanse and Prep categories */}
+          {categoriesBeforeTreat.map((category) => (
+            <SkincareCategorySection
+              key={category.id}
+              category={category}
+              isExpanded={expandedCategories.has(category.id)}
+              onToggle={() => toggleCategory(category.id)}
+              selectedProducts={selectionsByCategory[category.id]}
+              products={products}
+              recommendedProductIds={recommendedProductIds}
+              onAddClick={() => openModal(category)}
+              onUpdateQuantity={handleUpdateQuantity}
+              onUpdateWhenToApply={handleUpdateWhenToApply}
+              onRemoveProduct={handleRemoveProduct}
+            />
+          ))}
+
+          {/* Treat Section (Personalized Serums) */}
+          {serumApiResponse && (
+            <TreatSection
+              isExpanded={isSerumExpanded}
+              onToggle={() => setIsSerumExpanded((prev) => !prev)}
+              configs={serumConfigs}
+              recommendations={serumRecommendations}
+              apiResponse={serumApiResponse}
+              onConfigsChange={setSerumConfigs}
+            />
+          )}
+
+          {/* Strengthen, Sunscreen, and Kits categories */}
+          {categoriesAfterTreat.map((category) => (
             <SkincareCategorySection
               key={category.id}
               category={category}
@@ -350,7 +425,7 @@ export default function SkincareSelectionPage() {
         </div>
 
         {/* Routine Total - matching EBD treatment total design */}
-        {selections.length > 0 && totalCents > 0 && (
+        {(selections.length > 0 || serumConfigs.length > 0) && totalCents > 0 && (
           <div className="bg-sky-50 border border-sky-200 rounded-xl p-4 mb-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-sky-900">
@@ -362,7 +437,13 @@ export default function SkincareSelectionPage() {
             </div>
             <div className="flex items-center justify-between">
               <p className="text-xs text-sky-600">
-                {selections.length} product{selections.length !== 1 ? 's' : ''} ({totalItems} item{totalItems !== 1 ? 's' : ''})
+                {selections.length > 0 && (
+                  <span>{selections.length} product{selections.length !== 1 ? 's' : ''}</span>
+                )}
+                {selections.length > 0 && serumConfigs.length > 0 && <span> + </span>}
+                {serumConfigs.length > 0 && (
+                  <span>{serumConfigs.length} serum{serumConfigs.length !== 1 ? 's' : ''}</span>
+                )}
               </p>
               <div className="flex items-center gap-1.5 text-xs text-sky-600">
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -390,7 +471,7 @@ export default function SkincareSelectionPage() {
             className="flex-1 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 focus:ring-sky-500/30"
             onClick={handleFinish}
           >
-            {selections.length > 0 ? 'Complete' : 'Skip'}
+            {selections.length > 0 || serumConfigs.length > 0 ? 'Complete' : 'Skip'}
           </Button>
         </div>
 

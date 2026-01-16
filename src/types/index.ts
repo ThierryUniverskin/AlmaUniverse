@@ -483,3 +483,88 @@ export interface SkinWellnessEntryData {
   consentConfirmed: boolean;
   clinicalSessionId?: string; // For tracking session status (operational, not clinical data)
 }
+
+// ===========================================
+// Personalized Serum Types
+// ===========================================
+
+// Serum ingredient with concentration
+export interface SerumIngredient {
+  id: string;                    // e.g., 'niacinamide', 'vitamin-c'
+  name: string;                  // Display name: 'Niacinamide', 'Vitamin C'
+  baseConcentration: number;     // Base % with 1 capsule
+  capsules: 1 | 2 | 3;           // Number of capsules (multiplier)
+  color: string;                 // Hex color
+}
+
+// Raw ingredient data (without capsule selection)
+export interface SerumIngredientData {
+  id: string;
+  name: string;
+  baseConcentration: number;
+  color: string;
+  displayOrder: number;
+}
+
+// Single serum (AM or PM for face, single for eye/neck)
+export interface Serum {
+  timeOfDay: 'AM' | 'PM' | 'AM&PM';
+  ingredients: SerumIngredient[];  // 1-3 ingredients
+}
+
+// Serum type and option enums
+export type SerumType = 'face' | 'eye' | 'neck';
+export type SerumOption = 'clinical' | 'advanced' | 'minimalist' | 'custom';
+
+// Complete serum configuration for a type
+export interface SerumConfiguration {
+  type: SerumType;
+  option: SerumOption;
+  serums: Serum[];  // Face has 2 (AM+PM), Eye/Neck has 1
+  isAiRecommended: boolean;
+  description: string;  // AI-generated explanation for this configuration
+}
+
+// Ingredient recommendation categories from API
+export type IngredientCategory =
+  | 'highly_recommended'
+  | 'recommended'
+  | 'can_be_used'
+  | 'should_not_be_used'
+  | 'cannot_be_used';
+
+// Ingredient with its recommendation category
+export interface IngredientRecommendation {
+  ingredient: SerumIngredientData;
+  category: IngredientCategory;
+}
+
+// Serum option with ingredients and description
+export interface SerumOptionData {
+  am: SerumIngredient[];
+  pm: SerumIngredient[];
+  description: string;
+}
+
+export interface SoloSerumOptionData {
+  ingredients: SerumIngredient[];
+  description: string;
+}
+
+// API response structure for serum recommendations
+export interface SerumRecommendationsResponse {
+  treatFace: {
+    clinical: SerumOptionData;
+    advanced: SerumOptionData;
+    minimalist: SerumOptionData;
+  };
+  treatEyes: {
+    advanced: SoloSerumOptionData;
+    minimalist: SoloSerumOptionData;
+  } | null;
+  treatNeck: {
+    advanced: SoloSerumOptionData;
+    minimalist: SoloSerumOptionData;
+  } | null;
+  ingredientRecommendations: IngredientRecommendation[];
+}

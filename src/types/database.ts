@@ -476,3 +476,22 @@ export interface DbDoctorUniverskinProduct {
   created_at: string;
   updated_at: string;
 }
+
+// Serum Ingredients types
+export interface DbSerumIngredient {
+  id: string;
+  name: string;
+  base_concentration: number;  // DECIMAL in DB
+  color: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface DbCountrySerumIngredient {
+  id: string;
+  country_code: string;
+  ingredient_id: string;
+  is_available: boolean;
+  created_at: string;
+}
