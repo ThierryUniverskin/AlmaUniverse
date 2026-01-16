@@ -255,7 +255,7 @@ function PersonalInfoForm({ formData, onChange, errors, email, savedCountry }: P
         <h3 className="text-lg font-semibold text-stone-900 mb-1">Contact Information</h3>
         <p className="text-sm text-stone-500 mb-6">How patients and colleagues can reach you.</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <PhoneInput
             label="Personal Mobile Phone Number"
             value={formData.personalMobile}
@@ -268,7 +268,7 @@ function PersonalInfoForm({ formData, onChange, errors, email, savedCountry }: P
             onChange={(value: PhoneNumber) => handleChange('officePhone', value)}
             error={getFieldError(errors, 'officePhone')}
           />
-          <div className="md:col-span-2">
+          <div className="xl:col-span-2">
             <Input
               label="Email Address"
               name="email"

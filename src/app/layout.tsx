@@ -4,6 +4,7 @@ import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { PatientProvider } from '@/context/PatientContext';
 import { ToastProvider } from '@/components/ui';
+import { ScrollToTop } from '@/components/layout/ScrollToTop';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -25,6 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className={inter.className}>
+        <ScrollToTop />
         <AuthProvider>
           <PatientProvider>
             <ToastProvider>

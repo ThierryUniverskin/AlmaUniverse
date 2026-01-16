@@ -418,8 +418,8 @@ function InlinePatientForm({
               checked={formData.consentTerms || false}
               onChange={e => handleChange('consentTerms', e.target.checked)}
               disabled={disabled}
-              className={`mt-0.5 h-4 w-4 rounded border-stone-300 accent-purple-600 focus:ring-purple-500 disabled:opacity-50 ${
-                getFieldError(errors, 'consentTerms') ? 'border-red-500' : ''
+              className={`checkbox-custom mt-0.5 ${
+                getFieldError(errors, 'consentTerms') ? '!border-red-500' : ''
               }`}
             />
             <span className={`text-sm ${getFieldError(errors, 'consentTerms') ? 'text-red-600' : 'text-stone-600'}`}>

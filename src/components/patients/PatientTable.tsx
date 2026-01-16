@@ -48,7 +48,7 @@ function PatientTable({ patients }: PatientTableProps) {
             <th className="w-12 px-6 py-3">
               <input
                 type="checkbox"
-                className="h-4 w-4 rounded border-stone-300 text-purple-600 focus:ring-purple-500"
+                className="checkbox-custom"
               />
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-stone-500">
@@ -95,7 +95,7 @@ function PatientTable({ patients }: PatientTableProps) {
               <td className="px-6 py-4">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded border-stone-300 text-purple-600 focus:ring-purple-500"
+                  className="checkbox-custom"
                 />
               </td>
               <td className="px-6 py-4">

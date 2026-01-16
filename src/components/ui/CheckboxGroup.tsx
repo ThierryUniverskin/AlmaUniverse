@@ -63,7 +63,7 @@ export function CheckboxGroup({
               checked={selectedValues.includes(option.value)}
               onChange={() => handleToggle(option.value)}
               disabled={disabled}
-              className="h-4 w-4 mt-0.5 flex-shrink-0 rounded border-stone-300 accent-purple-600 focus:ring-purple-500"
+              className="checkbox-custom mt-0.5"
             />
             <span className="text-sm text-stone-700">{option.label}</span>
           </label>

@@ -227,19 +227,21 @@ export default function AccountPage() {
               <path d="M32 28v4M30 30h4" stroke="url(#doctorIconGradient)" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </div>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-xl lg:text-2xl font-semibold text-stone-900">My Account</h1>
-            <p className="text-sm text-stone-500">Manage your account preferences and configure various options.</p>
+            <p className="text-xs md:text-sm text-stone-500 hidden sm:block md:hidden lg:block">Manage your account preferences and configure various options.</p>
+            <p className="text-xs text-stone-500 sm:hidden md:block lg:hidden">Manage your preferences.</p>
           </div>
         </div>
 
           {/* Action buttons (only show on personal tab) */}
           {activeTab === 'personal' && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <Button
                 variant="outline"
                 onClick={handleDiscard}
                 disabled={!hasUnsavedChanges || isSubmitting}
+                className="whitespace-nowrap"
               >
                 Discard
               </Button>
@@ -247,8 +249,9 @@ export default function AccountPage() {
                 onClick={handleSaveChanges}
                 isLoading={isSubmitting}
                 disabled={!hasUnsavedChanges || isSubmitting}
+                className="whitespace-nowrap"
               >
-                Save Changes
+                Save
               </Button>
             </div>
           )}
@@ -257,9 +260,9 @@ export default function AccountPage() {
 
       {/* Two-column layout */}
       <div className="relative p-6 md:p-8 lg:p-10">
-        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-6 md:gap-8">
-          {/* Left: Profile Sidebar - shows live preview of form changes */}
-          <div className="lg:sticky lg:top-28 lg:self-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 lg:gap-8">
+          {/* Left: Profile Sidebar - hidden on tablet portrait, shown on mobile and desktop */}
+          <div className="md:hidden lg:block lg:sticky lg:top-28 lg:self-start">
             <ProfileSidebar doctor={{ ...state.doctor, ...formData }} />
           </div>
 

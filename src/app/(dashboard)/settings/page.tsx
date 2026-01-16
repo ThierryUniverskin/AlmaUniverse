@@ -196,9 +196,45 @@ export default function SettingsPage() {
 
       {/* Two-column layout */}
       <div className="relative p-6 md:p-8 lg:p-10">
-        <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] lg:grid-cols-[240px_1fr] gap-6 md:gap-8">
-          {/* Left: Settings Sidebar */}
-          <div className="lg:sticky lg:top-28 lg:self-start">
+        {/* Horizontal tabs for tablet portrait - hidden on mobile and desktop */}
+        <div className="hidden md:block lg:hidden mb-6">
+          <div className="bg-white rounded-2xl border border-stone-200 p-2">
+            <div className="flex gap-1">
+              <button
+                onClick={() => setActiveSection('clinic-devices')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                  activeSection === 'clinic-devices'
+                    ? 'bg-purple-50 text-purple-700'
+                    : 'text-stone-600 hover:bg-stone-50'
+                }`}
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" />
+                  <path d="M8 21h8M12 17v4" />
+                </svg>
+                <span>Devices</span>
+              </button>
+              <button
+                onClick={() => setActiveSection('custom-procedures')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                  activeSection === 'custom-procedures'
+                    ? 'bg-purple-50 text-purple-700'
+                    : 'text-stone-600 hover:bg-stone-50'
+                }`}
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19.5 4.5l-1 1m0 0l-4-1-9 9 5 5 9-9-1-4z" />
+                  <path d="M5.5 18.5l-1 1" />
+                </svg>
+                <span>Procedures</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 lg:gap-8">
+          {/* Left: Settings Sidebar - hidden on tablet portrait, shown on mobile and desktop */}
+          <div className="md:hidden lg:block lg:sticky lg:top-28 lg:self-start">
             <SettingsSidebar
               activeSection={activeSection}
               onSectionChange={setActiveSection}

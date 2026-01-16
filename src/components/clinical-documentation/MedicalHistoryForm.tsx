@@ -217,7 +217,7 @@ export function MedicalHistoryForm({
                           handleChange('recoveryTimePreferences', newValues);
                         }}
                         disabled={disabled}
-                        className="h-4 w-4 rounded border-stone-300 accent-purple-600 focus:ring-purple-500"
+                        className="checkbox-custom"
                       />
                       <span className={`text-sm ${isSelected ? 'text-purple-900 font-medium' : 'text-stone-700'}`}>
                         {option.label}

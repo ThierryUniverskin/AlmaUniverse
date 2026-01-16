@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
@@ -99,6 +99,22 @@ export default function SkincareSelectionPage() {
   const [expandedCategories, setExpandedCategories] = useState<Set<UniverskinCategory>>(new Set());
   const [modalCategory, setModalCategory] = useState<{ id: UniverskinCategory; label: string } | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const pageTopRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top on mount (for tablet compatibility)
+  useEffect(() => {
+    const scrollToTop = () => {
+      if (pageTopRef.current) {
+        pageTopRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    scrollToTop();
+    const timeoutId = setTimeout(scrollToTop, 50);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   // Get AI recommended products
   const recommendedProducts = useMemo(() => getRecommendedProducts(products), [products]);
@@ -237,7 +253,18 @@ export default function SkincareSelectionPage() {
   const minDuration = calculateMinDuration(selections, products);
 
   return (
-    <div className="min-h-full relative bg-gradient-to-b from-sky-100 via-sky-50 to-sky-50/50">
+    <div ref={pageTopRef} className="min-h-screen relative bg-gradient-to-b from-sky-100 via-sky-50 to-sky-50/50">
+      {/* Medical doodles pattern overlay - grayscale */}
+      <div
+        className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        style={{
+          backgroundImage: 'url(/images/medical-doodles-bg.svg)',
+          backgroundSize: '440px 440px',
+          backgroundRepeat: 'repeat',
+          filter: 'grayscale(100%)',
+        }}
+      />
+
       {/* Top bar with doctor name (left) and step progress (right) */}
       <div className="absolute top-6 left-6 right-6 md:top-7 md:left-8 md:right-8 lg:top-8 lg:left-10 lg:right-10 z-10 flex items-center justify-between">
         {/* Doctor name with avatar */}

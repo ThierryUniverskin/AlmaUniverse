@@ -156,6 +156,22 @@ export function SkinWellnessResults({ results: initialResults, patientId, photoS
   );
   const [isEditingConcerns, setIsEditingConcerns] = useState(false);
   const [concernsManuallyEdited, setConcernsManuallyEdited] = useState(initialConcernsManuallyEdited ?? false);
+  const pageTopRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top on mount (for tablet compatibility)
+  useEffect(() => {
+    const scrollToTop = () => {
+      if (pageTopRef.current) {
+        pageTopRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    scrollToTop();
+    const timeoutId = setTimeout(scrollToTop, 50);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   // Auto-update concerns when results change (only if not manually edited)
   useEffect(() => {
@@ -307,9 +323,21 @@ export function SkinWellnessResults({ results: initialResults, patientId, photoS
 
   return (
     <div
-      className="min-h-full relative bg-gradient-to-b from-sky-100 via-sky-50 to-sky-50/50"
+      ref={pageTopRef}
+      className="min-h-screen relative bg-gradient-to-b from-sky-100 via-sky-50 to-sky-50/50"
       onClick={() => setActiveSlice(null)}
     >
+      {/* Medical doodles pattern overlay - grayscale */}
+      <div
+        className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        style={{
+          backgroundImage: 'url(/images/medical-doodles-bg.svg)',
+          backgroundSize: '440px 440px',
+          backgroundRepeat: 'repeat',
+          filter: 'grayscale(100%)',
+        }}
+      />
+
       {/* Top bar with doctor name (left) and step progress (right) */}
       <div className="absolute top-6 left-6 right-6 md:top-7 md:left-8 md:right-8 lg:top-8 lg:left-10 lg:right-10 z-10 flex items-center justify-between">
         {/* Doctor name with avatar */}
@@ -337,24 +365,42 @@ export function SkinWellnessResults({ results: initialResults, patientId, photoS
       {/* Content */}
       <div className="relative max-w-3xl mx-auto px-6 pt-16 md:px-7 md:pt-20 lg:pt-16 pb-12">
         {/* Header */}
-        <div className="mb-6">
-          {/* Centered logo */}
-          <div className="flex items-center justify-center mb-3">
-            <img
-              src="/images/skinxs-logo.svg"
-              alt="SkinXS"
-              className="h-12 w-auto"
-            />
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center mb-4">
+            {/* Premium Skin Analysis Icon */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-sky-300 to-sky-400 rounded-full blur-lg opacity-20 scale-105" />
+              <svg className="relative h-14 w-14" viewBox="0 0 56 56" fill="none">
+                <defs>
+                  <linearGradient id="analysisGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#9ca3af" />
+                    <stop offset="100%" stopColor="#0ea5e9" />
+                  </linearGradient>
+                  <filter id="analysisShadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#0ea5e9" floodOpacity="0.15"/>
+                  </filter>
+                </defs>
+                <circle cx="28" cy="28" r="27" fill="white" filter="url(#analysisShadow)" />
+                <circle cx="28" cy="28" r="25" fill="url(#analysisGradient)" opacity="0.05" />
+                {/* Face silhouette */}
+                <ellipse cx="28" cy="26" rx="10" ry="12" stroke="url(#analysisGradient)" strokeWidth="1.5" fill="none" />
+                {/* Magnifying glass */}
+                <circle cx="35" cy="32" r="6" stroke="url(#analysisGradient)" strokeWidth="1.5" fill="none" />
+                <line x1="39.5" y1="36.5" x2="44" y2="41" stroke="url(#analysisGradient)" strokeWidth="2" strokeLinecap="round" />
+                {/* Analysis lines on face */}
+                <path d="M24 22h8M24 26h8M24 30h5" stroke="url(#analysisGradient)" strokeWidth="1" strokeLinecap="round" opacity="0.6" />
+                {/* Sparkle accents */}
+                <circle cx="18" cy="18" r="1.5" fill="url(#analysisGradient)" opacity="0.5" />
+                <circle cx="38" cy="16" r="1" fill="url(#analysisGradient)" opacity="0.4" />
+              </svg>
+            </div>
           </div>
-          {/* Title */}
-          <div className="text-center">
-            <h1 className="text-xl font-semibold text-stone-800 mb-1">
-              Cosmetic Skin Appearance Overview
-            </h1>
-            <p className="text-sm text-stone-400">
-              Based on visible skin appearance only
-            </p>
-          </div>
+          <h1 className="text-2xl font-semibold text-stone-900 mb-1">
+            Cosmetic Skin Appearance Overview
+          </h1>
+          <p className="text-stone-500 text-sm">
+            Based on visible skin appearance only
+          </p>
         </div>
 
         {/* Patient Info Card */}

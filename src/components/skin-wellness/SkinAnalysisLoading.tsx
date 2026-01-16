@@ -86,7 +86,7 @@ export function SkinAnalysisLoading({ photoUrl, onComplete, isAnalysisReady = fa
 
   return (
     <div
-      className={`min-h-full relative overflow-hidden transition-opacity duration-300 ${
+      className={`min-h-screen relative overflow-hidden transition-opacity duration-300 ${
         isExiting ? 'opacity-0' : 'opacity-100'
       }`}
       style={{

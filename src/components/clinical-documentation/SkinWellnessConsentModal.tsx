@@ -137,7 +137,7 @@ export function SkinWellnessConsentModal({
                 id="wellness-consent"
                 checked={consentChecked}
                 onChange={(e) => setConsentChecked(e.target.checked)}
-                className="h-5 w-5 rounded border-stone-300 text-purple-600 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer accent-purple-600"
+                className="checkbox-custom h-5 w-5"
               />
             </div>
             <label

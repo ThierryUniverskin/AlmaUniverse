@@ -12,21 +12,19 @@ function MainLayoutContent({ children }: MainLayoutProps) {
   const { sidebarCollapsed, toggleSidebar } = useLayout();
 
   return (
-    <div className="h-screen bg-stone-50 flex">
+    <div className="min-h-screen bg-stone-50">
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggle={toggleSidebar}
       />
-      <div className="flex-1 flex flex-col overflow-hidden relative">
-        <main
-          className="flex-1 overflow-y-auto overscroll-contain"
-          style={{ WebkitOverflowScrolling: 'touch' }}
-        >
-          <div className="animate-fade-in h-full">
-            {children}
-          </div>
-        </main>
-      </div>
+      {/* Main content with margin for fixed sidebar */}
+      <main
+        className={`min-h-screen transition-all duration-300 ${
+          sidebarCollapsed ? 'ml-16' : 'ml-64'
+        }`}
+      >
+        {children}
+      </main>
     </div>
   );
 }

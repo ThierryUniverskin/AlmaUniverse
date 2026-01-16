@@ -40,7 +40,7 @@ export function PhotoConsentSection({
             checked={consentGiven}
             onChange={(e) => onConsentChange(e.target.checked)}
             disabled={disabled}
-            className="h-6 w-6 rounded border-stone-300 text-purple-600 focus:ring-purple-500 focus:ring-offset-0 disabled:opacity-50 cursor-pointer accent-purple-600"
+            className="checkbox-custom-lg"
           />
         </div>
         <div className="flex-1">

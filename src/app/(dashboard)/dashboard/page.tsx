@@ -9,7 +9,7 @@ import { Header } from '@/components/layout/Header';
 export default function DashboardPage() {
 
   return (
-    <div className="h-full relative overflow-hidden">
+    <div className="h-screen relative overflow-hidden">
       <Header />
       {/* Hero Section with Background Image */}
       <div className="absolute inset-0">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePatients } from '@/context/PatientContext';
 import { useAuth } from '@/context/AuthContext';
@@ -36,6 +36,28 @@ export default function ClinicalDocumentationPage() {
 
   // Step management
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
+  const pageTopRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top when step changes
+  useEffect(() => {
+    // Use multiple scroll methods for cross-browser/device compatibility
+    const scrollToTop = () => {
+      // Method 1: scrollIntoView on the page container
+      if (pageTopRef.current) {
+        pageTopRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+      // Method 2: Also scroll window and document for Safari/iOS
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    // Execute immediately and with a small delay for mobile browsers
+    scrollToTop();
+    const timeoutId = setTimeout(scrollToTop, 50);
+
+    return () => clearTimeout(timeoutId);
+  }, [currentStep]);
 
   // Initialize clinical session on page load
   useEffect(() => {
@@ -941,11 +963,11 @@ export default function ClinicalDocumentationPage() {
           onClick={handleContinueToStep4}
           disabled={!photoFormData.frontalPhoto || !photoFormData.photoConsentGiven || isSubmitting}
         >
-          Continue
+          Continue Clinical Flow
         </Button>
       </div>
 
-      {/* Secondary Option: Skip to Skin Wellness */}
+      {/* Secondary Option: Go Direct to Skin Wellness */}
       <div className="mt-4">
         <Button
           variant="outline"
@@ -958,7 +980,7 @@ export default function ClinicalDocumentationPage() {
           onClick={handleSkipToWellness}
           disabled={!photoFormData.frontalPhoto || !photoFormData.photoConsentGiven || isSubmitting}
         >
-          Skip to Skin Wellness Analysis
+          Go Direct to Skin Wellness Analysis
         </Button>
       </div>
     </>
@@ -1064,7 +1086,17 @@ export default function ClinicalDocumentationPage() {
   };
 
   return (
-    <div className="min-h-full relative bg-gradient-to-b from-purple-100 via-purple-50 to-purple-50/50">
+    <div ref={pageTopRef} className="min-h-screen relative bg-gradient-to-b from-purple-100 via-purple-50 to-purple-50/50">
+      {/* Medical doodles pattern overlay - grayscale */}
+      <div
+        className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        style={{
+          backgroundImage: 'url(/images/medical-doodles-bg.svg)',
+          backgroundSize: '440px 440px',
+          backgroundRepeat: 'repeat',
+          filter: 'grayscale(100%)',
+        }}
+      />
 
       {/* Top bar with doctor name (left) and step progress (right) */}
       <div className="absolute top-6 left-6 right-6 md:top-7 md:left-8 md:right-8 lg:top-8 lg:left-10 lg:right-10 z-10 flex items-center justify-between">

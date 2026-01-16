@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { parseSkinWellnessParams } from '@/lib/skinWellness';
 import { getSignedUrl } from '@/lib/photoSession';
@@ -78,6 +78,22 @@ export default function SkinWellnessPage() {
 
   // Track which step we entered from (3 = photos, 6 = summary)
   const [entryStep, setEntryStep] = useState<3 | 6>(6);
+  const pageTopRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top when view state changes (for tablet compatibility)
+  useEffect(() => {
+    const scrollToTop = () => {
+      if (pageTopRef.current) {
+        pageTopRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    scrollToTop();
+    const timeoutId = setTimeout(scrollToTop, 50);
+    return () => clearTimeout(timeoutId);
+  }, [viewState]);
 
   // Load entry step from sessionStorage on mount
   useEffect(() => {
@@ -499,7 +515,7 @@ export default function SkinWellnessPage() {
   // Loading state (fetching photo)
   if (viewState === 'loading') {
     return (
-      <div className="min-h-full flex items-center justify-center bg-stone-50">
+      <div className="min-h-screen flex items-center justify-center bg-stone-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mx-auto mb-4" />
           <p className="text-stone-500">Loading...</p>

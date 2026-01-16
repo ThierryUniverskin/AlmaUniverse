@@ -18,6 +18,7 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
+  hideOnTablet?: boolean; // Hide on tablets to save space
 }
 
 const mainNavItems: NavItem[] = [
@@ -46,6 +47,7 @@ const mainNavItems: NavItem[] = [
   {
     label: 'Learning Center',
     href: '#',
+    hideOnTablet: true, // Placeholder - hide on tablet
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="7" height="7" />
@@ -58,6 +60,7 @@ const mainNavItems: NavItem[] = [
   {
     label: 'Documents',
     href: '#',
+    hideOnTablet: true, // Placeholder - hide on tablet
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
@@ -126,12 +129,12 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'bg-white border-r border-stone-200 flex flex-col transition-all duration-300',
+        'fixed left-0 top-0 bottom-0 bg-white border-r border-stone-200 flex flex-col transition-all duration-300 overflow-hidden z-40',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
       {/* Logo & Toggle */}
-      <div className="p-4 border-b border-stone-100">
+      <div className="p-4 md:p-3 lg:p-4 border-b border-stone-100 flex-shrink-0">
         <div
           className="relative group cursor-pointer"
           onClick={onToggle}
@@ -178,44 +181,44 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 px-3 py-4">
-        {!collapsed && (
-          <div className="mb-2 px-3">
-            <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">
-              Main
-            </span>
-          </div>
-        )}
-        <ul className="space-y-1">
-          {mainNavItems.map(item => {
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+      <nav className="flex-1 px-3 py-4 md:py-3 lg:py-4">
+          {!collapsed && (
+            <div className="mb-2 px-3">
+              <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">
+                Main
+              </span>
+            </div>
+          )}
+          <ul className="space-y-1">
+            {mainNavItems.map(item => {
+              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-            return (
-              <li key={item.label}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
-                    collapsed && 'justify-center px-2',
-                    isActive
-                      ? 'bg-purple-50 text-purple-700'
-                      : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
-                  )}
-                  title={collapsed ? item.label : undefined}
-                >
-                  <span className={cn(isActive ? 'text-purple-600' : 'text-stone-400')}>
-                    {item.icon}
-                  </span>
-                  {!collapsed && item.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+              return (
+                <li key={item.label}>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2.5 md:py-2 lg:py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                      collapsed && 'justify-center px-2',
+                      isActive
+                        ? 'bg-purple-50 text-purple-700'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    )}
+                    title={collapsed ? item.label : undefined}
+                  >
+                    <span className={cn(isActive ? 'text-purple-600' : 'text-stone-400')}>
+                      {item.icon}
+                    </span>
+                    {!collapsed && item.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
       </nav>
 
       {/* Bottom Navigation */}
-      <div className="px-3 py-2 border-t border-stone-100">
+      <div className="px-3 py-2 md:py-1.5 lg:py-2 border-t border-stone-100 flex-shrink-0">
         <ul className="space-y-1">
           {bottomNavItems.map(item => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -225,7 +228,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 <Link
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                    'flex items-center gap-3 px-3 py-2.5 md:py-2 lg:py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                     collapsed && 'justify-center px-2',
                     isActive
                       ? 'bg-purple-50 text-purple-700'
@@ -246,7 +249,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <button
               onClick={() => setLegalOpen(!legalOpen)}
               className={cn(
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                'w-full flex items-center gap-3 px-3 py-2.5 md:py-2 lg:py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                 collapsed && 'justify-center px-2',
                 legalOpen
                   ? 'bg-purple-50 text-purple-700'
@@ -299,7 +302,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <button
               onClick={logout}
               className={cn(
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                'w-full flex items-center gap-3 px-3 py-2.5 md:py-2 lg:py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                 collapsed && 'justify-center px-2',
                 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
               )}
@@ -315,47 +318,37 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
               {!collapsed && 'Logout'}
             </button>
           </li>
+          {/* My Account - inline with other nav items */}
+          {state.doctor && (
+            <li>
+              <Link
+                href="/account"
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2.5 md:py-2 lg:py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                  collapsed && 'justify-center px-2',
+                  pathname === '/account'
+                    ? 'bg-purple-50 text-purple-700'
+                    : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                )}
+                title={collapsed ? 'My Account' : undefined}
+              >
+                {/* Avatar as icon */}
+                <div className={cn(
+                  'h-5 w-5 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center flex-shrink-0',
+                  pathname === '/account' ? 'ring-1 ring-purple-300' : ''
+                )}>
+                  <span className="text-[10px] font-semibold text-purple-700">
+                    {state.doctor.firstName[0]}{state.doctor.lastName[0]}
+                  </span>
+                </div>
+                {!collapsed && (
+                  <span className="truncate">{getDisplayName(state.doctor)}</span>
+                )}
+              </Link>
+            </li>
+          )}
         </ul>
       </div>
-
-      {/* User Profile */}
-      {state.doctor && (
-        <div className="p-3 border-t border-stone-100">
-          <Link
-            href="/account"
-            className={cn(
-              'flex items-center gap-3 p-2 rounded-lg hover:bg-stone-50 transition-colors',
-              collapsed && 'justify-center'
-            )}
-            title={collapsed ? 'My Account' : undefined}
-          >
-            {/* Avatar */}
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
-              <span className="text-sm font-semibold text-purple-700">
-                {state.doctor.firstName[0]}{state.doctor.lastName[0]}
-              </span>
-            </div>
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-medium text-stone-800 truncate">
-                    {getDisplayName(state.doctor)}
-                  </p>
-                  <svg className="h-4 w-4 text-purple-500 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <p className="text-xs text-stone-500 truncate">{state.doctor.email}</p>
-              </div>
-            )}
-            {!collapsed && (
-              <svg className="h-4 w-4 text-stone-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            )}
-          </Link>
-        </div>
-      )}
     </aside>
   );
 }
