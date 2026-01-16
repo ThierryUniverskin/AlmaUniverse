@@ -20,12 +20,12 @@ const OPTION_LABELS: Record<string, string> = {
   custom: 'Custom',
 };
 
-// Option descriptions for tooltip
+// Option descriptions for Eye/Neck (different from Face)
 const OPTION_DESCRIPTIONS: Record<string, string> = {
-  clinical: '3 ingredients per serum',
-  advanced: '2 ingredients per serum',
-  minimalist: '1 ingredient per serum',
-  custom: 'Custom configuration',
+  clinical: '3 ingredients',
+  advanced: '3 ingredients',
+  minimalist: '1 ingredient',
+  custom: 'Custom',
 };
 
 // Face-specific descriptions (showing AM+PM)
