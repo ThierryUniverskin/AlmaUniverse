@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { SerumIngredient, SerumIngredientData, IngredientRecommendation, IngredientCategory } from '@/types';
 import { createIngredient } from '@/lib/serumIngredients';
@@ -12,7 +12,7 @@ interface IngredientDropdownProps {
   recommendations: IngredientRecommendation[];
   currentIngredient?: SerumIngredient;
   excludeIds?: string[];
-  position?: { top: number; left: number } | null;
+  position?: { top: number; left: number; alignRight?: boolean } | null;
 }
 
 // Category display configuration
@@ -62,23 +62,6 @@ export function IngredientDropdown({
   position,
 }: IngredientDropdownProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [alignRight, setAlignRight] = useState(false);
-
-  // Check if dropdown should be right-aligned to avoid overflow
-  useEffect(() => {
-    if (isOpen && dropdownRef.current && position) {
-      const dropdown = dropdownRef.current;
-      const rect = dropdown.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-
-      // If dropdown extends past viewport right edge, align right
-      if (rect.right > viewportWidth - 16) {
-        setAlignRight(true);
-      } else {
-        setAlignRight(false);
-      }
-    }
-  }, [isOpen, position]);
 
   // Group recommendations by category
   const groupedRecommendations = recommendations.reduce(
@@ -135,11 +118,11 @@ export function IngredientDropdown({
   ];
 
   // Calculate position style
-  const getPositionStyle = () => {
+  const getPositionStyle = (): React.CSSProperties => {
     if (!position) {
       return { top: '100%', left: 0, marginTop: 4 };
     }
-    if (alignRight) {
+    if (position.alignRight) {
       return { top: position.top, right: 0 };
     }
     return { top: position.top, left: Math.max(0, position.left) };

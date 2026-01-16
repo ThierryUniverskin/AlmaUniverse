@@ -45,9 +45,11 @@ export function SerumCard({
 }: SerumCardProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; alignRight?: boolean } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pillRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+
+  const DROPDOWN_WIDTH = 460;
 
   const maxIngredients = getMaxIngredientsForOption(type, option);
   const canAddMore = serum.ingredients.length < maxIngredients && !disabled;
@@ -68,9 +70,14 @@ export function SerumCard({
     if (element && containerRef.current) {
       const containerRect = containerRef.current.getBoundingClientRect();
       const pillRect = element.getBoundingClientRect();
+
+      // Check if dropdown would overflow right edge of viewport
+      const wouldOverflowRight = pillRect.left + DROPDOWN_WIDTH > window.innerWidth - 16;
+
       setDropdownPosition({
         top: pillRect.bottom - containerRect.top + 4,
         left: pillRect.left - containerRect.left,
+        alignRight: wouldOverflowRight,
       });
     }
     setDropdownOpen(true);
@@ -81,9 +88,14 @@ export function SerumCard({
     if (element && containerRef.current) {
       const containerRect = containerRef.current.getBoundingClientRect();
       const buttonRect = element.getBoundingClientRect();
+
+      // Check if dropdown would overflow right edge of viewport
+      const wouldOverflowRight = buttonRect.left + DROPDOWN_WIDTH > window.innerWidth - 16;
+
       setDropdownPosition({
         top: buttonRect.bottom - containerRect.top + 4,
         left: buttonRect.left - containerRect.left,
+        alignRight: wouldOverflowRight,
       });
     }
     setDropdownOpen(true);
