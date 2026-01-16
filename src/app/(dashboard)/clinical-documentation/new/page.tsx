@@ -1123,7 +1123,7 @@ export default function ClinicalDocumentationPage() {
       </div>
 
       {/* Content */}
-      <div className="relative p-8 md:px-9 md:pt-20 lg:px-10 lg:pt-10 pb-12 max-w-2xl mx-auto">
+      <div className="relative p-8 md:px-9 md:pt-20 lg:px-10 lg:pt-10 pb-12 max-w-3xl mx-auto">
         {/* Step Content */}
         {currentStep === 1 && renderStep1()}
         {currentStep === 2 && renderStep2()}
